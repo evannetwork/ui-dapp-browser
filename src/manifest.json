@@ -1,0 +1,13 @@
+{
+  "name": "evan.network",
+  "short_name": "evan.network",
+  "start_url": "index.html",
+  "display": "standalone",
+  "icons": [{
+    "src": "logo.png",
+    "sizes": "1024x1024",
+    "type": "image/png"
+  }],
+  "background_color": "#023845",
+  "theme_color": "#023845"
+}

@@ -1,0 +1,15 @@
+{
+  "name": "evan.network",
+  "app_id": "",
+  "type": "ionic-angular",
+  "integrations": {
+    "cordova": {},
+    "gulp": {
+      "enabled": false
+    }
+  },
+  "config": {
+    "ionic_www_dir": "deployment",
+    "ionic_build_dir": "deployment"
+  }
+}

@@ -1,0 +1,188 @@
+/*
+  Copyright (C) 2018-present evan GmbH. 
+  
+  This program is free software: you can redistribute it and/or modify it
+  under the terms of the GNU Affero General Public License, version 3, 
+  as published by the Free Software Foundation. 
+  
+  This program is distributed in the hope that it will be useful, 
+  but WITHOUT ANY WARRANTY; without even the implied warranty of 
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  See the GNU Affero General Public License for more details. 
+  
+  You should have received a copy of the GNU Affero General Public License along with this program.
+  If not, see http://www.gnu.org/licenses/ or write to the
+  
+  Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA, 02110-1301 USA,
+  
+  or download the license from the following URL: https://evan.network/license/ 
+  
+  You can be released from the requirements of the GNU Affero General Public License
+  by purchasing a commercial license.
+  Buying such a license is mandatory as soon as you use this software or parts of it
+  on other blockchains than evan.network. 
+  
+  For more information, please contact evan GmbH at this address: https://evan.network/license/ 
+*/
+
+import * as core from './core';
+import * as dapp from './dapp';
+import * as ipfs from './ipfs';
+import * as lightwallet from './lightwallet';
+import * as loading from './loading';
+import * as queue from './queue';
+import * as routing from './routing';
+import * as solc from './solc';
+import * as utils from './utils';
+import * as notifications from './notifications';
+import * as web3Helper from './web3';
+import { AccountStore } from './bcc/AccountStore';
+import { config } from './config';
+import { KeyProvider, getLatestKeyProvider } from './bcc/KeyProvider';
+import { updateCoreRuntime, getCoreOptions } from './bcc/bcc';
+
+/**
+ * is inserted when the application was bundled, used to prevent window usage
+ */
+declare let evanGlobals: any;
+
+/**
+ * add page load performance tracking
+ */
+window['evanloadTime'] = Date.now();
+
+/**************************************************************************************************/
+/**
+ * Keep orignal Promise from ZoneJS and restore it after bcc browserified was loaded, which
+ * is overwriting the ZoneJS Promise
+ *
+ * bcc:23126 Unhandled promise rejection Error: Zone.js has detected that ZoneAwarePromise
+ * `(window|global).Promise` has been overwritten.
+ */
+// TODO: when bcc is loaded multiple times, zoneJS should also be saved
+const zoneJSPromise = window['Promise'];
+const System = window['System'];
+const getDomainName = dapp.getDomainName;
+let web3;
+let CoreRuntime;
+let definition;
+let nameResolver;
+
+delete window['System'];
+
+// prefill bcc for systemjs plugin usage
+evanGlobals = {
+  System : System,
+  ipfsCatPromise: ipfs.ipfsCatPromise,
+  restIpfs: ipfs.restIpfs
+};
+
+evanGlobals.System.map['bcc'] = `bcc.${ getDomainName() }!dapp-content`;
+evanGlobals.System.map['bcc-profile'] = `bcc.${ getDomainName() }!dapp-content`;
+evanGlobals.System.map['bcc-bc'] = `bcc.${ getDomainName() }!dapp-content`;
+evanGlobals.System.map['smart-contracts'] = `smartcontracts.${ getDomainName() }!dapp-content`;
+
+/**
+ * Starts the whole dapp-browser.
+ */
+export async function initializeEvanNetworkStructure(): Promise<void> {
+  // check if we are running in dev mode, load dev mode available modules
+  await utils.setUpDevMode();
+
+  // set initial loadin step
+  utils.raiseProgress(5);
+
+  // load smart-contracts and blockchain-core minimal setup for accessing ens from ipfs
+  Promise
+    .all<any, any>([
+      System
+        .import('bcc')
+        .then(CoreBundle => utils.raiseProgress(10, CoreBundle)),
+      System
+        .import('smart-contracts')
+        .then(SmartContracts => utils.raiseProgress(10, SmartContracts))
+    ])
+    .then(async ([ CoreBundle, SmartContracts ]) => {
+      // make it global available without loading it twice
+      evanGlobals.CoreBundle = CoreBundle;
+      evanGlobals.SmartContracts = SmartContracts;
+
+      try {
+        // initialize bcc and make it globally available
+        await updateCoreRuntime(CoreBundle, SmartContracts);
+        evanGlobals.CoreRuntime = CoreBundle.CoreRuntime;
+
+        // set variables to export to dapps
+        CoreRuntime = CoreBundle.CoreRuntime;
+        definition = CoreRuntime.definition;
+        nameResolver = CoreRuntime.nameResolver;
+        web3 = CoreRuntime.web3;
+
+        // restore zoneJSpromise
+        window['Promise'] = zoneJSPromise;
+
+        // initialize notifications
+        notifications.initialize();
+
+        // initialize queue
+        queue.updateQueue();
+
+        // initialize dynamic routing
+        routing.initialize();
+
+        // add account watcher
+        core.watchAccountChange();
+
+        if (utils.devMode) {
+          window['evanGlobals'] = evanGlobals;
+        }
+      } catch (ex) {
+        console.error(ex);
+
+        utils.showError();
+      }
+    })
+    .catch(ex => {
+      console.error(ex);
+
+      utils.showError();
+    });
+}
+
+System.originalImport = System.import;
+/**
+ * Overwrite SystemJS import to add additional logs for dev tracing.
+ *
+ * @param      {string}  pathToLoad  The path to load
+ * @return     {Promise<any>}  SystemJS result
+ */
+System.import = function(pathToLoad: string): Promise<any> {
+  utils.devLog(`SystemJS import: ${ pathToLoad }`, 'verbose');
+
+  return System.originalImport(pathToLoad);
+};
+
+export {
+  AccountStore,
+  CoreRuntime,
+  config,
+  evanGlobals,
+  core,
+  dapp,
+  definition,
+  getCoreOptions,
+  getDomainName,
+  getLatestKeyProvider,
+  ipfs,
+  KeyProvider,
+  lightwallet,
+  loading,
+  nameResolver,
+  queue,
+  routing,
+  solc,
+  System,
+  utils,
+  web3,
+  web3Helper,
+}

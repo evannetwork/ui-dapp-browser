@@ -1,0 +1,16 @@
+!runtime
+.csscomb.json
+.csscomb.json
+.editorconfig
+config.xml
+flat-icons/
+ionic.config.json
+resources/
+runtime/external/*
+src/
+systemjs.config.js
+tsconfig.json
+tslint.json
+platforms/
+plugins/
+www/
