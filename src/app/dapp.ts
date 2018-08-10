@@ -1,28 +1,28 @@
 /*
-  Copyright (C) 2018-present evan GmbH. 
-  
+  Copyright (C) 2018-present evan GmbH.
+
   This program is free software: you can redistribute it and/or modify it
-  under the terms of the GNU Affero General Public License, version 3, 
-  as published by the Free Software Foundation. 
-  
-  This program is distributed in the hope that it will be useful, 
-  but WITHOUT ANY WARRANTY; without even the implied warranty of 
+  under the terms of the GNU Affero General Public License, version 3,
+  as published by the Free Software Foundation.
+
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-  See the GNU Affero General Public License for more details. 
-  
+  See the GNU Affero General Public License for more details.
+
   You should have received a copy of the GNU Affero General Public License along with this program.
   If not, see http://www.gnu.org/licenses/ or write to the
-  
+
   Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA, 02110-1301 USA,
-  
-  or download the license from the following URL: https://evan.network/license/ 
-  
+
+  or download the license from the following URL: https://evan.network/license/
+
   You can be released from the requirements of the GNU Affero General Public License
   by purchasing a commercial license.
   Buying such a license is mandatory as soon as you use this software or parts of it
-  on other blockchains than evan.network. 
-  
-  For more information, please contact evan GmbH at this address: https://evan.network/license/ 
+  on other blockchains than evan.network.
+
+  For more information, please contact evan GmbH at this address: https://evan.network/license/
 */
 
 import * as utils from './utils';
@@ -331,51 +331,43 @@ export async function startDApp(dappEns: string, container = document.body, useD
   const ensDefinition = await loadDAppDependencies(dappEns, useDefaultDomain);
 
   // asynchroniously start dapp to speed up synchroniously loaded css files from dapp
-  await new Promise((resolve, reject) => {
-    setTimeout(async () => {
-      if (ensDefinition.dapp && ensDefinition.dapp.entrypoint) {
-        const entrypoint = ensDefinition.dapp.entrypoint;
+  // do we need this?
+  // setTimeout(async () => {
+  if (ensDefinition.dapp && ensDefinition.dapp.entrypoint) {
+    const entrypoint = ensDefinition.dapp.entrypoint;
 
-        if (entrypoint.endsWith('.js')) {
-          // load the DApp and start it
-          const dappModule = await evanGlobals.System.import(`${dappEns}!dapp-content`);
+    if (entrypoint.endsWith('.js')) {
+      // load the DApp and start it
+      const dappModule = await evanGlobals.System.import(`${dappEns}!dapp-content`);
 
-          try {
-            await dappModule.startDApp(container, ensDefinition.name);
-          } catch (ex) {
-            return reject(ex);
-          }
-        // html entrypoint => create iframe
-        } else if (entrypoint.endsWith('.html')) {
-          const iframe = document.createElement('iframe');
-          iframe.className += ' evan-dapp';
+      await dappModule.startDApp(container, ensDefinition.name);
+    // html entrypoint => create iframe
+    } else if (entrypoint.endsWith('.html')) {
+      const iframe = document.createElement('iframe');
+      iframe.className += ' evan-dapp';
 
-          // dev mode checks
-          if (utils.isDevAvailable(ensDefinition.name)) {
-            iframe.setAttribute(
-              'src',
-              `${ window.location.origin }/external/${ ensDefinition.name }/${ensDefinition.dapp.entrypoint}#/${ dappEns }`
-            );
-          } else {
-            iframe.setAttribute(
-              'src',
-              evanGlobals.restIpfs.api_url(`/ipfs/${ ensDefinition.dapp.origin }/${ ensDefinition.dapp.entrypoint }#/${ dappEns }`)
-            );
-
-            finishDAppLoading();
-          }
-
-          container.appendChild(iframe);
-        } else {
-          return reject(new Error('Invalid entry point defined!'));
-        }
-
-        resolve();
+      // dev mode checks
+      if (utils.isDevAvailable(ensDefinition.name)) {
+        iframe.setAttribute(
+          'src',
+          `${ window.location.origin }/external/${ ensDefinition.name }/${ensDefinition.dapp.entrypoint}#/${ dappEns }`
+        );
       } else {
-        return reject(new Error('No entry point defined!'));
+        iframe.setAttribute(
+          'src',
+          evanGlobals.restIpfs.api_url(`/ipfs/${ ensDefinition.dapp.origin }/${ ensDefinition.dapp.entrypoint }#/${ dappEns }`)
+        );
+
+        finishDAppLoading();
       }
-    });
-  });
+
+      container.appendChild(iframe);
+    } else {
+      throw new Error('Invalid entry point defined!');
+    }
+  } else {
+    throw new Error('No entry point defined!');
+  }
 }
 
 /**

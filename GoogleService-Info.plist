@@ -36,5 +36,7 @@
 	<string>1:203811286799:ios:28d4d00d653bc0d7</string>
 	<key>DATABASE_URL</key>
 	<string>https://testprojekt-67be5.firebaseio.com</string>
+	<key>FirebaseAppDelegateProxyEnabled</key>
+	<true></true>	
 </dict>
 </plist>

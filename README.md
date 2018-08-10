@@ -150,6 +150,23 @@ cordova-run-android
 
 The apk is build in this folder: "platforms/android/build/outputs".
 
+Occures the following error ** ionic Manifest merger failed : Attribute meta-data#android.support.VERSION@value value=(25.4.0) from [com.android.support:appcompat-v7:25.4.0] AndroidManifest.xml:28:13-35 ** ?
+
+Insert the following code at the end of the ui-dapp-browser/platforms/android/build.gradle file:
+
+```
+configurations.all {
+    resolutionStrategy.eachDependency { DependencyResolveDetails details ->
+        def requested = details.requested
+        if (requested.group == 'com.android.support') {
+            if (!requested.name.startsWith("multidex")) {
+                details.useVersion '26.1.0'
+            }
+        }
+    }
+}
+```
+
 ### IOS deployment
 **You need to do this on an Apple Mac!**
 Before you start building the application, you need to update the Versionnumber of the config.xml file.
