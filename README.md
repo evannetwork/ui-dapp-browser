@@ -27,6 +27,10 @@ The DApp browser provides several functionallities to access
 - SystemJS plugins for ENS loading, ENS and file loading, IPFS loading, JSON loading, CSS loading
 - web3 handlers
 
+## API Documentation and Tutorials
+- [DApp Tutorials](https://evannetwork.github.io/dapps/basics)
+- [API Reference UI](https://ipfs.evan.network/ipns/QmReXE5YkiXviaHNG1ASfY6fFhEoiDKuSkgY4hxgZD9Gm8/dapp-browser/index.html)
+
 ## Building
 - build the runtime folder
 ```sh
@@ -58,7 +62,7 @@ npm run serve-build
 
 ## Installation
 ```sh
-npm i dapp-browser
+npm i @evan.network/ui-dapp-browser
 ```
 
 ## Usage
