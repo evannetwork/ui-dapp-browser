@@ -473,7 +473,13 @@ async function deployDApps(externals, version) {
         dbcpPath = require(`${folderName}/dbcpPath.json`).dbcpPath;
       } catch (ex) { }
 
-      const address = `${dbcp.public.name}.${runtime.nameResolver.getDomainName(config.bcConfig.nameResolver.domains.root)}`;
+      // add support for sub ens domains
+      let address = dbcp.public.name;
+      if (config.runtimeConfig.subEns) {
+        address += `.${ config.runtimeConfig.subEns }`;
+      }
+      address += `.${ runtime.nameResolver.getDomainName(config.bcConfig.nameResolver.domains.root) }`;
+
       let beforeHash = await runtime.nameResolver.getContent(address);
 
       if (beforeHash) {
@@ -530,7 +536,12 @@ const loadDbcps = async function(externals) {
       let dbcp = require(`${originFolder}/${external}/dbcp.json`);
       dbcp = Object.assign(dbcp.public, dbcp.private);
 
-      const address = `${dbcp.name}.${runtime.nameResolver.getDomainName(config.bcConfig.nameResolver.domains.root)}`;
+      let address = dbcp.name;
+      if (config.runtimeConfig.subEns) {
+        address += `.${ config.runtimeConfig.subEns }`;
+      }
+      address += `.${ runtime.nameResolver.getDomainName(config.bcConfig.nameResolver.domains.root) }`;
+
       let descriptionHash = await runtime.nameResolver.getContent(address);
 
       if (descriptionHash) {
