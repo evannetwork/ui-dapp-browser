@@ -300,7 +300,7 @@ async function deployToIpns(dapp, hash, retry) {
   await new Promise((resolve, reject) => {
     console.log(`Publish to ipns: ${ dapp } : ${ hash }`);
 
-    exec(`ipfs name publish --key=${ ipnsPrivateKeys[dapp] } --lifetime="8760h" /ipfs/${ hash }`, {
+    exec(`ipfs name publish --key=${ ipnsPrivateKeys[dapp] } --lifetime=8760h /ipfs/${ hash }`, {
 
     }, async (err, stdout, stderr) => {
       console.log('ipfs name publish');
