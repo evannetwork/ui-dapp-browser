@@ -218,3 +218,19 @@ export async function onDeviceReady(): Promise<any> {
     return new Promise((resolve, reject) => document.addEventListener('deviceready', resolve));
   }
 }
+
+/**
+ * Removes the text after the last dot.
+ *
+ * @param      {string}  ensAddress  ens address to get the name for
+ * @return     {string}  dappname including sub ens paths
+ */
+export function getDAppName(ensAddress: string) {
+  let dappName = ensAddress.replace(/\-/g, '');
+
+  try {
+    dappName = /^(.*)\.[^.]+$/.exec(dappName)[1];
+  } catch (ex) { }
+
+  return dappName;
+}

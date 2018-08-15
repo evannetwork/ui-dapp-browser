@@ -36,7 +36,11 @@ const ipfsCatPromise = require('../app/ipfs').ipfsCatPromise;
  * @return     {any}     The definition from ens.
  */
 const getDefinitionFromEns = function(ensAddress) {
-  let dappName = ensAddress.split('.')[0].replace(/\-/g, '');
+  let dappName = ensAddress.replace(/\-/g, '');
+
+  try {
+    dappName = /^(.*)\.[^.]+$/.exec(dappName)[1];
+  } catch (ex) { }
 
   if (utils.isDevAvailable(dappName) && ensAddress.indexOf('0x') !== 0) {
     // load json and resolve it as stringified

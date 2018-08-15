@@ -67,7 +67,11 @@ const addCSS = function(origin, file, isIpns) {
  *                         returns nothing
  */
 const importIpfs = function(dbcp, file, fetch) {
-  let dappName = dbcp.ensAddress.split('.')[0];
+  let dappName = dbcp.ensAddress;
+
+  try {
+    dappName = /^(.*)\.[^.]+$/.exec(dappName)[1];
+  } catch (ex) { }
 
   if (utils.isDevAvailable(dappName) && dappName.indexOf('0x') !== 0) {
     // load js files
