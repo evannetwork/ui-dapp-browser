@@ -95,6 +95,7 @@ const ipnsPrivateKeys = {
   smartcontracts: 'evan.network-smart-contracts',
   bccdocs: 'evan.network-bccdocs',
   uidocs: 'evan.network-uidocs',
+  dbcpdocs: 'evan.network-dbcpdocs'
 };
 
 const ipnsValues = {
@@ -103,6 +104,7 @@ const ipnsValues = {
   smartcontracts: 'QmRMz7yzMqjbEqXNdcmqk2WMFcXtpY41Nt9CqsLwMgkF43',
   bccdocs: 'QmYmsPTdPPDLig6gKB1wu1De4KJtTqAXFLF1498umYs4M6',
   uidocs: 'QmReXE5YkiXviaHNG1ASfY6fFhEoiDKuSkgY4hxgZD9Gm8',
+  dbcpdocs: 'QmSXPThSm6u3BDE1X4C9QofFfcNH86cCWAR1W5Sqe9VWKn'
 };
 
 // version mapping for version bump select
