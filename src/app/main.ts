@@ -1,28 +1,28 @@
 /*
-  Copyright (C) 2018-present evan GmbH. 
-  
+  Copyright (C) 2018-present evan GmbH.
+
   This program is free software: you can redistribute it and/or modify it
-  under the terms of the GNU Affero General Public License, version 3, 
-  as published by the Free Software Foundation. 
-  
-  This program is distributed in the hope that it will be useful, 
-  but WITHOUT ANY WARRANTY; without even the implied warranty of 
+  under the terms of the GNU Affero General Public License, version 3,
+  as published by the Free Software Foundation.
+
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-  See the GNU Affero General Public License for more details. 
-  
-  You should have received a copy of the GNU Affero General Public License along with this program.
-  If not, see http://www.gnu.org/licenses/ or write to the
-  
-  Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA, 02110-1301 USA,
-  
-  or download the license from the following URL: https://evan.network/license/ 
-  
-  You can be released from the requirements of the GNU Affero General Public License
-  by purchasing a commercial license.
-  Buying such a license is mandatory as soon as you use this software or parts of it
-  on other blockchains than evan.network. 
-  
-  For more information, please contact evan GmbH at this address: https://evan.network/license/ 
+  See the GNU Affero General Public License for more details.
+
+  You should have received a copy of the GNU Affero General Public License
+  along with this program. If not, see http://www.gnu.org/licenses/ or
+  write to the Free Software Foundation, Inc., 51 Franklin Street,
+  Fifth Floor, Boston, MA, 02110-1301 USA, or download the license from
+  the following URL: https://evan.network/license/
+
+  You can be released from the requirements of the GNU Affero General Public
+  License by purchasing a commercial license.
+  Buying such a license is mandatory as soon as you use this software or parts
+  of it on other blockchains than evan.network.
+
+  For more information, please contact evan GmbH at this address:
+  https://evan.network/license/
 */
 
 import * as core from './core';
@@ -121,14 +121,29 @@ export async function initializeEvanNetworkStructure(): Promise<void> {
         // restore zoneJSpromise
         window['Promise'] = zoneJSPromise;
 
-        // initialize notifications
-        notifications.initialize();
+        // wait for device ready event so we can load notifications
+        await utils.onDeviceReady();
 
         // initialize queue
         queue.updateQueue();
 
-        // initialize dynamic routing
-        routing.initialize();
+        // use initial route to handle initially clicked notifications
+        let initialRoute;
+        if ((<any>window).cordova) {
+          // initialize notifications and try to load notifications that the user has clicked, while
+          // the app was closed
+          const initialNotification = await notifications.initialize();
+
+          // if an initialNotification could be loaded, get the url from the notification that
+          // should be opened
+          if (initialNotification) {
+            initialNotification.evanNotificationOpened = true;
+            initialRoute = await notifications.getDAppUrlFromNotification(initialNotification);
+          }
+        }
+
+        // initialize dynamic routing and apply eventually clicked notification initial route
+        routing.initialize(initialRoute);
 
         // add account watcher
         core.watchAccountChange();
@@ -164,12 +179,12 @@ System.import = function(pathToLoad: string): Promise<any> {
 
 export {
   AccountStore,
-  CoreRuntime,
   config,
-  evanGlobals,
   core,
+  CoreRuntime,
   dapp,
   definition,
+  evanGlobals,
   getCoreOptions,
   getDomainName,
   getLatestKeyProvider,
@@ -178,6 +193,7 @@ export {
   lightwallet,
   loading,
   nameResolver,
+  notifications,
   queue,
   routing,
   solc,

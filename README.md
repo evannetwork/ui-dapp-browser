@@ -5,6 +5,10 @@ By using the evan.network framework to create featured DApps, the initialization
 
 To do this, however, all DApps must be started via the evan.network dapp-browser application, since this provides the complete function stack and the various UIs. As long as the provided functions are used, the application can only be started in environments that have the corresponding structures. Alternatively, the blockchain-core can be initialized, configured and used, as in the standalone example.
 
+## API Documentation and Tutorials
+- [DApp Tutorials](https://evannetwork.github.io/dapps/basics)
+- [API Reference UI](https://ipfs.evan.network/ipns/QmReXE5YkiXviaHNG1ASfY6fFhEoiDKuSkgY4hxgZD9Gm8/dapp-browser/index.html)
+
 ## Functionallity
 The src folder includes a dev.html and a index.html file. By opening the dev.html file, the code will bypass several code loading checks, to try to load dapps from the local file server. The compiled files from the "src/app" folder will be placed within the runtime folder. Chosen files will be copied to the www folder for deployment and native app building. Durin the dev mode the application will try to load dapps not from ens and ipfs, but from the local file server (runtime/external). This folder will be filled using [angular-gulp](https://github.com/evannetwork/angular-gulp) and the lerna DApp projects (e.g. [core-dapps](https://github.com/evannetwork/ui-core-dapps)). During production mode, each DApp or contract will be loaded using its ens or contract address and dbcp description. How to develop DApps, that can be loaded via the dapp-browser, have a look here [DApp Basics](https://evannetwork.github.io/dapps/basics).
 
@@ -26,6 +30,11 @@ The DApp browser provides several functionallities to access
 - loading mechanisms
 - SystemJS plugins for ENS loading, ENS and file loading, IPFS loading, JSON loading, CSS loading
 - web3 handlers
+
+## Installation
+```sh
+npm i @evan.network/ui-dapp-browser
+```
 
 ## Building
 - build the runtime folder
@@ -56,11 +65,6 @@ npm run serve
 npm run serve-build
 ```
 
-## Installation
-```sh
-npm i dapp-browser
-```
-
 ## Usage
 - typescript
 
@@ -80,63 +84,7 @@ tsconfig.json
 ```
 
 ## ENS Deployment
-Each DApp can be deployed to the evan.network, so it can be accessed from anywhere, not only from a localhost server. This is handle by an wrapped library, to handle the deployment as simple as possible. To deploy your application run the following command. To deploy DApps to ens paths, you need one configuration file, that specifies which accounts and which configurations should be used for the deployment.
-This file must be js / json files that exports specific values:
-
-- accounts.js
-```js
-const bcConfig = {
-  nameResolver: {
-    ensAddress: process.env.ENS_ADDRESS || '0x937...',
-    ensResolver: process.env.ENS_RESOLVER || '0xDC18...',
-    labels: {
-      businessCenterRoot: process.env.BC_ROOT || 'testbc.test',
-      ensRoot: process.env.ENS_ROOT || 'test',
-      factory: 'factory',
-      admin: 'admin',
-      eventhub: 'eventhub',
-      profile: 'profile',
-      mailbox: 'mailbox'
-    },
-    domains: {
-      root: ['ensRoot'],
-      factory: ['factory', 'businessCenterRoot'],
-      adminFactory: ['admin', 'factory', 'ensRoot'],
-      businessCenter: ['businessCenterRoot'],
-      eventhub: process.env.ENS_EVENTS || ['eventhub', 'ensRoot'],
-      profile: process.env.ENS_PROFILES || ['profile', 'ensRoot'],
-      profileFactory: ['profile', 'factory', 'ensRoot'],
-      mailbox: process.env.ENS_MAILBOX || ['mailbox', 'ensRoot'],
-    },
-  },
-  smartAgents: {
-    onboarding: {
-      accountId: '0x063fB42cCe4CA5448D69b4418cb89E663E71A139',
-    },
-  },
-  alwaysAutoGasLimit: 1.1
-}
-
-const runtimeConfig = {
-  accountMap: {
-    '0x001...': '01734...', // deploymentAccount: 'privateKey'
-  },
-  ipfs: { host: 'ipfs.evan.network', port: '443', protocol: 'https' },
-  web3Provider: 'wss://testcore.evan.network/ws'
-}
-
-module.exports = { bcConfig, runtimeConfig }
-```
-
-```bash
-npm run deploy --config pathToConfig
-```
-
-**Be sure that "pathToConfig" is the absolute path to your deployment configuration!**
-
-Now, you can open the ens address to your application on https://dashboard.evan.network#/my-ens-address.evan. (my-ens-address = dbcp.name)
-
-**blockchain-core and smart-contract origins will be deployed hardcoded to keep the correct working reference.**
+Have a look at the [deployment description](https://evannetwork.github.io/dev/deployment).
 
 ## Ionic App generation
 DApp-browser Files from the runtime folder will be copied into the www folder using cordova-prepare. After this, cordova dependencies will be injected into this folder and the correct cordova load options will be added to the html files.
@@ -149,6 +97,23 @@ cordova-run-android
 ```
 
 The apk is build in this folder: "platforms/android/build/outputs".
+
+Occures the following error ** ionic Manifest merger failed : Attribute meta-data#android.support.VERSION@value value=(25.4.0) from [com.android.support:appcompat-v7:25.4.0] AndroidManifest.xml:28:13-35 ** ?
+
+Insert the following code at the end of the ui-dapp-browser/platforms/android/build.gradle file:
+
+```
+configurations.all {
+    resolutionStrategy.eachDependency { DependencyResolveDetails details ->
+        def requested = details.requested
+        if (requested.group == 'com.android.support') {
+            if (!requested.name.startsWith("multidex")) {
+                details.useVersion '26.1.0'
+            }
+        }
+    }
+}
+```
 
 ### IOS deployment
 **You need to do this on an Apple Mac!**

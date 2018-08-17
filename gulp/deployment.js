@@ -1,28 +1,28 @@
 /*
-  Copyright (C) 2018-present evan GmbH. 
-  
+  Copyright (C) 2018-present evan GmbH.
+
   This program is free software: you can redistribute it and/or modify it
-  under the terms of the GNU Affero General Public License, version 3, 
-  as published by the Free Software Foundation. 
-  
-  This program is distributed in the hope that it will be useful, 
-  but WITHOUT ANY WARRANTY; without even the implied warranty of 
+  under the terms of the GNU Affero General Public License, version 3,
+  as published by the Free Software Foundation.
+
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-  See the GNU Affero General Public License for more details. 
-  
-  You should have received a copy of the GNU Affero General Public License along with this program.
-  If not, see http://www.gnu.org/licenses/ or write to the
-  
-  Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA, 02110-1301 USA,
-  
-  or download the license from the following URL: https://evan.network/license/ 
-  
-  You can be released from the requirements of the GNU Affero General Public License
-  by purchasing a commercial license.
-  Buying such a license is mandatory as soon as you use this software or parts of it
-  on other blockchains than evan.network. 
-  
-  For more information, please contact evan GmbH at this address: https://evan.network/license/ 
+  See the GNU Affero General Public License for more details.
+
+  You should have received a copy of the GNU Affero General Public License
+  along with this program. If not, see http://www.gnu.org/licenses/ or
+  write to the Free Software Foundation, Inc., 51 Franklin Street,
+  Fifth Floor, Boston, MA, 02110-1301 USA, or download the license from
+  the following URL: https://evan.network/license/
+
+  You can be released from the requirements of the GNU Affero General Public
+  License by purchasing a commercial license.
+  Buying such a license is mandatory as soon as you use this software or parts
+  of it on other blockchains than evan.network.
+
+  For more information, please contact evan GmbH at this address:
+  https://evan.network/license/
 */
 
 require('console.table');
@@ -93,12 +93,18 @@ const ipnsPrivateKeys = {
   dappbrowser: 'evan.network-dapp-browser',
   bcc: 'evan.network-blockchain-core',
   smartcontracts: 'evan.network-smart-contracts',
+  bccdocs: 'evan.network-bccdocs',
+  uidocs: 'evan.network-uidocs',
+  dbcpdocs: 'evan.network-dbcpdocs'
 };
 
 const ipnsValues = {
   dappbrowser: 'QmeaaYgC38Ai993NUKbgvfBw11mrmK9THb6GtR48TmcsGj',
   bcc: 'Qme9gmKpueriR7qMH5SNW3De3b9AFBkUGvFMS8ve1SuYBy',
-  smartcontracts: 'QmRMz7yzMqjbEqXNdcmqk2WMFcXtpY41Nt9CqsLwMgkF43'
+  smartcontracts: 'QmRMz7yzMqjbEqXNdcmqk2WMFcXtpY41Nt9CqsLwMgkF43',
+  bccdocs: 'QmYmsPTdPPDLig6gKB1wu1De4KJtTqAXFLF1498umYs4M6',
+  uidocs: 'QmReXE5YkiXviaHNG1ASfY6fFhEoiDKuSkgY4hxgZD9Gm8',
+  dbcpdocs: 'QmSXPThSm6u3BDE1X4C9QofFfcNH86cCWAR1W5Sqe9VWKn'
 };
 
 // version mapping for version bump select
@@ -296,7 +302,7 @@ async function deployToIpns(dapp, hash, retry) {
   await new Promise((resolve, reject) => {
     console.log(`Publish to ipns: ${ dapp } : ${ hash }`);
 
-    exec(`ipfs name publish --key=${ ipnsPrivateKeys[dapp] } --lifetime="8760h" /ipfs/${ hash }`, {
+    exec(`ipfs name publish --key=${ ipnsPrivateKeys[dapp] } --lifetime=8760h /ipfs/${ hash }`, {
 
     }, async (err, stdout, stderr) => {
       console.log('ipfs name publish');
@@ -359,7 +365,7 @@ const logDbcps = function() {
       version: dbcp.version,
       description: dbcp.dapp.descriptionHash,
       folder: dbcp.dapp.origin,
-      ipns: dbcp.dapp.ipns,
+      ipns: dbcp.dapp.ipns || ipnsValues[dbcp.name],
       file: dbcp.file
     }
   }));
@@ -469,7 +475,13 @@ async function deployDApps(externals, version) {
         dbcpPath = require(`${folderName}/dbcpPath.json`).dbcpPath;
       } catch (ex) { }
 
-      const address = `${dbcp.public.name}.${runtime.nameResolver.getDomainName(config.bcConfig.nameResolver.domains.root)}`;
+      // add support for sub ens domains
+      let address = dbcp.public.name;
+      if (config.runtimeConfig.subEns) {
+        address += `.${ config.runtimeConfig.subEns }`;
+      }
+      address += `.${ runtime.nameResolver.getDomainName(config.bcConfig.nameResolver.domains.root) }`;
+
       let beforeHash = await runtime.nameResolver.getContent(address);
 
       if (beforeHash) {
@@ -526,7 +538,12 @@ const loadDbcps = async function(externals) {
       let dbcp = require(`${originFolder}/${external}/dbcp.json`);
       dbcp = Object.assign(dbcp.public, dbcp.private);
 
-      const address = `${dbcp.name}.${runtime.nameResolver.getDomainName(config.bcConfig.nameResolver.domains.root)}`;
+      let address = dbcp.name;
+      if (config.runtimeConfig.subEns) {
+        address += `.${ config.runtimeConfig.subEns }`;
+      }
+      address += `.${ runtime.nameResolver.getDomainName(config.bcConfig.nameResolver.domains.root) }`;
+
       let descriptionHash = await runtime.nameResolver.getContent(address);
 
       if (descriptionHash) {

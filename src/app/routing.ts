@@ -1,32 +1,33 @@
 /*
-  Copyright (C) 2018-present evan GmbH. 
-  
+  Copyright (C) 2018-present evan GmbH.
+
   This program is free software: you can redistribute it and/or modify it
-  under the terms of the GNU Affero General Public License, version 3, 
-  as published by the Free Software Foundation. 
-  
-  This program is distributed in the hope that it will be useful, 
-  but WITHOUT ANY WARRANTY; without even the implied warranty of 
+  under the terms of the GNU Affero General Public License, version 3,
+  as published by the Free Software Foundation.
+
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-  See the GNU Affero General Public License for more details. 
-  
-  You should have received a copy of the GNU Affero General Public License along with this program.
-  If not, see http://www.gnu.org/licenses/ or write to the
-  
-  Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA, 02110-1301 USA,
-  
-  or download the license from the following URL: https://evan.network/license/ 
-  
-  You can be released from the requirements of the GNU Affero General Public License
-  by purchasing a commercial license.
-  Buying such a license is mandatory as soon as you use this software or parts of it
-  on other blockchains than evan.network. 
-  
-  For more information, please contact evan GmbH at this address: https://evan.network/license/ 
+  See the GNU Affero General Public License for more details.
+
+  You should have received a copy of the GNU Affero General Public License
+  along with this program. If not, see http://www.gnu.org/licenses/ or
+  write to the Free Software Foundation, Inc., 51 Franklin Street,
+  Fifth Floor, Boston, MA, 02110-1301 USA, or download the license from
+  the following URL: https://evan.network/license/
+
+  You can be released from the requirements of the GNU Affero General Public
+  License by purchasing a commercial license.
+  Buying such a license is mandatory as soon as you use this software or parts
+  of it on other blockchains than evan.network.
+
+  For more information, please contact evan GmbH at this address:
+  https://evan.network/license/
 */
 
 import { startDApp, getDomainName } from './dapp';
 import * as core from './core';
+import * as utils from './utils';
 
 /**
  * is inserted when the application was bundled, used to prevent window usage
@@ -164,13 +165,15 @@ export async function onRouteChange(): Promise<void> {
 /**
  * Initialize the whole routing mechanism.
  *
- * @return     {void}  resolved when routing was created
+ * @param      {string}  initialRoute  initial route that should replace the default ens url paths
+ *                                     (eg. dashboard.evan => my-initial-route.evan)
+ * @return     {void}    resolved when routing was created
  */
-export async function initialize(): Promise<void> {
+export async function initialize(initialRoute: string): Promise<void> {
   CoreBundle = evanGlobals.CoreBundle;
   CoreRuntime = CoreBundle.CoreRuntime;
 
-  // set route history
+  // load history from cache
   if (window.performance.navigation.type === 1 && !window.sessionStorage['evan-route-reloaded']) {
     history = [ ];
   } else {
@@ -179,9 +182,8 @@ export async function initialize(): Promise<void> {
     } catch (ex) { }
   }
 
-  if (!history) {
-    history = [ ];
-  }
+  // setup history functions
+  history = history || [ ];
   updateHistory();
 
   // watch for window reload to save, that the current session was reloaded
@@ -189,6 +191,11 @@ export async function initialize(): Promise<void> {
   window.addEventListener('beforeunload', function (event) {
     window.sessionStorage['evan-route-reloaded'] = true;
   });
+
+  // if an default route was applied to the initialize function, navigate to it!
+  if (initialRoute) {
+    window.location.hash = initialRoute;
+  }
 
   // create Navigo with angular # routing
   router = new Navigo(null, true, '#');
