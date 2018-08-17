@@ -5,6 +5,11 @@
 ### Fixes
 ### Deprecations
 
+## Version 1.1.0
+### Features
+- Remove deployment description and move it to the evan.network wiki
+- add subdomain support
+
 ## Version 1.0.2
 ### Features
 - add dapp.history for correct go back logic
