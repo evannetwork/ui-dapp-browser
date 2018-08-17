@@ -1,5 +1,5 @@
 {
-  "author": "Contractus",
+  "author": "evan GmbH",
   "cordova": {
     "config": {
       "ionic_build_dir": "deployment",
@@ -27,8 +27,8 @@
     }
   },
   "dependencies": {
-    "@evan.network/api-blockchain-core": "^1.0.0",
-    "@evan.network/dbcp": "^1.0.0",
+    "@evan.network/api-blockchain-core": "^1.1.0",
+    "@evan.network/dbcp": "^1.2.0",
     "cordova-android": "~6.4.0",
     "cordova-ios": "4.5.4",
     "cordova-plugin-camera": "^4.0.3",
@@ -61,8 +61,6 @@
     "@angular/core": "^5.1.0",
     "@compodoc/compodoc": "^1.0.5",
     "@compodoc/gulp-compodoc": "0.0.8",
-    "@evan.network/api-blockchain-core": "^1.0.0",
-    "@evan.network/dbcp": "^1.0.0",
     "@ionic-native/camera": "^4.7.0",
     "@ionic-native/file": "^4.7.0",
     "@ionic-native/file-path": "^4.7.0",

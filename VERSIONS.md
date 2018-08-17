@@ -8,7 +8,11 @@
 ## Version 1.1.0
 ### Features
 - Remove deployment description and move it to the evan.network wiki
+<<<<<<< HEAD
 - add subdomain dapp loading support
+=======
+- add subdomain support
+>>>>>>> release/v1.1.0
 
 ## Version 1.0.2
 ### Features

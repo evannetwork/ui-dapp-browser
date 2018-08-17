@@ -109,6 +109,12 @@ function getVersionDBCPHashFromDAppVersion(requiredVersion: string, childENS: st
           break;
         }
 
+        // direct return as valid, if e.g. the minor of the versionToLoad load than the new check
+        // version (1.0.2 is lower than 1.1.0)
+        if (splittedVersion[x] === '*' && versionToLoad[x] < splittedChild[x]) {
+          break;
+        }
+
         // check if a higher * value is selected
         if (splittedVersion[x] === '*' && versionToLoad[x] > splittedChild[x]) {
           isValid = false;
