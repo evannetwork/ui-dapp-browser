@@ -1,7 +1,7 @@
 # dapp-browser
-The dapp-browser is the wrapper application for the evan.network DApp framework. Using the project you will be possible to create featured DApps.
+The dapp-browser is the wrapper application for the evan.network DApp framework. Using the project you will be able to create featured DApps.
 
-By using the evan.network framework to create featured DApps, the initialization of DBCP or the blockchain core is completely replaced and existing, initialized and configured instances can be loaded. This has the advantage that accounts, encryptions and similar complex configurations are executed dynamically by the user when the application is started.
+By using the evan.network framework to create featured DApps, the initialization of DBCP or the blockchain core is altered and existing, initialized and configured instances can be loaded. This has the advantage that accounts, encryptions and similar complex configurations are executed dynamically by the user when the application is started.
 
 To do this, however, all DApps must be started via the evan.network dapp-browser application, since this provides the complete function stack and the various UIs. As long as the provided functions are used, the application can only be started in environments that have the corresponding structures. Alternatively, the blockchain-core can be initialized, configured and used, as in the standalone example.
 
