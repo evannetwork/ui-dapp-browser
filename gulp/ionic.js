@@ -86,7 +86,6 @@ gulp.task('bundle:vendor', function() {
     'systemjs.config.js',
   ])
   .pipe(babel({
-    presets: babelPresets,
     plugins: babelPlugins
   }))
   .pipe(concat('vendor.min.js'))
@@ -130,7 +129,6 @@ gulp.task('bundle:js', ['bundle:vendor'], function() {
         .src(['src/build/app.min.js'])
         .pipe(insert.prepend('let evanGlobals; let process = { env: { } }; '))
         .pipe(babel({
-          presets: babelPresets,
           plugins: babelPlugins
         }))
         .pipe(gulp.dest('src/build'));
