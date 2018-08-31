@@ -48,9 +48,9 @@ const addCSS = function(origin, file, isIpns) {
 
     // dev mode checks
     if (utils.isDevAvailable(origin.replace('external/', '')) && origin.indexOf('Qm') !== 0) {
-      link.href = `${ origin }/${ file }`;
+      link.href = origin + '/' + file;
     } else {
-      link.href = browserIpfs.api_url(`/${ isIpns ? 'ipns' : 'ipfs' }/${ origin }/${ file }`);
+      link.href = browserIpfs.api_url('/' + (isIpns ? 'ipns' : 'ipfs') + '/' + origin + '/' + file);
     }
 
     head.appendChild(link);
@@ -76,13 +76,13 @@ const importIpfs = function(dbcp, file, fetch) {
   if (utils.isDevAvailable(dappName) && dappName.indexOf('0x') !== 0) {
     // load js files
     if (file.indexOf('.css') === -1) {
-      return `external/${dappName}/${file}`;
+      return 'external/' + dappName + '/' + file;
     } else {
-      addCSS(`external/${dappName}`, file);
+      addCSS('external/' + dappName, file);
     }
   } else {
     if (file.indexOf('.css') === -1) {
-      return evanGlobals.restIpfs.api_url(`/${ dbcp.dapp.isIpns ? 'ipns' : 'ipfs' }/${dbcp.dapp.origin}/${file}`);
+      return evanGlobals.restIpfs.api_url('/' + (dbcp.dapp.isIpns ? 'ipns' : 'ipfs') + '/' + dbcp.dapp.origin + '/' + file);
     } else {
       addCSS(dbcp.dapp.origin, file, dbcp.dapp.isIpns);
     }
@@ -175,12 +175,18 @@ const locateDAppContent = function(params, originalFetch) {
   // allow multiple babel polyfill
   const ensAddress = params.address.split('/').pop();
 
-  let dbcpAddressToLoad = `${ ensAddress }!ens`;
+  let dbcpAddressToLoad = ensAddress + '!ens';
 
   if (ensAddress.startsWith('bcc')) {
-    return loadBCCCore({ params, originalFetch });
+    return loadBCCCore({
+      params: params,
+      originalFetch: originalFetch
+    });
   } else if (ensAddress.startsWith('smartcontracts')) {
-    return loadSmartContracts({ params, originalFetch });
+    return loadSmartContracts({
+      params: params,
+      originalFetch: originalFetch
+    });
   }
 
   // load dbcp configuration from ens address
@@ -193,7 +199,10 @@ const locateDAppContent = function(params, originalFetch) {
       // check for valid dbcp dapp configuration
       if (dbcp && dbcp.dapp) {
         // load entrypoint js
-        promises.push(importIpfs(dbcp, dbcp.dapp.entrypoint, { params, originalFetch }));
+        promises.push(importIpfs(dbcp, dbcp.dapp.entrypoint, {
+          params: params,
+          originalFetch: originalFetch
+        }));
 
         // iterate through all files to check for css files to load
         if (dbcp.dapp.files) {

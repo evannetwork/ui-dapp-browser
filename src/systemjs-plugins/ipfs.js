@@ -29,7 +29,7 @@ const utils = require('../app/utils');
 const ipfsCatPromise = require('../app/ipfs').ipfsCatPromise;
 
 const devLoad = function(externalFilePath, params, originalFetch) {
-  params.address = `external/${ externalFilePath }`;
+  params.address = 'external/' + externalFilePath;
   params.metadata = { };
 
   return originalFetch(params);
