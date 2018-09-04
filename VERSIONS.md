@@ -2,6 +2,8 @@
 
 ## Next Version
 ### Features
+- restore ens owner after setDescriptionToEns deployment
+
 ### Fixes
 - add babel to transform not supported functionalities of older browsers
 
