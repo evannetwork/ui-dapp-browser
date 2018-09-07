@@ -138,61 +138,6 @@ async function createRuntime() {
 }
 
 /********************************** ipfs functions ************************************************/
-const getIpfs = function() {
-  return new Promise((resolve) => {
-    const node = new IpfsServer('ws://localhost:8546', '');
-    const remoteNode = IpfsApi({host: 'ipfs.evan.network', port: '443', protocol: 'https'})
-
-    node.on('start', () => {
-      node.swarm.connect('/dns4/ipfs.evan.network/tcp/443/wss/ipfs/QmaaPzvrYK5H1fSmJN3zudwLG1XPMkBXJTg9i2tC9JiKRC', (err, res) => {
-        setTimeout(() => {
-          resolve(new Ipfs({ node, remoteNode }));
-        }, 5000);
-      })
-     const checkConnected = setInterval(() => {
-        node.swarm.peers((err, peers, ...args) => {
-          if (peers.length > 0) {
-            clearInterval(checkConnected);
-
-            resolve(new Ipfs({ node, remoteNode }));
-          }
-        });
-      }, 500);
-    });
-  });
-};
-
-const startLocalIpfs = function() {
-  return new Promise(async (resolve, reject) => {
-    const timeout = setTimeout(() => {
-      resolve();
-    }, 6 * 1000);
-
-    exec(`scripts/go-ipfs.sh`, {
-
-    }, (err, stdout, stderr) => {
-      if (err) {
-        console.log('Error while starting local ipfs: ');
-        console.dir(err);
-        console.dir(stderr);
-        console.dir(stdout);
-      } else {
-        console.log('local ipfs started: ');
-        console.dir(stdout)
-      }
-      
-      resolve();
-
-      clearTimeout(timeout);
-    })
-  })
-};
-
-const stopLocalIpfs = function() {
-  return new Promise((resolve, reject) => {
-    resolve();
-  })
-}
 
 const requestFileFromEVANIpfs = function(hash) {
   return new Promise((resolve, reject) => {
@@ -270,19 +215,11 @@ const pinToIPFSContractus = function(ipfsHash) {
  */
 async function deployIPFSFolder(folderName, path) {
   return new Promise((resolve, reject) => {
-    exec(`ipfs add -r ${ path }`, {
-
-    }, (err, stdout, stderr) => {
-      if (err) {
-        reject(err);
-      } else {
-        const regex = new RegExp('(Qm[^\\s]+)\\s' + folderName + '\n$', 'g');
-        const folderHash = regex.exec(stdout)[1];
-
-        resolve(folderHash);
-      }
+    runtime.dfs.remoteNode.util.addFromFs(path, { recursive: true}, (err, result) => {
+      if (err) { throw err }
+      resolve(result[result.length-1].hash);
     })
-  })
+  });
 }
 
 async function deployToIpns(dapp, hash, retry) {
@@ -738,21 +675,13 @@ const initializeDBCPs = async function(dapps) {
   console.log('\n\nstart bcc runtime')
   runtime = await createRuntime();
 
-  console.log('starting ipfs node...');
-  ipfsInstance = await getIpfs();
-
-  console.log('\n\nstarting local ipfs...');
-  await startLocalIpfs();
-
   await loadDbcps(dapps);
 }
 
 const deploymentMenu = async function() {
   const dapps = loadDApps();
 
-  if (!ipfsInstance) {
-    await initializeDBCPs(dapps);
-  }
+  await initializeDBCPs(dapps);
   
   const questions = [
     {
@@ -891,12 +820,6 @@ const deploymentMenu = async function() {
               break;
             }
             case 'exit': {
-              if (ipfsInstance) {
-                console.log('\n\n stopping ipfs...');
-      
-                await stopLocalIpfs();
-              }
-
               process.exit();
             }
             default: {
