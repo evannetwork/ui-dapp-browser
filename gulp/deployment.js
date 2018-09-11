@@ -58,10 +58,11 @@ const ionicDeploymentFolder = path.resolve('www');
 
 // globals
 let config;
-let web3;
-let runtime;
-let ipfsInstance;
 let deploymentAccount;
+let initialized;
+let ipfsInstance;
+let runtime;
+let web3;
 
 // runtime parameters
 const enableDeploy = true;
@@ -670,6 +671,7 @@ const loadDApps = function() {
 }
 
 const initializeDBCPs = async function(dapps) {
+  initialized = true;
   clearConsole();
 
   console.log('\n\nstart bcc runtime')
@@ -681,7 +683,9 @@ const initializeDBCPs = async function(dapps) {
 const deploymentMenu = async function() {
   const dapps = loadDApps();
 
-  await initializeDBCPs(dapps);
+  if (!initialized) {
+    await initializeDBCPs(dapps);
+  }
   
   const questions = [
     {
