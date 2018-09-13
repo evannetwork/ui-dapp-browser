@@ -3,6 +3,7 @@
 ## Next Version
 ### Features
 - restore ens owner after setDescriptionToEns deployment
+- add agent-executor provider support (core.js => getAgentExecutor)
 
 ### Fixes
 - add babel to transform not supported functionalities of older browsers

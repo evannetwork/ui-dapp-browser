@@ -103,7 +103,7 @@ export async function initializeEvanNetworkStructure(): Promise<void> {
         .import('smart-contracts')
         .then(SmartContracts => utils.raiseProgress(10, SmartContracts)),
       // check if an executor agent should be used for the application runtime
-      core.getExecutorAgent()
+      core.getAgentExecutor()
     ])
     .then(async ([ CoreBundle, SmartContracts ]) => {
       // make it global available without loading it twice

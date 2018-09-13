@@ -267,8 +267,8 @@ async function loadUnlockedVault(): Promise<any> {
  */
 async function getEncryptionKey(): Promise<string> {
   // if an executor agent should be used, return the key instantly
-  if (evanGlobals.executorAgent) {
-    return evanGlobals.executorAgent.key;
+  if (evanGlobals.agentExecutor) {
+    return evanGlobals.agentExecutor.key;
   } else {
     const currentProvider = window.localStorage['evan-provider'];
 
