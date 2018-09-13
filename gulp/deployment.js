@@ -489,34 +489,39 @@ async function deployDApps(externals, version) {
 const loadDbcps = async function(externals) {
   console.log('Loading deployed DApps...');
 
+  const promises = [ ];
   for (let external of externals) {
-    try {
-      let dbcp = require(`${originFolder}/${external}/dbcp.json`);
-      dbcp = Object.assign(dbcp.public, dbcp.private);
+    promises.push(async () => {
+      try {
+        let dbcp = require(`${originFolder}/${external}/dbcp.json`);
+        dbcp = Object.assign(dbcp.public, dbcp.private);
 
-      let address = dbcp.name;
-      if (config.runtimeConfig.subEns) {
-        address += `.${ config.runtimeConfig.subEns }`;
+        let address = dbcp.name;
+        if (config.runtimeConfig.subEns) {
+          address += `.${ config.runtimeConfig.subEns }`;
+        }
+        address += `.${ runtime.nameResolver.getDomainName(config.bcConfig.nameResolver.domains.root) }`;
+
+        let descriptionHash = await runtime.nameResolver.getContent(address);
+
+        if (descriptionHash) {
+          descriptionHash = descriptionHash.startsWith('Qm') ? descriptionHash : Ipfs.bytes32ToIpfsHash(descriptionHash);
+        
+          let loaded = await runtime.description.getDescriptionFromEns(address);
+          loaded = Object.assign(loaded.public, loaded.private);
+    
+          dbcp.dapp.origin = loaded.dapp.origin;
+        }
+
+        addDbcpToList(dbcp);
+      } catch (ex) {
+        console.log(`   Failed to load dbcp : ${ external }`);
+        console.dir(ex);
       }
-      address += `.${ runtime.nameResolver.getDomainName(config.bcConfig.nameResolver.domains.root) }`;
-
-      let descriptionHash = await runtime.nameResolver.getContent(address);
-
-      if (descriptionHash) {
-        descriptionHash = descriptionHash.startsWith('Qm') ? descriptionHash : Ipfs.bytes32ToIpfsHash(descriptionHash);
-      
-        let loaded = await runtime.description.getDescriptionFromEns(address);
-        loaded = Object.assign(loaded.public, loaded.private);
-  
-        dbcp.dapp.origin = loaded.dapp.origin;
-      }
-
-      addDbcpToList(dbcp);
-    } catch (ex) {
-      console.log(`   Failed to load dbcp : ${ external }`);
-      console.dir(ex);
-    }
+    });
   }
+
+  return await Promise.all(promises);
 }
 
 /********************************** ionic functions ***********************************************/

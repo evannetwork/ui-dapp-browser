@@ -97,7 +97,6 @@
         </config-file>
     </platform>
     <engine name="ios" spec="4.5.4" />
-    <engine name="android" spec="~6.4.0" />
     <plugin name="cordova-plugin-camera" spec="^4.0.3">
         <variable name="PHOTOLIBRARY_USAGE_DESCRIPTION" value="Need photo library access to get pictures." />
         <variable name="PHOTO_LIBRARY_USAGE_DESCRIPTION" value="Need photo library access to get pictures." />
@@ -106,10 +105,12 @@
     <plugin name="cordova-plugin-file" spec="^6.0.1" />
     <plugin name="cordova-plugin-file-transfer" spec="^1.7.1" />
     <plugin name="cordova-plugin-filepath" spec="^1.3.0" />
+    <plugin name="cordova-plugin-firebase" spec="^1.0.5" />
     <plugin name="cordova-plugin-ionic-webview" spec="^1.2.0" />
     <plugin name="cordova-plugin-qrscanner" spec="^2.5.0" />
     <plugin name="cordova-plugin-splashscreen" spec="^4.1.0" />
     <plugin name="cordova-plugin-whitelist" spec="^1.3.3" />
     <plugin name="ionic-plugin-keyboard" spec="^2.2.1" />
-    <plugin name="cordova-plugin-firebase" spec="^1.0.5" />
+    <plugin name="cordova-plugin-file-opener2" spec="^2.0.19" />
+    <engine name="android" spec="~6.4.0" />
 </widget>
