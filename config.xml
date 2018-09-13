@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='utf-8'?>
-<widget id="network.evan.app" version="0.0.26" xmlns="http://www.w3.org/ns/widgets" xmlns:cdv="http://cordova.apache.org/ns/1.0">
+<widget id="network.evan.app" version="0.0.27" xmlns="http://www.w3.org/ns/widgets" xmlns:cdv="http://cordova.apache.org/ns/1.0">
     <name>evan.network</name>
     <description>The evan.network brings Blockchain Technology in every business.</description>
     <author email="info@contractus.com" href="http://evan.network/">evan.network</author>
@@ -25,6 +25,7 @@
     <preference name="StatusBarOverlaysWebView" value="false" />
     <preference name="StatusBarBackgroundColor" value="#023845" />
     <preference name="Fullscreen" value="false" />
+    <preference name="iosPersistentFileLocation" value="Library" />
     <platform name="android">
         <icon density="ldpi" src="resources/android/icon/drawable-ldpi-icon.png" />
         <icon density="mdpi" src="resources/android/icon/drawable-mdpi-icon.png" />
