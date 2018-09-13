@@ -238,3 +238,22 @@ export function getRouteFromUrl(): string {
 export function updateHistory() {
   window.sessionStorage['evan-route-history'] = JSON.stringify(history);
 }
+
+/**
+ * Parse the url queryParams and return a specific parameter from it
+ *
+ * @param      {string}  name    name of the parameter
+ * @param      {string}  url     url to parse, detail is window.location.href
+ * @return     {string}  value of the parameter / null if not defined
+ */
+export function getQueryParameterValue(name, url = window.location.href) {
+  // parse out the parameters
+  const regex = new RegExp('[?&]' + name.replace(/[\[\]]/g, '\\$&') + '(=([^&#]*)|&|#|$)');
+  const results = regex.exec(url);
+
+  if (!results || !results[2]) {
+    return null;
+  } else {
+    return decodeURIComponent(results[2].replace(/\+/g, ' '));
+  }
+}

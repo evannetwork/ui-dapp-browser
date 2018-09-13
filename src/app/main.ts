@@ -95,13 +95,15 @@ export async function initializeEvanNetworkStructure(): Promise<void> {
 
   // load smart-contracts and blockchain-core minimal setup for accessing ens from ipfs
   Promise
-    .all<any, any>([
+    .all<any, any, any>([
       System
         .import('bcc')
         .then(CoreBundle => utils.raiseProgress(10, CoreBundle)),
       System
         .import('smart-contracts')
-        .then(SmartContracts => utils.raiseProgress(10, SmartContracts))
+        .then(SmartContracts => utils.raiseProgress(10, SmartContracts)),
+      // check if an executor agent should be used for the application runtime
+      core.getExecutorAgent()
     ])
     .then(async ([ CoreBundle, SmartContracts ]) => {
       // make it global available without loading it twice

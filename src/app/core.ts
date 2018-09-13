@@ -48,6 +48,11 @@ const validProviders = [
 ];
 
 /**
+ * external executor variables
+ */
+let executorAgent;
+
+/**
  * Logout the current user. Removes the active account, provider and terms of use acceptance.
  *
  * @param      {boolean}  disabledReload  disable window reload
@@ -77,12 +82,18 @@ function logout(disabledReload?: boolean) {
 
 /**
  * Get the current, in local storage, configured provider.
+ *
+ * @return     {string}  The current provider (internal, external, executor-agent).
  */
 function getCurrentProvider() {
-  const currentProvider = window.localStorage['evan-provider'];
+  if (executorAgent) {
+    return 'executor-agent';
+  } else {
+    const currentProvider = window.localStorage['evan-provider'];
 
-  if (currentProvider && validProviders.indexOf(currentProvider) !== -1) {
-    return currentProvider;
+    if (currentProvider && validProviders.indexOf(currentProvider) !== -1) {
+      return currentProvider;
+    }
   }
 }
 
@@ -156,9 +167,66 @@ function activeAccount(): string {
 
       break;
     }
+    case 'executor-agent': {
+      return executorAgent.accountId;
+    }
   }
 
   return getAccountId();
+}
+
+/**
+ * Checks the current url parameters if an executor login.
+ *
+ * @return     {any}  all parameters that were passed
+ */
+export async function getExecutorAgent() {
+  // if the executorAgent wasn't loaded before, check if the query parameter was specified
+  if (typeof executorAgent === 'undefined') {
+    const token = routing.getQueryParameterValue('executor-token');
+
+    // if an token is specified, load the data from the edge-server
+    // TODO: currently the parameters are specified via query parameters => load it via edge-server
+    if (token) {
+      // use a promise await to implement an timeout (this function will be called at the beginning
+      // of the page load, so everything will stop working, when agent not responds)
+      await (new Promise(async (resolve) => {
+        // dont resolve twice
+        let timedOut = false;
+
+        // break loading after 10 seconds
+        const agentTimeout: any = setTimeout(() => {
+          executorAgent = false;
+          timedOut = true;
+
+          resolve();
+        }, 10 * 1000);
+
+        // load data from edge-server
+        const accountId = routing.getQueryParameterValue('executor-account-id');
+        const key = routing.getQueryParameterValue('executor-key');
+
+        // if all parameters are valid, set the executor agent
+        if (accountId && key) {
+          executorAgent = { token, accountId, key };
+        } else {
+          executorAgent = false;
+        }
+
+        // if the timeout wasn't triggered => resolve it normally
+        if (!timedOut) {
+          window.clearTimeout(agentTimeout);
+          resolve();
+        }
+      }));
+    } else {
+      executorAgent = false;
+    }
+
+    evanGlobals.executorAgent = executorAgent;
+  }
+
+  return executorAgent;
 }
 
 /**
@@ -167,7 +235,9 @@ function activeAccount(): string {
  * @return     {string}  account id;
  */
 function getAccountId() {
-  if (window.localStorage['evan-account']) {
+  if (executorAgent) {
+    return executorAgent.accountId;
+  } else if (window.localStorage['evan-account']) {
     const checkSumAddress = evanGlobals.CoreRuntime.web3.utils.toChecksumAddress(
       window.localStorage['evan-account']
     );
