@@ -2,6 +2,11 @@
 
 ## Next Version
 ### Features
+### Fixes
+### Deprecations
+
+## Version 1.2.0
+### Features
 - restore ens owner after setDescriptionToEns deployment
 - add agent-executor provider support (core.js => getAgentExecutor)
 
