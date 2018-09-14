@@ -43,35 +43,28 @@ let internalWeb3;
  * @return                {Promise<any>}  core options
  */
 export async function getCoreOptions(CoreBundle: any, SmartContracts: any, provider?: string): Promise<any> {
-  let remoteIpfsNode;
-  let web3;
-  const ipfsCache = new IPFSCache();
+  const coreOptions: any = {
+    config: config,
+    dfsRemoteNode: CoreBundle.IpfsRemoteConstructor(ipfsConfig),
+    ipfsCache: new IPFSCache(),
+    solc: new Solc(SmartContracts),
+  };
 
   // set default web socket provider or use localStorage parameters
   config.web3Provider = window.localStorage['evan-web3-provider'] || 'wss://testcore.evan.network/ws';
 
   if (provider === 'metamask') {
     const existingWeb3 = (<any>window).web3;
-    const newWeb3 = new CoreBundle.Web3();
-    newWeb3.setProvider(existingWeb3.currentProvider);
-    newWeb3.eth.defaultAccount = existingWeb3.eth.defaultAccount;
-
-    web3 = newWeb3;
+    coreOptions.web3 = new CoreBundle.Web3();
+    coreOptions.web3.setProvider(existingWeb3.currentProvider);
+    coreOptions.web3.eth.defaultAccount = existingWeb3.eth.defaultAccount;
   } else {
-    if (!internalWeb3) {
-      internalWeb3 = getWeb3Instance(config.web3Provider);
+    if (!coreOptions.web3) {
+      coreOptions.web3 = getWeb3Instance(config.web3Provider);
     }
-    web3 = internalWeb3;
   }
-  remoteIpfsNode = CoreBundle.IpfsRemoteConstructor(ipfsConfig);
 
-  return {
-    web3: web3,
-    solc: new Solc(SmartContracts),
-    dfsRemoteNode: remoteIpfsNode,
-    ipfsCache: ipfsCache,
-    config: config,
-  };
+  return coreOptions;
 }
 
 /**

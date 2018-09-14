@@ -48,6 +48,11 @@ const validProviders = [
 ];
 
 /**
+ * external executor variables
+ */
+let agentExecutor;
+
+/**
  * Logout the current user. Removes the active account, provider and terms of use acceptance.
  *
  * @param      {boolean}  disabledReload  disable window reload
@@ -77,12 +82,18 @@ function logout(disabledReload?: boolean) {
 
 /**
  * Get the current, in local storage, configured provider.
+ *
+ * @return     {string}  The current provider (internal, external, agent-executor).
  */
 function getCurrentProvider() {
-  const currentProvider = window.localStorage['evan-provider'];
+  if (agentExecutor) {
+    return 'agent-executor';
+  } else {
+    const currentProvider = window.localStorage['evan-provider'];
 
-  if (currentProvider && validProviders.indexOf(currentProvider) !== -1) {
-    return currentProvider;
+    if (currentProvider && validProviders.indexOf(currentProvider) !== -1) {
+      return currentProvider;
+    }
   }
 }
 
@@ -156,9 +167,69 @@ function activeAccount(): string {
 
       break;
     }
+    case 'agent-executor': {
+      return agentExecutor.accountId;
+    }
   }
 
   return getAccountId();
+}
+
+/**
+ * Checks the current url parameters if agent executor login parameters are given.
+ *
+ * @return     {any}  all agent-exeutor parameters for requesting smart-agents and decrypting the
+ *                    profile ({ accountId, agentUrl, key, token, })
+ */
+export async function getAgentExecutor() {
+  // if the agentExecutor wasn't loaded before, check if the query parameter was specified
+  if (typeof agentExecutor === 'undefined') {
+    const token = routing.getQueryParameterValue('agent-executor');
+    const agentUrl = routing.getQueryParameterValue('agent-executor-url') ||
+      'http://localhost:8080';
+
+    // if an token is specified, load the data from the edge-server
+    // TODO: currently the parameters are specified via query parameters => load it via edge-server
+    if (token) {
+      // use a promise await to implement an timeout (this function will be called at the beginning
+      // of the page load, so everything will stop working, when agent not responds)
+      await (new Promise(async (resolve) => {
+        // dont resolve twice
+        let timedOut = false;
+
+        // break loading after 10 seconds
+        const agentTimeout: any = setTimeout(() => {
+          agentExecutor = false;
+          timedOut = true;
+
+          resolve();
+        }, 10 * 1000);
+
+        // load data from edge-server
+        const accountId = routing.getQueryParameterValue('agent-executor-account-id');
+        const key = routing.getQueryParameterValue('agent-executor-key');
+
+        // if all parameters are valid, set the executor agent
+        if (accountId && key) {
+          agentExecutor = { accountId, agentUrl, key, token, };
+        } else {
+          agentExecutor = false;
+        }
+
+        // if the timeout wasn't triggered => resolve it normally
+        if (!timedOut) {
+          window.clearTimeout(agentTimeout);
+          resolve();
+        }
+      }));
+    } else {
+      agentExecutor = false;
+    }
+
+    evanGlobals.agentExecutor = agentExecutor;
+  }
+
+  return agentExecutor;
 }
 
 /**
@@ -167,7 +238,9 @@ function activeAccount(): string {
  * @return     {string}  account id;
  */
 function getAccountId() {
-  if (window.localStorage['evan-account']) {
+  if (agentExecutor) {
+    return agentExecutor.accountId;
+  } else if (window.localStorage['evan-account']) {
     const checkSumAddress = evanGlobals.CoreRuntime.web3.utils.toChecksumAddress(
       window.localStorage['evan-account']
     );

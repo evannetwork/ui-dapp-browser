@@ -45,7 +45,7 @@ const getDefinitionFromEns = function(ensAddress) {
   if (utils.isDevAvailable(dappName) && ensAddress.indexOf('0x') !== 0) {
     // load json and resolve it as stringified
     return evanGlobals.System
-      .import(`external/${dappName}/dbcp.json!json`)
+      .import('external/' + dappName + '/dbcp.json!json')
       .then(dbcp => JSON.stringify(
         Object.assign(dbcp.public, dbcp.private)
       ));

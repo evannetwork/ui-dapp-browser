@@ -26,6 +26,7 @@
 */
 
 const { lstatSync, readdirSync } = require('fs');
+const babel = require('gulp-babel');
 const Builder = require('systemjs-builder');
 const concat = require('gulp-concat');
 const cssBase64 = require('gulp-css-base64');
@@ -53,17 +54,44 @@ const distFolder = 'runtime/build';
 const sourceMaps = false;
 const minify = false;
 
+const babelPlugins = [
+  'babel-plugin-transform-es2015-template-literals',
+  'babel-plugin-transform-es2015-literals',
+  'babel-plugin-transform-es2015-function-name',
+  'babel-plugin-transform-es2015-arrow-functions',
+  'babel-plugin-transform-es2015-block-scoped-functions',
+  'babel-plugin-transform-es2015-classes',
+  'babel-plugin-transform-es2015-object-super',
+  'babel-plugin-transform-es2015-shorthand-properties',
+  'babel-plugin-transform-es2015-computed-properties',
+  'babel-plugin-transform-es2015-for-of',
+  'babel-plugin-transform-es2015-sticky-regex',
+  'babel-plugin-transform-es2015-unicode-regex',
+  'babel-plugin-check-es2015-constants',
+  'babel-plugin-transform-es2015-spread',
+  'babel-plugin-transform-es2015-parameters',
+  'babel-plugin-transform-es2015-destructuring',
+  'babel-plugin-transform-es2015-block-scoping',
+  'babel-plugin-transform-es3-property-literals',
+  'babel-plugin-remove-comments'
+].map(require.resolve);
+
 gulp.task('bundle:vendor', function() {
   return gulp.src([
     'src/libs/core-js.client.shim.min.js',
     'src/libs/zone.js',
     'src/libs/system.src.js',
     'src/libs/navigo.js',
+    'src/libs/polyfills.js',
     'systemjs.config.js',
   ])
+  .pipe(babel({
+    plugins: babelPlugins
+  }))
   .pipe(concat('vendor.min.js'))
   .pipe(gulp.dest('src/build'));
 })
+
 gulp.task('bundle:js', ['bundle:vendor'], function() {
   var builder = new Builder('.', 'systemjs.config.js');
 
@@ -100,13 +128,15 @@ gulp.task('bundle:js', ['bundle:vendor'], function() {
       return gulp
         .src(['src/build/app.min.js'])
         .pipe(insert.prepend('let evanGlobals; let process = { env: { } }; '))
+        .pipe(babel({
+          plugins: babelPlugins
+        }))
         .pipe(gulp.dest('src/build'));
     })
     .catch(function(err) {
       console.error('>>> [systemjs-builder] Bundling failed'.bold.green, err);
     })
 });
-
 
 // Compile TypeScript to JS
 gulp.task('compile:ts', function () {
@@ -200,7 +230,7 @@ gulp.task('ionic-sass', function () {
     )
     // remove ttf and woff font files from build
     // file is 1,4mb big => to reduce file size, remove noto sans font files
-    .pipe(replace(/(?:,\s?)?url\(\"[^"]*\"\) format\(\"(?:truetype|woff2)\"\)(?:,\s?)?/g, ''))
+    .pipe(replace(/(?:,\s?)?url\(\'[^']*\'\) format\(\'(?:truetype|woff2)\'\)(?:,\s?)?/g, ''))
     .pipe(concat(`dapp-root.css`))
     .pipe(cssBase64({ maxWeightResource: 849616, baseDir : 'node_modules/ui-angular-sass' }))
     .pipe(cssBase64({ maxWeightResource: 849616, baseDir : '../../ui-angular-sass' }))

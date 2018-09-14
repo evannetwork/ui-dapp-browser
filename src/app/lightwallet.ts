@@ -266,18 +266,23 @@ async function loadUnlockedVault(): Promise<any> {
  * @return     {string}  encryption key
  */
 async function getEncryptionKey(): Promise<string> {
-  const currentProvider = window.localStorage['evan-provider'];
-
-  if (currentProvider === 'internal') {
-    const vault = await loadUnlockedVault();
-
-    if (vault) {
-      return vault.encryptionKey;
-    }
+  // if an executor agent should be used, return the key instantly
+  if (evanGlobals.agentExecutor) {
+    return evanGlobals.agentExecutor.key;
   } else {
-    const password = await getPassword();
+    const currentProvider = window.localStorage['evan-provider'];
 
-    return getEncryptionKeyFromPassword(password);
+    if (currentProvider === 'internal') {
+      const vault = await loadUnlockedVault();
+
+      if (vault) {
+        return vault.encryptionKey;
+      }
+    } else {
+      const password = await getPassword();
+
+      return getEncryptionKeyFromPassword(password);
+    }
   }
 }
 

@@ -58,10 +58,11 @@ const ionicDeploymentFolder = path.resolve('www');
 
 // globals
 let config;
-let web3;
-let runtime;
-let ipfsInstance;
 let deploymentAccount;
+let initialized;
+let ipfsInstance;
+let runtime;
+let web3;
 
 // runtime parameters
 const enableDeploy = true;
@@ -138,61 +139,6 @@ async function createRuntime() {
 }
 
 /********************************** ipfs functions ************************************************/
-const getIpfs = function() {
-  return new Promise((resolve) => {
-    const node = new IpfsServer('ws://localhost:8546', '');
-    const remoteNode = IpfsApi({host: 'ipfs.evan.network', port: '443', protocol: 'https'})
-
-    node.on('start', () => {
-      node.swarm.connect('/dns4/ipfs.evan.network/tcp/443/wss/ipfs/QmaaPzvrYK5H1fSmJN3zudwLG1XPMkBXJTg9i2tC9JiKRC', (err, res) => {
-        setTimeout(() => {
-          resolve(new Ipfs({ node, remoteNode }));
-        }, 5000);
-      })
-     const checkConnected = setInterval(() => {
-        node.swarm.peers((err, peers, ...args) => {
-          if (peers.length > 0) {
-            clearInterval(checkConnected);
-
-            resolve(new Ipfs({ node, remoteNode }));
-          }
-        });
-      }, 500);
-    });
-  });
-};
-
-const startLocalIpfs = function() {
-  return new Promise(async (resolve, reject) => {
-    const timeout = setTimeout(() => {
-      resolve();
-    }, 6 * 1000);
-
-    exec(`scripts/go-ipfs.sh`, {
-
-    }, (err, stdout, stderr) => {
-      if (err) {
-        console.log('Error while starting local ipfs: ');
-        console.dir(err);
-        console.dir(stderr);
-        console.dir(stdout);
-      } else {
-        console.log('local ipfs started: ');
-        console.dir(stdout)
-      }
-      
-      resolve();
-
-      clearTimeout(timeout);
-    })
-  })
-};
-
-const stopLocalIpfs = function() {
-  return new Promise((resolve, reject) => {
-    resolve();
-  })
-}
 
 const requestFileFromEVANIpfs = function(hash) {
   return new Promise((resolve, reject) => {
@@ -270,19 +216,11 @@ const pinToIPFSContractus = function(ipfsHash) {
  */
 async function deployIPFSFolder(folderName, path) {
   return new Promise((resolve, reject) => {
-    exec(`ipfs add -r ${ path }`, {
-
-    }, (err, stdout, stderr) => {
-      if (err) {
-        reject(err);
-      } else {
-        const regex = new RegExp('(Qm[^\\s]+)\\s' + folderName + '\n$', 'g');
-        const folderHash = regex.exec(stdout)[1];
-
-        resolve(folderHash);
-      }
+    runtime.dfs.remoteNode.util.addFromFs(path, { recursive: true}, (err, result) => {
+      if (err) { throw err }
+      resolve(result[result.length-1].hash);
     })
-  })
+  });
 }
 
 async function deployToIpns(dapp, hash, retry) {
@@ -497,9 +435,27 @@ async function deployDApps(externals, version) {
         saveDBCPFile(dbcpPath, dbcp);
       }
 
+      // initialize the ens contract to get the original owner of the ens address 
+      const ens = runtime.contractLoader.loadContract('AbstractENS', config.bcConfig.nameResolver.ensAddress);
+      const owner = await runtime.executor.executeContractCall(ens, 'owner', runtime.nameResolver.namehash(address));
+
       await runtime.description.setDescriptionToEns(address, {
         public: dbcp.public
       }, deploymentAccount);
+
+      // restore owner of the ens address
+      if (owner !== '0x0000000000000000000000000000000000000000') {
+        await runtime.executor.executeContractTransaction(
+          ens,
+          'setOwner',
+          {
+            from: deploymentAccount,
+            gas: 200000
+          },
+          runtime.nameResolver.namehash(address),
+          owner,
+        );
+      }
 
       let descriptionHash = await runtime.nameResolver.getContent(address);
 
@@ -533,34 +489,39 @@ async function deployDApps(externals, version) {
 const loadDbcps = async function(externals) {
   console.log('Loading deployed DApps...');
 
+  const promises = [ ];
   for (let external of externals) {
-    try {
-      let dbcp = require(`${originFolder}/${external}/dbcp.json`);
-      dbcp = Object.assign(dbcp.public, dbcp.private);
+    promises.push(async () => {
+      try {
+        let dbcp = require(`${originFolder}/${external}/dbcp.json`);
+        dbcp = Object.assign(dbcp.public, dbcp.private);
 
-      let address = dbcp.name;
-      if (config.runtimeConfig.subEns) {
-        address += `.${ config.runtimeConfig.subEns }`;
+        let address = dbcp.name;
+        if (config.runtimeConfig.subEns) {
+          address += `.${ config.runtimeConfig.subEns }`;
+        }
+        address += `.${ runtime.nameResolver.getDomainName(config.bcConfig.nameResolver.domains.root) }`;
+
+        let descriptionHash = await runtime.nameResolver.getContent(address);
+
+        if (descriptionHash) {
+          descriptionHash = descriptionHash.startsWith('Qm') ? descriptionHash : Ipfs.bytes32ToIpfsHash(descriptionHash);
+        
+          let loaded = await runtime.description.getDescriptionFromEns(address);
+          loaded = Object.assign(loaded.public, loaded.private);
+    
+          dbcp.dapp.origin = loaded.dapp.origin;
+        }
+
+        addDbcpToList(dbcp);
+      } catch (ex) {
+        console.log(`   Failed to load dbcp : ${ external }`);
+        console.dir(ex);
       }
-      address += `.${ runtime.nameResolver.getDomainName(config.bcConfig.nameResolver.domains.root) }`;
-
-      let descriptionHash = await runtime.nameResolver.getContent(address);
-
-      if (descriptionHash) {
-        descriptionHash = descriptionHash.startsWith('Qm') ? descriptionHash : Ipfs.bytes32ToIpfsHash(descriptionHash);
-      
-        let loaded = await runtime.description.getDescriptionFromEns(address);
-        loaded = Object.assign(loaded.public, loaded.private);
-  
-        dbcp.dapp.origin = loaded.dapp.origin;
-      }
-
-      addDbcpToList(dbcp);
-    } catch (ex) {
-      console.log(`   Failed to load dbcp : ${ external }`);
-      console.dir(ex);
-    }
+    });
   }
+
+  return await Promise.all(promises);
 }
 
 /********************************** ionic functions ***********************************************/
@@ -715,16 +676,11 @@ const loadDApps = function() {
 }
 
 const initializeDBCPs = async function(dapps) {
+  initialized = true;
   clearConsole();
 
   console.log('\n\nstart bcc runtime')
   runtime = await createRuntime();
-
-  console.log('starting ipfs node...');
-  ipfsInstance = await getIpfs();
-
-  console.log('\n\nstarting local ipfs...');
-  await startLocalIpfs();
 
   await loadDbcps(dapps);
 }
@@ -732,7 +688,7 @@ const initializeDBCPs = async function(dapps) {
 const deploymentMenu = async function() {
   const dapps = loadDApps();
 
-  if (!ipfsInstance) {
+  if (!initialized) {
     await initializeDBCPs(dapps);
   }
   
@@ -873,12 +829,6 @@ const deploymentMenu = async function() {
               break;
             }
             case 'exit': {
-              if (ipfsInstance) {
-                console.log('\n\n stopping ipfs...');
-      
-                await stopLocalIpfs();
-              }
-
               process.exit();
             }
             default: {

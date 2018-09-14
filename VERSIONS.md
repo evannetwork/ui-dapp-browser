@@ -5,14 +5,21 @@
 ### Fixes
 ### Deprecations
 
+## Version 1.2.0
+### Features
+- restore ens owner after setDescriptionToEns deployment
+- add agent-executor provider support (core.js => getAgentExecutor)
+
+### Fixes
+- add babel to transform not supported functionalities of older browsers
+
+### Deprecations
+
 ## Version 1.1.0
 ### Features
 - Remove deployment description and move it to the evan.network wiki
-<<<<<<< HEAD
 - add subdomain dapp loading support
-=======
 - add subdomain support
->>>>>>> release/v1.1.0
 
 ## Version 1.0.2
 ### Features

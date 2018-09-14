@@ -51,7 +51,8 @@ let lastAnimationFrame;
  * @return     {<type>}  { description_of_the_return_value }
  */
 export async function setUpDevMode(): Promise<void> {
-  if (window.location.host.indexOf('localhost') !== -1 && window.location.href.indexOf('dev.html') !== -1) {
+  if ((window.location.host.indexOf('localhost') !== -1 || window.location.host.indexOf('10.0.2.2') !== -1) &&
+       window.location.href.indexOf('dev.html') !== -1) {
     evanGlobals.devMode = await evanGlobals.System.import(`${ window.location.origin }/dev-dapps!json`);
 
     if (evanGlobals.devMode.externals) {
