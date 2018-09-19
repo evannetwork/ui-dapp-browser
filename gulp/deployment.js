@@ -27,6 +27,9 @@
 
 require('console.table');
 
+// enable dev logs
+process.env.DBCP_LOGLEVEL = 'debug';
+
 // node_modules
 const path = require('path');
 const exec = require('child_process').exec;
@@ -59,6 +62,7 @@ const ionicDeploymentFolder = path.resolve('www');
 // globals
 let config;
 let deploymentAccount;
+let deploymentDomain;
 let initialized;
 let ipfsInstance;
 let runtime;
@@ -269,6 +273,7 @@ keyPressToContinue = async function() {
 
 const clearConsole = function() {
   console.clear();
+  console.log(`\n\nContractus - Deployment (${ deploymentDomain || '---' })\n`);
 };
 
 /********************************** dapps deployment functions ************************************/
@@ -307,7 +312,6 @@ const logDbcps = function() {
       file: dbcp.file
     }
   }));
-
   console.log('--------------------------\n');
   console.log('Watch pins : \n');
   console.log('http://localhost:5004/webui');
@@ -398,7 +402,6 @@ async function deployDApps(externals, version) {
     }
 
     clearConsole();
-    logDbcps(dbcps);
   
     console.log(`\n\nDeploying Dapps... (${ currIndex + 1} / ${ externals.length })\n`);
     console.table(statusTable);
@@ -406,19 +409,19 @@ async function deployDApps(externals, version) {
 
     try {
       const folderName = `${dappDeploymentFolder}/${external}`;
-      let dbcp = require(`${folderName}/dbcp.json`);
+      const externalDbcpPath = `${ runtimeFolder }/external/${external}`;
+      let dbcp = require(`${ externalDbcpPath }/dbcp.json`);
       let dbcpPath;
 
       try {
-        dbcpPath = require(`${folderName}/dbcpPath.json`).dbcpPath;
+        dbcpPath = require(`${ externalDbcpPath }/dbcpPath.json`).dbcpPath;
       } catch (ex) { }
+
+      console.dir(dbcpPath);
 
       // add support for sub ens domains
       let address = dbcp.public.name;
-      if (config.runtimeConfig.subEns) {
-        address += `.${ config.runtimeConfig.subEns }`;
-      }
-      address += `.${ runtime.nameResolver.getDomainName(config.bcConfig.nameResolver.domains.root) }`;
+      address += `.${ deploymentDomain }`;
 
       let beforeHash = await runtime.nameResolver.getContent(address);
 
@@ -426,6 +429,7 @@ async function deployDApps(externals, version) {
         beforeHash = beforeHash.startsWith('Qm') ? beforeHash : Ipfs.bytes32ToIpfsHash(beforeHash);
       }
 
+      console.dir(beforeHash)
       dbcp.public.dapp.origin = await deployIPFSFolder(external, `${folderName}`);
 
       updateDBCPVersion(dbcp, version, beforeHash);
@@ -487,20 +491,17 @@ async function deployDApps(externals, version) {
 }
 
 const loadDbcps = async function(externals) {
-  console.log('Loading deployed DApps...');
+  console.log('\nLoading deployed DApps...');
 
   const promises = [ ];
   for (let external of externals) {
-    promises.push(async () => {
+    promises.push((async () => {
       try {
         let dbcp = require(`${originFolder}/${external}/dbcp.json`);
         dbcp = Object.assign(dbcp.public, dbcp.private);
 
         let address = dbcp.name;
-        if (config.runtimeConfig.subEns) {
-          address += `.${ config.runtimeConfig.subEns }`;
-        }
-        address += `.${ runtime.nameResolver.getDomainName(config.bcConfig.nameResolver.domains.root) }`;
+        address += `.${ deploymentDomain }`;
 
         let descriptionHash = await runtime.nameResolver.getContent(address);
 
@@ -511,14 +512,14 @@ const loadDbcps = async function(externals) {
           loaded = Object.assign(loaded.public, loaded.private);
     
           dbcp.dapp.origin = loaded.dapp.origin;
-        }
 
-        addDbcpToList(dbcp);
+          addDbcpToList(dbcp);
+        }
       } catch (ex) {
         console.log(`   Failed to load dbcp : ${ external }`);
         console.dir(ex);
       }
-    });
+    })());
   }
 
   return await Promise.all(promises);
@@ -563,7 +564,6 @@ const prepareIonicAppBuild = async function(platform) {
   const dapps = loadDApps();
 
   await initializeDBCPs(dapps);
-  logDbcps();
   await prepareIonicDeploy();
 
   console.log('copy platform cordova assets...');
@@ -592,8 +592,6 @@ const prepareIonicAppBuild = async function(platform) {
 }
 
 const ionicDeploy = async function (version) {
-  logDbcps();
-  
   const folderHash = await deployIPFSFolder('www', ionicDeploymentFolder);
 
   await pinToIPFSContractus(folderHash);
@@ -652,8 +650,6 @@ const uglifyCSS = async function (folder) {
 };
 
 const uglify = async function(mode, folder) {
-  logDbcps();
-
   console.log(`Uglify sources (${ mode })...`);
 
   console.log(`\nUglify js...`);
@@ -679,8 +675,20 @@ const initializeDBCPs = async function(dapps) {
   initialized = true;
   clearConsole();
 
-  console.log('\n\nstart bcc runtime')
   runtime = await createRuntime();
+
+  if (!deploymentDomain) {
+    clearConsole();
+    const prompt = inquirer.createPromptModule();
+    
+    deploymentDomain = (await prompt([{
+      name: 'deploymentDomain',
+      message: 'On which domain do you want to deploy your DApps?',
+      type: 'input',
+      default: runtime.nameResolver.getDomainName(config.bcConfig.nameResolver.domains.root),
+      required: true
+    }])).deploymentDomain;
+  }
 
   await loadDbcps(dapps);
 }
@@ -695,7 +703,7 @@ const deploymentMenu = async function() {
   const questions = [
     {
       name: 'deploymentType',
-      message: `What do you want to deploy? (${ config.bcConfig.nameResolver.labels.ensRoot })`,
+      message: `What do you want to deploy? (${ deploymentDomain })`,
       type: 'list',
       choices: [
         new inquirer.Separator(),
@@ -711,8 +719,25 @@ const deploymentMenu = async function() {
           name: 'Ionic DApp',
           value: 'ionic-dapp',
         },
+        {
+          name: 'Specific DApps',
+          value: 'specific-dapps',
+        },
         new inquirer.Separator(),
       ]
+    },
+    {
+      name: 'dapps',
+      message: `Whichs DApps do you want to deploy? (${ deploymentDomain })`,
+      type: 'checkbox',
+      choices: [ ],
+      when: (results) => {
+        if (results.deploymentType === 'specific-dapps') {
+          return true;
+        } else {
+          return false;
+        }
+      }
     },
     {
       name: 'version',
@@ -736,7 +761,6 @@ const deploymentMenu = async function() {
           name: 'major',
           value: 'major',
         },
-        new inquirer.Separator(),
       ],
       when: (results) => {
         if (results.deploymentType !== 'exit') {
@@ -772,28 +796,63 @@ const deploymentMenu = async function() {
     }
   ];
 
+  // search for the longest dapp name for a good looking output
+  let dappNameLength = 0;
+  dapps.forEach(dappName => {
+    if (dappNameLength < (dappName.length + 10)) {
+      dappNameLength = dappName.length + 10;
+    }
+  });
+
+  questions[0].choices.forEach((choice) => {
+    if (choice.name) {
+      // fill ui choice name until the longest dappname is reached
+      while (choice.name.length < dappNameLength) {
+        choice.name = choice.name + ' ';
+      }
+
+      choice.name = choice.name + '.' + deploymentDomain;
+    }
+  });
+
+  // add choices for dapps
   for (let i = 0; i < dapps.length; i++) {
-    questions[0].choices.push({
+    const choice = {
       name : dapps[i],
       value : dapps[i]
-    });
+    };
+
+    // fill ui choice name until the longest dappname is reached
+    while (choice.name.length < dappNameLength) {
+      choice.name = choice.name + ' ';
+    }
+
+    choice.name = choice.name + '.' + deploymentDomain;
+
+    // search for loaded dbcps and add the verison to the display
+    const foundDBCP = dbcps.filter(desc => desc.name === dapps[i]);
+    if (foundDBCP.length > 0) {
+      choice.name = choice.name + ` (${ foundDBCP[0].version }) - ${ foundDBCP[0].dapp.origin }`;
+    } else {
+      choice.name = choice.name + ` (not deployed)`;
+    }
+
+    questions[1].choices.push(choice);
   }
 
-  questions[0].choices.push(new inquirer.Separator());
   questions[0].choices.push({
     name: 'Exit',
     value: 'exit'
   });
 
   questions[0].pageSize = questions[0].choices.length;
-  
-  logDbcps();
-  console.log('\n\n');
+  questions[1].pageSize = questions[1].choices.length;
   
   try {
     await new Promise((resolve, reject) => {
       var prompt = inquirer.createPromptModule();
       
+      clearConsole();
       prompt(questions)
         .then(async results => {
           clearConsole();
@@ -832,14 +891,14 @@ const deploymentMenu = async function() {
               process.exit();
             }
             default: {
-              await prepareDappsDeployment([ results.deploymentType ]);
+              await prepareDappsDeployment(results.dapps);
               
               if (results.uglify) {
                 await uglify(results.deploymentType, dappDeploymentFolder);
               }
       
               if (enableDeploy) {
-                await deployDApps([ results.deploymentType ], results.version);
+                await deployDApps(results.dapps, results.version);
               }
       
               break;

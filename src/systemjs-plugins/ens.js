@@ -35,12 +35,12 @@ const ipfsCatPromise = require('../app/ipfs').ipfsCatPromise;
  * @param      {string}  ensAddress  ens address to load the definition for
  * @return     {any}     The definition from ens.
  */
-const getDefinitionFromEns = function(ensAddress) {
-  let dappName = ensAddress.replace(/\-/g, '');
-
-  try {
-    dappName = /^(.*)\.[^.]+$/.exec(dappName)[1];
-  } catch (ex) { }
+const getDefinitionFromEns = function(ensAddress, domain) {
+  // remove domain from the end of the ensAddress to get the dapp name
+  let dappName = ensAddress.replace(/\-/g, '').slice(
+    0,
+    ensAddress.lastIndexOf('.' + domain)
+  );
 
   if (utils.isDevAvailable(dappName) && ensAddress.indexOf('0x') !== 0) {
     // load json and resolve it as stringified
@@ -81,8 +81,23 @@ const getDefinitionFromEns = function(ensAddress) {
 const fetchEns = function(params) {
   // parse ens address from requested url source
   const ensAddress = params.address.split('/').pop();
+  const rootDomain = ensAddress.split('.').pop();
 
-  return getDefinitionFromEns(ensAddress);
+  // if the dapps dev domain is enabled, try to load the dapp from this url
+  if (window.localStorage['evan-dev-dapps-domain']) {
+    // replace the root domain at the end of the ens address with the dev domain
+    const ensDevAddress = ensAddress.slice(
+      0,
+      ensAddress.lastIndexOf('.' + rootDomain)
+    ) + '.' + window.localStorage['evan-dev-dapps-domain']
+
+    // try to load from dev domain, if is 
+    return Promise.resolve()
+      .then(() => getDefinitionFromEns(ensDevAddress, window.localStorage['evan-dev-dapps-domain']))
+      .catch(() => getDefinitionFromEns(ensAddress, rootDomain));
+  } else {
+    return getDefinitionFromEns(ensAddress, rootDomain);
+  }
 };
 
 /**
