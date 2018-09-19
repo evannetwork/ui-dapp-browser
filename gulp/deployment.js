@@ -417,8 +417,6 @@ async function deployDApps(externals, version) {
         dbcpPath = require(`${ externalDbcpPath }/dbcpPath.json`).dbcpPath;
       } catch (ex) { }
 
-      console.dir(dbcpPath);
-
       // add support for sub ens domains
       let address = dbcp.public.name;
       address += `.${ deploymentDomain }`;
@@ -428,8 +426,6 @@ async function deployDApps(externals, version) {
       if (beforeHash) {
         beforeHash = beforeHash.startsWith('Qm') ? beforeHash : Ipfs.bytes32ToIpfsHash(beforeHash);
       }
-
-      console.dir(beforeHash)
       dbcp.public.dapp.origin = await deployIPFSFolder(external, `${folderName}`);
 
       updateDBCPVersion(dbcp, version, beforeHash);
