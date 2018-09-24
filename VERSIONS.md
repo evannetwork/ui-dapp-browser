@@ -8,6 +8,9 @@
 - add ens side loading of `localStorage['evan-dev-dapps-domain']`
 
 ### Fixes
+- only use `evan-dev-dapps-domain` when `evan-developer-mode` is true
+- fix notification.`getDAppUrlFromNotification` to remove duplicated slashes
+
 ### Deprecations
 
 ## Version 1.2.0

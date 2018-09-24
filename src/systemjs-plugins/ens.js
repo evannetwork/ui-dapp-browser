@@ -84,7 +84,8 @@ const fetchEns = function(params) {
   const rootDomain = ensAddress.split('.').pop();
 
   // if the dapps dev domain is enabled, try to load the dapp from this url
-  if (window.localStorage['evan-dev-dapps-domain']) {
+  if (window.localStorage['evan-developer-mode'] === 'true' &&
+      window.localStorage['evan-dev-dapps-domain']) {
     // replace the root domain at the end of the ens address with the dev domain
     const ensDevAddress = ensAddress.slice(
       0,
