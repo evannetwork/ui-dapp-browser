@@ -6,6 +6,8 @@
   - move deploy DApps to radio button selects, to be able to deploy multiple selected DApps
   - ask the user for starting the whole deployment under another sub domain (e.g. evan => test.evan)
 - add ens side loading of `localStorage['evan-dev-dapps-domain']`
+- add ens cache (update each second load)
+- preload angular-libs instant to speed up initial load performance
 
 ### Fixes
 - only use `evan-dev-dapps-domain` when `evan-developer-mode` is true

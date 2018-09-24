@@ -38,7 +38,7 @@ declare let evanGlobals: any;
 /**
  * Set defaults for preloaded applications.
  */
-let loadedDeps = { };
+export let loadedDeps = { };
 loadedDeps[`bcc.${ getDomainName() }!dapp-content`] = true;
 loadedDeps[`smartcontracts.${ getDomainName() }!dapp-content`] = true;
 

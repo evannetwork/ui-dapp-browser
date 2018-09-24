@@ -27,6 +27,12 @@
 
 const utils = require('../app/utils');
 const ipfsCatPromise = require('../app/ipfs').ipfsCatPromise;
+let ensCache = { };
+
+// check if any ens entries were loaded before
+try {
+  ensCache = JSON.parse(window.localStorage['evan-ens-cache']);
+} catch (ex) { }
 
 /**
  * Wrap data handling to be able to switch between dev and production mode =>
@@ -60,14 +66,24 @@ const getDefinitionFromEns = function(ensAddress, domain) {
     }
 
     // use api to load dbcp json from ens
-    return loader
+     loader = loader
       .then(dbcp => {
         try {
           dbcp = JSON.parse(dbcp);
         } catch(ex) { }
+
+        // set ens cache to speed up initial loading
+        ensCache[validEnsAddress] = JSON.stringify(dbcp);
+        window.localStorage['evan-ens-cache'] = JSON.stringify(ensCache);
         
         return JSON.stringify(Object.assign(dbcp.public, dbcp.private));
       });
+
+    if (ensCache[validEnsAddress]) {
+      return ensCache[validEnsAddress];
+    } else {
+      return loader;
+    }
   }
 };
 
