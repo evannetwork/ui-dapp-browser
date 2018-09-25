@@ -50,6 +50,13 @@ const gulp = require('gulp');
 // blockchain-core / DBCP stuff
 const { Ipfs, createDefaultRuntime, } = require('@evan.network/api-blockchain-core');
 
+// search for root ui-dapp-browser path
+let runFolder = process.cwd();
+while (runFolder.indexOf('ui-dapp-browser', runFolder.length - 'ui-dapp-browser'.length) === -1) {
+  process.chdir(path.resolve(runFolder, '..'));
+  runFolder = process.cwd();
+}
+
 // path parameters
 const configPath = path.resolve(process.argv[process.argv.indexOf('--config') + 1]);
 const dappFolder = path.resolve('..');

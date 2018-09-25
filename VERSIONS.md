@@ -12,6 +12,7 @@
 ### Fixes
 - only use `evan-dev-dapps-domain` when `evan-developer-mode` is true
 - fix notification.`getDAppUrlFromNotification` to remove duplicated slashes
+- fix deployment gulpfile resolve
 
 ### Deprecations
 
