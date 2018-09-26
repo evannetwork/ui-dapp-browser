@@ -72,11 +72,13 @@ const getDefinitionFromEns = function(ensAddress, domain) {
           dbcp = JSON.parse(dbcp);
         } catch(ex) { }
 
+        const combinedStringified = JSON.stringify(Object.assign(dbcp.public, dbcp.private));
+
         // set ens cache to speed up initial loading
-        ensCache[validEnsAddress] = JSON.stringify(dbcp);
+        ensCache[validEnsAddress] = combinedStringified;
         window.localStorage['evan-ens-cache'] = JSON.stringify(ensCache);
         
-        return JSON.stringify(Object.assign(dbcp.public, dbcp.private));
+        return combinedStringified;
       });
 
     if (ensCache[validEnsAddress]) {
