@@ -2,6 +2,11 @@
 
 ## Next Version
 ### Features
+### Fixes
+### Deprecations
+
+## Version 1.3.0
+### Features
 - deployment scripts
   - move deploy DApps to radio button selects, to be able to deploy multiple selected DApps
   - ask the user for starting the whole deployment under another sub domain (e.g. evan => test.evan)
