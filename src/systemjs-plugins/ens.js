@@ -27,6 +27,12 @@
 
 const utils = require('../app/utils');
 const ipfsCatPromise = require('../app/ipfs').ipfsCatPromise;
+let ensCache = { };
+
+// check if any ens entries were loaded before
+try {
+  ensCache = JSON.parse(window.localStorage['evan-ens-cache']);
+} catch (ex) { }
 
 /**
  * Wrap data handling to be able to switch between dev and production mode =>
@@ -35,12 +41,12 @@ const ipfsCatPromise = require('../app/ipfs').ipfsCatPromise;
  * @param      {string}  ensAddress  ens address to load the definition for
  * @return     {any}     The definition from ens.
  */
-const getDefinitionFromEns = function(ensAddress) {
-  let dappName = ensAddress.replace(/\-/g, '');
-
-  try {
-    dappName = /^(.*)\.[^.]+$/.exec(dappName)[1];
-  } catch (ex) { }
+const getDefinitionFromEns = function(ensAddress, domain) {
+  // remove domain from the end of the ensAddress to get the dapp name
+  let dappName = ensAddress.replace(/\-/g, '').slice(
+    0,
+    ensAddress.lastIndexOf('.' + domain)
+  );
 
   if (utils.isDevAvailable(dappName) && ensAddress.indexOf('0x') !== 0) {
     // load json and resolve it as stringified
@@ -60,14 +66,26 @@ const getDefinitionFromEns = function(ensAddress) {
     }
 
     // use api to load dbcp json from ens
-    return loader
+     loader = loader
       .then(dbcp => {
         try {
           dbcp = JSON.parse(dbcp);
         } catch(ex) { }
+
+        const combinedStringified = JSON.stringify(Object.assign(dbcp.public, dbcp.private));
+
+        // set ens cache to speed up initial loading
+        ensCache[validEnsAddress] = combinedStringified;
+        window.localStorage['evan-ens-cache'] = JSON.stringify(ensCache);
         
-        return JSON.stringify(Object.assign(dbcp.public, dbcp.private));
+        return combinedStringified;
       });
+
+    if (ensCache[validEnsAddress]) {
+      return ensCache[validEnsAddress];
+    } else {
+      return loader;
+    }
   }
 };
 
@@ -81,8 +99,24 @@ const getDefinitionFromEns = function(ensAddress) {
 const fetchEns = function(params) {
   // parse ens address from requested url source
   const ensAddress = params.address.split('/').pop();
+  const rootDomain = ensAddress.split('.').pop();
 
-  return getDefinitionFromEns(ensAddress);
+  // if the dapps dev domain is enabled, try to load the dapp from this url
+  if (window.localStorage['evan-developer-mode'] === 'true' &&
+      window.localStorage['evan-dev-dapps-domain']) {
+    // replace the root domain at the end of the ens address with the dev domain
+    const ensDevAddress = ensAddress.slice(
+      0,
+      ensAddress.lastIndexOf('.' + rootDomain)
+    ) + '.' + window.localStorage['evan-dev-dapps-domain']
+
+    // try to load from dev domain, if is 
+    return Promise.resolve()
+      .then(() => getDefinitionFromEns(ensDevAddress, window.localStorage['evan-dev-dapps-domain']))
+      .catch(() => getDefinitionFromEns(ensAddress, rootDomain));
+  } else {
+    return getDefinitionFromEns(ensAddress, rootDomain);
+  }
 };
 
 /**

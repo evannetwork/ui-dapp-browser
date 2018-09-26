@@ -257,7 +257,8 @@ export const getDAppUrlFromNotification = async (notification: any) => {
     notificationPath = `#/${ notification.path }`;
   }
 
-  return notificationPath;
+  // return notificationPath and return falsly provided multiple start slashes
+  return notificationPath.replace(/\/\//g, '/');
 };
 
 /**

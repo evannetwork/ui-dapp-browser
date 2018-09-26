@@ -93,15 +93,33 @@ export async function initializeEvanNetworkStructure(): Promise<void> {
   // set initial loadin step
   utils.raiseProgress(5);
 
+  // check if any ens entries were loaded before, so we can check, if the angular-libs were loaded
+  // before => speed it up scotty!
+  let ensCache = { };
+  try {
+    ensCache = JSON.parse(window.localStorage['evan-ens-cache']);
+  } catch (ex) { }
+
   // load smart-contracts and blockchain-core minimal setup for accessing ens from ipfs
   Promise
-    .all<any, any, any>([
+    .all<any, any, any, any>([
       System
         .import('bcc')
         .then(CoreBundle => utils.raiseProgress(10, CoreBundle)),
       System
         .import('smart-contracts')
         .then(SmartContracts => utils.raiseProgress(10, SmartContracts)),
+      (() => {
+        if (ensCache[`angularlibs.${ getDomainName() }`]) {
+          const importPath = `angularlibs.${ getDomainName() }!dapp-content`;
+
+          // set that the angular-libs were already loaded, so we don't require it twice
+          System.map['angular-libs'] = importPath;
+          dapp.loadedDeps[importPath] = true;
+
+          return System.import(importPath);
+        }
+      })(),
       // check if an executor agent should be used for the application runtime
       core.getAgentExecutor()
     ])

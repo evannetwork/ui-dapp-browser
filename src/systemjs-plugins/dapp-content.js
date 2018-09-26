@@ -27,6 +27,7 @@
 
 const utils = require('../app/utils');
 const browserIpfs = require('../libs/browser-ipfs.js');
+const importCache = { };
 
 /**
  * add css from ipfs to the current browser
@@ -39,7 +40,7 @@ const addCSS = function(origin, file, isIpns) {
   const fileID = (origin + file).replace(/^[^a-z]+|[^\w:.-]+/gi, '');
 
   // add the css only if it was not applied before
-  if (file.indexOf('.css') !== -1 && !document.getElementById('#' + fileID)) {
+  if (file.indexOf('.css') !== -1 && !document.getElementById(fileID)) {
     var head  = document.getElementsByTagName('head')[0];
     var link  = document.createElement('link');
 
@@ -177,6 +178,11 @@ const locateDAppContent = function(params, originalFetch) {
 
   let dbcpAddressToLoad = ensAddress + '!ens';
 
+  // if it was already loaded, return it instantly
+  if (importCache[dbcpAddressToLoad]) {
+    return importCache[dbcpAddressToLoad];
+  }
+
   if (ensAddress.startsWith('bcc')) {
     return loadBCCCore({
       params: params,
@@ -216,7 +222,11 @@ const locateDAppContent = function(params, originalFetch) {
         // wait for css and ens content to be resolved
         return Promise
           .all(promises)
-          .then(results => results.pop());
+          .then(results => {
+            importCache[dbcpAddressToLoad] = results.pop();
+
+            return importCache[dbcpAddressToLoad];
+          });
       } else {
         console.error('dbcp invalid dapp');
         throw new Error('dbcp invalid dapp');
