@@ -442,27 +442,9 @@ async function deployDApps(externals, version) {
         saveDBCPFile(dbcpPath, dbcp);
       }
 
-      // initialize the ens contract to get the original owner of the ens address 
-      const ens = runtime.contractLoader.loadContract('AbstractENS', config.bcConfig.nameResolver.ensAddress);
-      const owner = await runtime.executor.executeContractCall(ens, 'owner', runtime.nameResolver.namehash(address));
-
       await runtime.description.setDescriptionToEns(address, {
         public: dbcp.public
       }, deploymentAccount);
-
-      // restore owner of the ens address
-      if (owner !== '0x0000000000000000000000000000000000000000') {
-        await runtime.executor.executeContractTransaction(
-          ens,
-          'setOwner',
-          {
-            from: deploymentAccount,
-            gas: 200000
-          },
-          runtime.nameResolver.namehash(address),
-          owner,
-        );
-      }
 
       let descriptionHash = await runtime.nameResolver.getContent(address);
 

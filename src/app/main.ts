@@ -80,6 +80,7 @@ evanGlobals = {
 evanGlobals.System.map['bcc'] = `bcc.${ getDomainName() }!dapp-content`;
 evanGlobals.System.map['bcc-profile'] = `bcc.${ getDomainName() }!dapp-content`;
 evanGlobals.System.map['bcc-bc'] = `bcc.${ getDomainName() }!dapp-content`;
+evanGlobals.System.map['@evan.network/api-blockchain-core'] = `bcc.${ getDomainName() }!dapp-content`;
 evanGlobals.System.map['smart-contracts'] = `smartcontracts.${ getDomainName() }!dapp-content`;
 evanGlobals.System.map['@evan.network/smart-contracts-core'] = `smartcontracts.${ getDomainName() }!dapp-content`;
 
@@ -93,33 +94,19 @@ export async function initializeEvanNetworkStructure(): Promise<void> {
   // set initial loadin step
   utils.raiseProgress(5);
 
-  // check if any ens entries were loaded before, so we can check, if the angular-libs were loaded
-  // before => speed it up scotty!
-  let ensCache = { };
-  try {
-    ensCache = JSON.parse(window.localStorage['evan-ens-cache']);
-  } catch (ex) { }
+  // check if angular-libs are already cached as the latest version => load it directly from ipfs
+  // simoultaniously to bcc
+  const preloadAngular = dapp.preloadAngularLibs();
 
   // load smart-contracts and blockchain-core minimal setup for accessing ens from ipfs
   Promise
-    .all<any, any, any, any>([
+    .all<any, any, any>([
       System
         .import('bcc')
         .then(CoreBundle => utils.raiseProgress(10, CoreBundle)),
       System
         .import('smart-contracts')
         .then(SmartContracts => utils.raiseProgress(10, SmartContracts)),
-      (() => {
-        if (ensCache[`angularlibs.${ getDomainName() }`]) {
-          const importPath = `angularlibs.${ getDomainName() }!dapp-content`;
-
-          // set that the angular-libs were already loaded, so we don't require it twice
-          System.map['angular-libs'] = importPath;
-          dapp.loadedDeps[importPath] = true;
-
-          return System.import(importPath);
-        }
-      })(),
       // check if an executor agent should be used for the application runtime
       core.getAgentExecutor()
     ])
@@ -133,6 +120,9 @@ export async function initializeEvanNetworkStructure(): Promise<void> {
         await updateCoreRuntime(CoreBundle, SmartContracts);
         evanGlobals.CoreRuntime = CoreBundle.CoreRuntime;
 
+        // tell everyone, that bcc was loaded and initialized
+        utils.setBccReady();
+
         // set variables to export to dapps
         CoreRuntime = CoreBundle.CoreRuntime;
         definition = CoreRuntime.definition;
@@ -143,6 +133,7 @@ export async function initializeEvanNetworkStructure(): Promise<void> {
         window['Promise'] = zoneJSPromise;
 
         // wait for device ready event so we can load notifications
+        await preloadAngular;
         await utils.onDeviceReady();
 
         // initialize queue
