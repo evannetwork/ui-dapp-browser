@@ -28,7 +28,7 @@
     }
   },
   "dependencies": {
-    "@evan.network/api-blockchain-core": "1.2.0",
+    "@evan.network/api-blockchain-core": "^1.2.2",
     "@evan.network/dbcp": "1.3.0",
     "cordova-android": "^6.4.0",
     "cordova-ios": "4.5.4",
@@ -183,5 +183,5 @@
     "serve": "gulp --cwd . --gulpfile gulp/serve.js serve",
     "serve-build": "gulp --cwd . --gulpfile gulp/serve.js serve --build"
   },
-  "version": "1.3.0"
+  "version": "1.3.1"
 }
