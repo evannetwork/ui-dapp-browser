@@ -280,7 +280,7 @@ keyPressToContinue = async function() {
 
 const clearConsole = function() {
   console.clear();
-  console.log(`\n\nContractus - Deployment (${ deploymentDomain || '---' })\n`);
+  console.log(`\n\nevan.network - deployment (${ deploymentDomain || '---' })\n`);
 };
 
 /********************************** dapps deployment functions ************************************/
@@ -320,10 +320,6 @@ const logDbcps = function() {
     }
   }));
   console.log('--------------------------\n');
-  console.log('Watch pins : \n');
-  console.log('http://localhost:5004/webui');
-  console.log('http://contractus:c0n7r4c7u5@ipfs.evan.network:443/pins');
-  console.log('\n--------------------------\n');
 
   const ionicInstallation = getDbcpFromList('Ionic DApp');
 
