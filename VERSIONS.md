@@ -5,6 +5,11 @@
 ### Fixes
 ### Deprecations
 
+## Version 1.3.1
+### Fixes
+- fix angular-libs preloading initialization deadlock when loading it from ipfs
+- remove owner restore for ens deployment (already done by `@evan.network/api-blockchain-core`)
+
 ## Version 1.3.0
 ### Features
 - deployment scripts
@@ -18,8 +23,6 @@
 - only use `evan-dev-dapps-domain` when `evan-developer-mode` is true
 - fix notification.`getDAppUrlFromNotification` to remove duplicated slashes
 - fix deployment gulpfile resolve
-
-### Deprecations
 
 ## Version 1.2.0
 ### Features

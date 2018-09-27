@@ -62,26 +62,34 @@ const getDefinitionFromEns = function(ensAddress, domain) {
     if (validEnsAddress.indexOf('Qm') === 0) {
       loader = ipfsCatPromise(validEnsAddress);
     } else {
-      loader = evanGlobals.CoreRuntime.description.getDescription(validEnsAddress);
+      loader = utils.bccReady
+        .then(() => evanGlobals.CoreRuntime.description.getDescription(validEnsAddress));
     }
 
     // use api to load dbcp json from ens
      loader = loader
       .then(dbcp => {
-        try {
-          dbcp = JSON.parse(dbcp);
-        } catch(ex) { }
+        if (dbcp) {
+          try {
+            dbcp = JSON.parse(dbcp);
+          } catch(ex) { }
 
-        const combinedStringified = JSON.stringify(Object.assign(dbcp.public, dbcp.private));
+          const combinedStringified = JSON.stringify(Object.assign(dbcp.public, dbcp.private));
 
-        // set ens cache to speed up initial loading
-        ensCache[validEnsAddress] = combinedStringified;
-        window.localStorage['evan-ens-cache'] = JSON.stringify(ensCache);
-        
-        return combinedStringified;
+          // set ens cache to speed up initial loading
+          ensCache[validEnsAddress] = combinedStringified;
+          window.localStorage['evan-ens-cache'] = JSON.stringify(ensCache);
+          
+          return combinedStringified;
+        } else {
+          // if no dbcp was found, set it invalid
+          ensCache[validEnsAddress] = 'invalid';
+
+          throw new Error(`no valid dbcp on ${ validEnsAddress }`);
+        }
       });
 
-    if (ensCache[validEnsAddress]) {
+    if (ensCache[validEnsAddress] && ensCache[validEnsAddress] !== 'invalid') {
       return ensCache[validEnsAddress];
     } else {
       return loader;

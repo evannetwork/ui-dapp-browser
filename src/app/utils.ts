@@ -36,6 +36,14 @@ declare let evanGlobals: any;
  */
 export let devMode: Array<any>;
 
+/**
+ * add a bcc ready promise, so some functionallities can wait for finishing bcc has loaded
+ */
+export let setBccReady;
+export let bccReady = new Promise((resolve, reject) => {
+  setBccReady = resolve;
+});
+
 
 /**
  * Initial loading cache values
@@ -237,3 +245,4 @@ export function getDAppName(ensAddress: string) {
 
   return dappName;
 }
+
