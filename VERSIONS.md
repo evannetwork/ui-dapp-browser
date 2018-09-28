@@ -3,6 +3,8 @@
 ## Next Version
 ### Features
 ### Fixes
+- fix false prefilled ensAddress on dapp laoding
+
 ### Deprecations
 
 ## Version 1.3.1
