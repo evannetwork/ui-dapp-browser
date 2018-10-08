@@ -2,8 +2,10 @@
 
 ## Next Version
 ### Features
+- add support for overwriting dapp.origin.entrypoint using file system paths to require different files from dbcp (e.g. System.import('mydapp/myfile2!dapp-content'))
+
 ### Fixes
-- fix false prefilled ensAddress on dapp laoding
+- fix false prefilled ensAddress on dapp loading
 
 ### Deprecations
 

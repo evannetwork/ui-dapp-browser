@@ -81,6 +81,7 @@ evanGlobals.System.map['bcc'] = `bcc.${ getDomainName() }!dapp-content`;
 evanGlobals.System.map['bcc-profile'] = `bcc.${ getDomainName() }!dapp-content`;
 evanGlobals.System.map['bcc-bc'] = `bcc.${ getDomainName() }!dapp-content`;
 evanGlobals.System.map['@evan.network/api-blockchain-core'] = `bcc.${ getDomainName() }!dapp-content`;
+evanGlobals.System.map['@evan.network/dbcp'] = `bcc.${ getDomainName() }!dapp-content`;
 evanGlobals.System.map['smart-contracts'] = `smartcontracts.${ getDomainName() }!dapp-content`;
 evanGlobals.System.map['@evan.network/smart-contracts-core'] = `smartcontracts.${ getDomainName() }!dapp-content`;
 
@@ -186,7 +187,24 @@ System.originalImport = System.import;
 System.import = function(pathToLoad: string): Promise<any> {
   utils.devLog(`SystemJS import: ${ pathToLoad }`, 'verbose');
 
-  return System.originalImport(pathToLoad);
+  // if an export function with the following pattern (#***!dapp-content) was specified, replace the
+  // export function for the System.import
+  let exportFunction: any = pathToLoad.match(/#(.*)!/g);
+  if (exportFunction && exportFunction.length > 0) {
+    exportFunction = exportFunction[0].replace(/#|!/g, '');
+    pathToLoad.replace(exportFunction, '!');
+  }
+
+  return System
+    .originalImport(pathToLoad)
+    .then((result) => {
+      // if an export function is selected and available, return only this value
+      if (exportFunction && result[exportFunction]) {
+        return result[exportFunction]
+      } else {
+        return result;
+      }
+    });
 };
 
 export {

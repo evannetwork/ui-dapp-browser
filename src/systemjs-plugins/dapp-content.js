@@ -173,14 +173,21 @@ const loadSmartContracts = function(originalFetch) {
  * @return     {Promise<any>}  resolved when everything is loaded
  */
 const locateDAppContent = function(params, originalFetch) {
-  // allow multiple babel polyfill
-  const ensAddress = params.address.split('/').pop();
+  // remove the origin and leading slashes / #/
+  const clearAddress = params.address
+    .replace(window.location.origin, '')
+    .replace(/^(#\/|\/)/g, '')
+    .split('#')[0];
+  const requiredFile = clearAddress.split('/').pop();
+  const ensAddress = clearAddress.split('/')[0];
 
   let dbcpAddressToLoad = ensAddress + '!ens';
 
   // if it was already loaded, return it instantly
-  if (importCache[dbcpAddressToLoad]) {
-    return importCache[dbcpAddressToLoad];
+  const importCacheKey = dbcpAddressToLoad !== requiredFile ? dbcpAddressToLoad + requiredFile :
+    dbcpAddressToLoad; 
+  if (importCache[importCacheKey]) {
+    return importCache[importCacheKey];
   }
 
   if (ensAddress.startsWith('bcc')) {
@@ -204,11 +211,24 @@ const locateDAppContent = function(params, originalFetch) {
 
       // check for valid dbcp dapp configuration
       if (dbcp && dbcp.dapp) {
-        // load entrypoint js
-        promises.push(importIpfs(dbcp, dbcp.dapp.entrypoint, {
-          params: params,
-          originalFetch: originalFetch
-        }));
+        // use the default entrypoint if
+        //   - import dapp content was opened without an file parameter
+        //   - an required file should be loaded but not no files array exists or the file is not
+        //     included into the dbcp configuration
+        if (requiredFile === ensAddress ||
+            !dbcp.dapp.files ||
+            (dbcp.dapp.files && dbcp.dapp.files.indexOf(requiredFile) === -1)) {
+          // load entrypoint js
+          promises.push(importIpfs(dbcp, dbcp.dapp.entrypoint, {
+            params: params,
+            originalFetch: originalFetch
+          }));
+        } else {
+          promises.push(importIpfs(dbcp, requiredFile, {
+            params: params,
+            originalFetch: originalFetch
+          }));
+        }
 
         // iterate through all files to check for css files to load
         if (dbcp.dapp.files) {
@@ -223,9 +243,9 @@ const locateDAppContent = function(params, originalFetch) {
         return Promise
           .all(promises)
           .then(results => {
-            importCache[dbcpAddressToLoad] = results.pop();
+            importCache[importCacheKey] = results.pop();
 
-            return importCache[dbcpAddressToLoad];
+            return importCache[importCacheKey];
           });
       } else {
         console.error('dbcp invalid dapp');
