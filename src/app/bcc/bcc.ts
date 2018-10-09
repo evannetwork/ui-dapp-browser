@@ -314,6 +314,7 @@ export {
   getCoreOptions,
   getProfileForAccount,
   getSigner,
+  isAccountPasswordValid,
   setExchangeKeys,
   startBCC,
   updateCoreRuntime,
