@@ -40,6 +40,8 @@ import { AccountStore } from './bcc/AccountStore';
 import { config } from './config';
 import { KeyProvider, getLatestKeyProvider } from './bcc/KeyProvider';
 import { updateCoreRuntime, getCoreOptions } from './bcc/bcc';
+import * as bccHelper from './bcc/bcc';
+
 
 /**
  * is inserted when the application was bundled, used to prevent window usage
@@ -209,6 +211,7 @@ System.import = function(pathToLoad: string): Promise<any> {
 
 export {
   AccountStore,
+  bccHelper,
   config,
   core,
   CoreRuntime,

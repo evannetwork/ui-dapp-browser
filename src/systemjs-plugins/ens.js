@@ -24,7 +24,10 @@
   For more information, please contact evan GmbH at this address:
   https://evan.network/license/
 */
-
+// libraries that should be cached
+const cachableDBCPs = [
+  'angularlibs'
+];
 const utils = require('../app/utils');
 const ipfsCatPromise = require('../app/ipfs').ipfsCatPromise;
 let ensCache = { };
@@ -33,6 +36,24 @@ let ensCache = { };
 try {
   ensCache = JSON.parse(window.localStorage['evan-ens-cache']);
 } catch (ex) { }
+
+/**
+ * Should a dbcp should be cached.
+ *
+ * @param      {string}   address  ens address to check
+ * @return     {boolean}  true if it should be cached, false if not
+ */
+const shouldBeCached = function(address) {
+  const splitAddress = address.split('.');
+
+  for (let i = 1; i < splitAddress.length; i++) {
+    if (cachableDBCPs.indexOf(splitAddress.slice(0, i).join('.')) !== -1) {
+      return true;
+    }
+  }
+
+  return false;
+}
 
 /**
  * Wrap data handling to be able to switch between dev and production mode =>
@@ -57,6 +78,7 @@ const getDefinitionFromEns = function(ensAddress, domain) {
       ));
   } else {
     const validEnsAddress = ensAddress.replace(/-/g, '');
+    const cacheDbcp = shouldBeCached(validEnsAddress);
     let loader;
 
     if (validEnsAddress.indexOf('Qm') === 0) {
@@ -77,19 +99,23 @@ const getDefinitionFromEns = function(ensAddress, domain) {
           const combinedStringified = JSON.stringify(Object.assign(dbcp.public, dbcp.private));
 
           // set ens cache to speed up initial loading
-          ensCache[validEnsAddress] = combinedStringified;
-          window.localStorage['evan-ens-cache'] = JSON.stringify(ensCache);
+          if (cacheDbcp) {
+            ensCache[validEnsAddress] = combinedStringified;
+            window.localStorage['evan-ens-cache'] = JSON.stringify(ensCache);
+          }
           
           return combinedStringified;
         } else {
-          // if no dbcp was found, set it invalid
-          ensCache[validEnsAddress] = 'invalid';
+          if (cacheDbcp) {
+            // if no dbcp was found, set it invalid
+            ensCache[validEnsAddress] = 'invalid';
+          }
 
           throw new Error(`no valid dbcp on ${ validEnsAddress }`);
         }
       });
 
-    if (ensCache[validEnsAddress] && ensCache[validEnsAddress] !== 'invalid') {
+    if (cacheDbcp && ensCache[validEnsAddress] && ensCache[validEnsAddress] !== 'invalid') {
       return ensCache[validEnsAddress];
     } else {
       return loader;

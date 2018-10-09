@@ -173,9 +173,16 @@ const loadSmartContracts = function(originalFetch) {
  * @return     {Promise<any>}  resolved when everything is loaded
  */
 const locateDAppContent = function(params, originalFetch) {
+  // concadinate the window.location. origin with the correctly SystemJS parsed base url (=> remove
+  // index.html / dev.html)
+  const baseUrl = window.location.origin + (window.location.pathname
+    .split('/')
+    .slice(0, -1)
+    .join('/'));
+
   // remove the origin and leading slashes / #/
   const clearAddress = params.address
-    .replace(window.location.origin, '')
+    .replace(baseUrl, '')
     .replace(/^(#\/|\/)/g, '')
     .split('#')[0];
   const requiredFile = clearAddress.split('/').pop();
