@@ -257,3 +257,17 @@ export function getQueryParameterValue(name, url = window.location.href) {
     return decodeURIComponent(results[2].replace(/\+/g, ' '));
   }
 }
+
+/**
+ * Parse the url queryParams and return a specific parameter from it
+ *
+ * @return     {any}  all parameters with its values
+ */
+export function getQueryParameters() {
+  const urlParams: any = new URLSearchParams(window.location.search);
+  const result = { };
+
+  urlParams.forEach((value, key) => result[key] = value);
+
+  return result;
+}

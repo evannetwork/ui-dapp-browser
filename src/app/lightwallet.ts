@@ -158,6 +158,10 @@ async function getNewVault(mnemonic: string, password: string): Promise<any> {
   vault.pwDerivedKey = pwDerivedKey;
   vault.encryptionKey = getEncryptionKeyFromPassword(password);
 
+  // if the accountId was specified externally, we should load the first account to be able to run
+  // calls for this account
+  getAccounts(vault, 1);
+
   return vault;
 }
 
@@ -233,7 +237,10 @@ function setPasswordFunction(newPasswordFunction: Function) {
  * @return     {Promise<string>}  password input
  */
 async function getPassword(accountId?: string): Promise<string> {
-  if (passwordFunction) {
+  // if a password was specified over the url, use this one
+  if (evanGlobals.queryParams.password) {
+    return evanGlobals.queryParams.password;
+  } else if (passwordFunction) {
     return await passwordFunction(accountId);
   } else {
     console.error('No password function for lightwallet service set...');
@@ -247,7 +254,14 @@ async function getPassword(accountId?: string): Promise<string> {
  * @return     {Promise<any>}  unlocked vault
  */
 async function loadUnlockedVault(): Promise<any> {
-  const vault = loadVault();
+  let vault;
+
+  // if a mnemonic and a password were specified over the url, load the vault with this values
+  if (evanGlobals.queryParams.mnemonic && evanGlobals.queryParams.password) {
+    vault = await getNewVault(evanGlobals.queryParams.mnemonic, evanGlobals.queryParams.password);
+  } else {
+    vault = loadVault();
+  }
 
   if (vault && !vault.pwDerivedKey) {
     const password = await getPassword();
@@ -256,6 +270,10 @@ async function loadUnlockedVault(): Promise<any> {
     vault.pwDerivedKey = await keyFromPassword(vault, password);
     vault.encryptionKey = getEncryptionKeyFromPassword(password);
   }
+
+  // if the accountId was specified externally, we should load the first account to be able to run
+  // calls for this account
+  getAccounts(vault, 1);
 
   return vault;
 }
@@ -269,8 +287,9 @@ async function getEncryptionKey(): Promise<string> {
   // if an executor agent should be used, return the key instantly
   if (evanGlobals.agentExecutor) {
     return evanGlobals.agentExecutor.key;
+  // if the url was opened using an specific mnemonic and password, use this one!
   } else {
-    const currentProvider = window.localStorage['evan-provider'];
+    const currentProvider = evanGlobals.core.getCurrentProvider();
 
     if (currentProvider === 'internal') {
       const vault = await loadUnlockedVault();

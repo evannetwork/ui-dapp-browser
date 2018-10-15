@@ -89,16 +89,17 @@ export class KeyProvider {
    * @param      {boolean}  accountId      account id to use
    * @param      {string}   encryptionKey  encryption key for the account
    */
-  setKeysForAccount(accountId: string, encryptionKey: string) {
-    const publicMailBoxExchange = 'mailboxKeyExchange';
-    if (accountId.length === 42) {
-      accountId = this.Web3.utils.soliditySha3(accountId);
+  setKeysForAccount(accountHash: string, encryptionKey: string) {
+    const soliditySha3 = this.Web3.utils.soliditySha3;
+
+    if (accountHash.length === 42) {
+      accountHash = soliditySha3(accountHash);
     }
 
-    this.origin.keys[accountId] = encryptionKey;
-    this.origin.keys[this.Web3.utils.soliditySha3(accountId, accountId)] = encryptionKey;
+    this.origin.keys[accountHash] = encryptionKey;
+    this.origin.keys[soliditySha3(accountHash, accountHash)] = encryptionKey;
 
-    this.origin.keys[this.Web3.utils.soliditySha3(publicMailBoxExchange)] =
+    this.origin.keys[soliditySha3('mailboxKeyExchange')] =
       '346c22768f84f3050f5c94cec98349b3c5cbfa0b7315304e13647a4918ffff22';    // accX <--> mailbox edge key
   }
 

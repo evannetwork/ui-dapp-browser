@@ -33,6 +33,7 @@ import * as loading from './loading';
 import * as queue from './queue';
 import * as routing from './routing';
 import * as solc from './solc';
+import { Solc } from './solc';
 import * as utils from './utils';
 import * as notifications from './notifications';
 import * as web3Helper from './web3';
@@ -74,14 +75,18 @@ delete window['System'];
 
 // prefill bcc for systemjs plugin usage
 evanGlobals = {
-  System : System,
+  core: core,
   ipfsCatPromise: ipfs.ipfsCatPromise,
-  restIpfs: ipfs.restIpfs
+  lightwallet: lightwallet,
+  restIpfs: ipfs.restIpfs,
+  System : System,
+  queryParams: routing.getQueryParameters()
 };
 
 evanGlobals.System.map['bcc'] = `bcc.${ getDomainName() }!dapp-content`;
 evanGlobals.System.map['bcc-profile'] = `bcc.${ getDomainName() }!dapp-content`;
 evanGlobals.System.map['bcc-bc'] = `bcc.${ getDomainName() }!dapp-content`;
+evanGlobals.System.map['@evan.network/ui-dapp-browser'] = `dapp-browser!dapp-content`;
 evanGlobals.System.map['@evan.network/api-blockchain-core'] = `bcc.${ getDomainName() }!dapp-content`;
 evanGlobals.System.map['@evan.network/dbcp'] = `bcc.${ getDomainName() }!dapp-content`;
 evanGlobals.System.map['smart-contracts'] = `smartcontracts.${ getDomainName() }!dapp-content`;
@@ -230,6 +235,7 @@ export {
   queue,
   routing,
   solc,
+  Solc,
   System,
   utils,
   web3,

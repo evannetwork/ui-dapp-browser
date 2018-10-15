@@ -88,6 +88,8 @@ function logout(disabledReload?: boolean) {
 function getCurrentProvider() {
   if (agentExecutor) {
     return 'agent-executor';
+  } else if (evanGlobals.queryParams.provider) {
+    return evanGlobals.queryParams.provider;
   } else {
     const currentProvider = window.localStorage['evan-provider'];
 
@@ -147,6 +149,11 @@ function activeAccount(): string {
       break;
     }
     case 'internal': {
+      // if the url was opened using an specific accountId, use this one!
+      if (evanGlobals.queryParams.accountId) {
+        return evanGlobals.queryParams.accountId;
+      }
+
       const vault = lightwallet.loadVault();
 
       // get the first account from the vault and set it as evan-account to localStorage

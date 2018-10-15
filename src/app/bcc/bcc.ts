@@ -90,16 +90,18 @@ async function updateCoreRuntime(CoreBundle: any, SmartContracts: any): Promise<
 /**
  * Returns the existing executor or creates a new one, for the active current provider.
  *
- * @param      {any}                           CoreBundle  blockchain-core ipfs bundle
- * @param      {string}                        provider    the current selected provider that should
- *                                                         be loaded
+ * @param      {any}                           CoreBundle    blockchain-core ipfs bundle
+ * @param      {string}                        provider      the current selected provider that
+ *                                                           should be loaded
+ * @param      {AccountStore}                  accountStore  account store to use for the internal
+ *                                                           signer
  * @return     {ProfileBundle.SignerInternal}  the new Signer Object
  */
-function getSigner(CoreBundle: any, provider = core.getCurrentProvider()) {
+function getSigner(CoreBundle: any, provider = core.getCurrentProvider(), accountStore = new AccountStore()) {
   let signer;
   if (provider === 'internal') {
     signer = new CoreBundle.SignerInternal({
-      accountStore: new AccountStore(),
+      accountStore: accountStore,
       config: { },
       contractLoader: CoreBundle.CoreRuntime.contractLoader,
       web3: CoreBundle.CoreRuntime.web3,
@@ -310,7 +312,57 @@ async function isAccountPasswordValid(CoreBundle: any, accountId: string, passwo
   }
 }
 
+/**
+ * Wraps the original create default runtime bcc function to simplify key and account map
+ * management.
+ *
+ * @param      {any}     CoreBundle     blockchain-core ipfs bundle
+ * @param      {string}  accountId      account id to create the runtime for
+ * @param      {string}  encryptionKey  enryption key of the users profile
+ * @param      {string}  privateKey     account id's private key
+ * @param      {any}     config         overwrite the ui configuration with a custom config
+ * @param      {any}     web3           overwrite the CoreRuntime web3 with a new one
+ * @param      {any}     dfs            overwrite the CoreRuntime dfs with a new one
+ * @return     {any}     the new bcc defaultruntime
+ */
+async function createDefaultRuntime(
+  CoreBundle: any,
+  accountId: string,
+  encryptionKey: string,
+  privateKey: string,
+  runtimeConfig: any = JSON.parse(JSON.stringify(config)),
+  web3?: any,
+  dfs?: any
+) {
+  // fill web3 per default with the core runtime web3
+  web3 = web3 || CoreBundle.CoreRuntime.web3;
+  const soliditySha3 = web3.utils.soliditySha3;
+
+  // get accounthash for easy acces within keyConfig
+  const accountHash = soliditySha3(accountId);
+  runtimeConfig.keyConfig = { };
+  runtimeConfig.accountMap = { };
+
+  // set key config for the user accountId
+  runtimeConfig.keyConfig[accountHash] = encryptionKey;
+  runtimeConfig.keyConfig[soliditySha3(accountHash, accountHash)] = encryptionKey;
+  // set mailbox edge key
+  runtimeConfig.keyConfig[soliditySha3('mailboxKeyExchange')] =
+    '346c22768f84f3050f5c94cec98349b3c5cbfa0b7315304e13647a4918ffff22';
+
+  // set private key
+  runtimeConfig.accountMap[accountId] = privateKey;
+
+  // create the new runtime
+  return await CoreBundle.createDefaultRuntime(
+    web3,
+    dfs || CoreBundle.CoreRuntime.dfs,
+    runtimeConfig,
+  );
+}
+
 export {
+  createDefaultRuntime,
   getCoreOptions,
   getProfileForAccount,
   getSigner,
