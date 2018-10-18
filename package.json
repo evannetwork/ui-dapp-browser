@@ -28,8 +28,8 @@
     }
   },
   "dependencies": {
-    "@evan.network/api-blockchain-core": "^1.2.2",
-    "@evan.network/dbcp": "^1.3.0",
+    "@evan.network/api-blockchain-core": "^1.3.0",
+    "@evan.network/dbcp": "^1.3.1",
     "cordova-android": "^6.4.0",
     "cordova-ios": "4.5.4",
     "del": "^2.2.2",
@@ -50,7 +50,7 @@
   },
   "description": "Contractus dapp root project for building sub dapps and compiling the whole ionic project.",
   "devDependencies": {
-    "@evan.network/ui-angular-sass": "^1.2.0",
+    "@evan.network/ui-angular-sass": "^1.3.0",
     "@angular/compiler": "^5.1.0",
     "@angular/compiler-cli": "^5.0.5",
     "@angular/core": "^5.1.0",
@@ -184,5 +184,5 @@
     "serve": "gulp --cwd . --gulpfile gulp/serve.js serve",
     "serve-build": "gulp --cwd . --gulpfile gulp/serve.js serve --build"
   },
-  "version": "1.3.1"
+  "version": "1.4.0"
 }
