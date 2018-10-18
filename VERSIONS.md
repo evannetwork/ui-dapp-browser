@@ -2,6 +2,8 @@
 
 ## Next Version
 ### Features
+- remove UrlSearchParams and include own created function (was not supported in edge)
+
 ### Fixes
 ### Deprecations
 
