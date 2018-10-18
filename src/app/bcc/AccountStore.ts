@@ -34,10 +34,19 @@ import * as lightwallet from '../lightwallet';
  * @class      AccountStore (name)
  */
 export class AccountStore {
+  /**
+   * account cache
+   */
   private accounts: any;
 
-  constructor() {
+  /**
+   * overwrite the global vault with an specific one
+   */
+  private vault: any;
+
+  constructor(vault?: any) {
     this.accounts = { }
+    this.vault = vault;
   }
 
   /**
@@ -45,9 +54,8 @@ export class AccountStore {
    *
    * @return     {Promise<string>}  private key for this account
    */
-  async getPrivateKey(): Promise<string> {
-    const vault = await lightwallet.loadUnlockedVault();
-    const activeAccount = core.activeAccount();
+  async getPrivateKey(activeAccount = core.activeAccount()): Promise<string> {
+    const vault = this.vault || await lightwallet.loadUnlockedVault();
 
     this.accounts[activeAccount] = this.accounts[activeAccount] ||
       lightwallet.getPrivateKey(vault, activeAccount);

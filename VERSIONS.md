@@ -5,6 +5,20 @@
 ### Fixes
 ### Deprecations
 
+## Version 1.4.0
+### Features
+- add support for overwriting dapp.origin.entrypoint using file system paths to require different files from dbcp (e.g. `System.import('mydapp/myfile2!dapp-content')`)
+- add support for loading properties from loaded dbcp contents (e.g. `System.import('mydapp/myfile2#myProperty!dapp-content')`)
+- add `bccHelper` export to main.ts that includes basic functionalities to create profile runtimes and password checking: `getCoreOptions`, `getProfileForAccount`, `getSigner`, `setExchangeKeys`, `startBCC`, `updateCoreRuntime`
+- add `vault` parameter to `AccountStore` to be able to use it not only for the primary logged in account
+- add `accountStore` parameter to `bccHelper.getSigner` to overwrite the default one
+- add `createDefaultRuntime` function to `bccHelper` that wraps the `api-blockchain-core` createDefaultRuntime function
+- add url parameters so global `mnemonic`, `accountId`, `password`, `provider` can be overwritten
+
+### Fixes
+- fix false prefilled ensAddress on dapp loading
+- add fallback within deployment for hash <=> Hash after `addMultiple`
+
 ## Version 1.3.1
 ### Fixes
 - fix angular-libs preloading initialization deadlock when loading it from ipfs

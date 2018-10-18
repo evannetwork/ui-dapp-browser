@@ -340,7 +340,7 @@ export async function startDApp(dappEns: string, container = document.body, useD
   // do we need this?
   // setTimeout(async () => {
   if (ensDefinition.dapp && ensDefinition.dapp.entrypoint) {
-    if (!ensDefinition.origin) {
+    if (!ensDefinition.dapp.origin) {
       dappEns = `${ ensDefinition.name }.${ getDomainName() }`;
     }
 
