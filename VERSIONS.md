@@ -12,6 +12,7 @@
 
 ### Fixes
 - fix false prefilled ensAddress on dapp loading
+- add fallback within deployment for hash <=> Hash after `addMultiple`
 
 ### Deprecations
 

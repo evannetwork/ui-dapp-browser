@@ -229,7 +229,7 @@ async function deployIPFSFolder(folderName, path) {
   return new Promise((resolve, reject) => {
     runtime.dfs.remoteNode.util.addFromFs(path, { recursive: true}, (err, result) => {
       if (err) { throw err }
-      resolve(result[result.length-1].hash);
+      resolve(result[result.length-1].hash || result[result.length-1].Hash);
     })
   });
 }
