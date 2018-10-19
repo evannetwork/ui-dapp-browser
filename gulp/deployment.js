@@ -232,6 +232,20 @@ async function deployIPFSFolder(folderName, path) {
       resolve(result[result.length-1].hash || result[result.length-1].Hash);
     })
   });
+  // return new Promise((resolve, reject) => {
+  //   exec(`ipfs add -r ${ path }`, {
+
+  //   }, (err, stdout, stderr) => {
+  //     if (err) {
+  //       reject(err);
+  //     } else {
+  //       const regex = new RegExp('(Qm[^\\s]+)\\s' + folderName + '\n$', 'g');
+  //       const folderHash = regex.exec(stdout)[1];
+
+  //       resolve(folderHash);
+  //     }
+  //   })
+  // })
 }
 
 async function deployToIpns(dapp, hash, retry) {
