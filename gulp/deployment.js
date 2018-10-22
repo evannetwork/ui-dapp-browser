@@ -59,6 +59,7 @@ while (runFolder.indexOf('ui-dapp-browser', runFolder.length - 'ui-dapp-browser'
 
 // path parameters
 const configPath = path.resolve(process.argv[process.argv.indexOf('--config') + 1]);
+const advancedDeployment = process.argv.indexOf('--advanced') !== -1;
 const dappFolder = path.resolve('..');
 const runtimeFolder = path.resolve('runtime');
 const originFolder = path.resolve('runtime/external');
@@ -727,11 +728,20 @@ const deploymentMenu = async function() {
       type: 'checkbox',
       choices: [ ],
       when: (results) => {
-        if (results.deploymentType === 'specific-dapps') {
+        if (!advancedDeployment || results.deploymentType === 'specific-dapps') {
           return true;
         } else {
           return false;
         }
+      },
+      validate: (dapps) => {
+        // if no advaned deployment was selected, it could be possible, that exit was selected,
+        // so we need to stop the application
+        if (dapps.filter(dapp => dapp === 'exit').length > 0) {
+          process.exit();
+        }
+
+        return true;
       }
     },
     {
@@ -835,13 +845,41 @@ const deploymentMenu = async function() {
     questions[1].choices.push(choice);
   }
 
-  questions[0].choices.push({
-    name: 'Exit',
-    value: 'exit'
+  // sort them using parent domains
+  questions[1].choices = questions[1].choices.sort((a, b) => {
+    const reverseA = a.value.split('.').reverse();
+    const reverseB = b.value.split('.').reverse();
+
+    for (let i = 0; i < reverseA.length; i++) {
+      if (reverseB.length < i || reverseA[i] < reverseB[i]) {
+        return -1;
+      }
+
+      if (reverseA[i] > reverseB[i]) {
+        return 1;
+      }
+    }
   });
+
+  if (advancedDeployment) {
+    questions[0].choices.push({
+      name: 'Exit',
+      value: 'exit'
+    });
+  } else {
+    questions[1].choices.push(new inquirer.Separator());
+    questions[1].choices.push({
+      name: 'Exit',
+      value: 'exit'
+    });
+  }
 
   questions[0].pageSize = questions[0].choices.length;
   questions[1].pageSize = questions[1].choices.length;
+
+  if (!advancedDeployment) {
+    questions.splice(0, 1);
+  }
   
   try {
     await new Promise((resolve, reject) => {
@@ -850,9 +888,14 @@ const deploymentMenu = async function() {
       clearConsole();
       prompt(questions)
         .then(async results => {
+          // if no ionic dapp should be deployed, show only the dapps
+          if (!advancedDeployment) {
+            results.deploymentType = 'specific-dapps';
+          }
+
           clearConsole();
 
-          switch(results.deploymentType) {
+          switch (results.deploymentType) {
             case 'everything':
             case 'all-dapps': {
               await prepareDappsDeployment(dapps);
