@@ -96,6 +96,9 @@ evanGlobals.System.map['@evan.network/smart-contracts-core'] = `smartcontracts.$
  * Starts the whole dapp-browser.
  */
 export async function initializeEvanNetworkStructure(): Promise<void> {
+  // activate color themes
+  utils.activateColorTheme(utils.getColorTheme());
+
   // check if we are running in dev mode, load dev mode available modules
   await utils.setUpDevMode();
 

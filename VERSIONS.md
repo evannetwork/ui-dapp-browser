@@ -3,6 +3,8 @@
 ## Next Version
 ### Features
 - remove UrlSearchParams and include own created function (was not supported in edge)
+- support light theme
+- getColorTheme, activateColorTheme
 
 ### Fixes
 ### Deprecations
