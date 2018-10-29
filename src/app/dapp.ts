@@ -350,7 +350,7 @@ export async function startDApp(dappEns: string, container = document.body, useD
       // load the DApp and start it
       const dappModule = await evanGlobals.System.import(`${dappEns}!dapp-content`);
 
-      await dappModule.startDApp(container, ensDefinition.name);
+      await dappModule.startDApp(container, ensDefinition.name, dappEns);
     // html entrypoint => create iframe
     } else if (entrypoint.endsWith('.html')) {
       const iframe = document.createElement('iframe');
