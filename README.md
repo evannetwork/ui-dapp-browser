@@ -90,6 +90,11 @@ Have a look at the [deployment description](https://evannetwork.github.io/dev/de
 DApp-browser Files from the runtime folder will be copied into the www folder using cordova-prepare. After this, cordova dependencies will be injected into this folder and the correct cordova load options will be added to the html files.
 
 ### Android deployment
+Be sure to have the correct cordova and ionic versions installed:
+
+- cordova: 6.5.0
+- ionic: 3.20.0
+
 To create the application for Android, run the following commands:
 ```sh
 cordova-prepare-android --config pathToConfig

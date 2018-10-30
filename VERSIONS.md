@@ -5,6 +5,7 @@
 - remove UrlSearchParams and include own created function (was not supported in edge)
 - support light theme
 - getColorTheme, activateColorTheme
+- add opened dapp ens parameter to startDApp function
 
 ### Fixes
 ### Deprecations
