@@ -6,6 +6,7 @@
 - support light theme
 - getColorTheme, activateColorTheme
 - add opened dapp ens parameter to startDApp function
+- add low eve watchers
 
 ### Fixes
 ### Deprecations
