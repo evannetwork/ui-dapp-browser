@@ -67,7 +67,7 @@ async function createIndexDB(accountId: string): Promise<any> {
         openRequest.onerror = () => {
           reject(openRequest.error)
         };
-        openRequest.onsuccess = function(event) {
+        openRequest.onsuccess = (event) => {
           try {
             (<any>event.target).result
               .createObjectStore('evan-queue', {
