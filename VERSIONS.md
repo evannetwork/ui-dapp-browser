@@ -7,6 +7,7 @@
 - getColorTheme, activateColorTheme
 - add opened dapp ens parameter to startDApp function
 - add low eve watchers
+- add warning for quota limit exceeded and for index db not available
 
 ### Fixes
 ### Deprecations
