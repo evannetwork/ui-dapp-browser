@@ -2,15 +2,17 @@
 
 ## Next Version
 ### Features
+### Fixes
+### Deprecations
+
+## Version 1.5.0
+### Features
 - remove UrlSearchParams and include own created function (was not supported in edge)
 - support light theme
 - getColorTheme, activateColorTheme
 - add opened dapp ens parameter to startDApp function
 - add low eve watchers
 - add warning for quota limit exceeded and for index db not available
-
-### Fixes
-### Deprecations
 
 ## Version 1.4.0
 ### Features
