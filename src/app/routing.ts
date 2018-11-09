@@ -259,15 +259,28 @@ export function getQueryParameterValue(name, url = window.location.href) {
 }
 
 /**
- * Parse the url queryParams and return a specific parameter from it
+ * Returns a bare object of the URL's query parameters.
+ * You can pass just a query string rather than a complete URL.
+ * The default URL is the current page.
  *
  * @return     {any}  all parameters with its values
  */
 export function getQueryParameters() {
-  const urlParams: any = new URLSearchParams(window.location.search);
-  const result = { };
+  // http://stackoverflow.com/a/23946023/2407309
+  let url: string = window.location.search.split('#')[0]; // Discard fragment identifier.
+  let urlParams = {};
+  let queryString = url.split('?')[1];
 
-  urlParams.forEach((value, key) => result[key] = value);
+  if (queryString) {
+    let keyValuePairs = queryString.split('&');
 
-  return result;
+    for (let i = 0; i < keyValuePairs.length; i++) {
+      let keyValuePair = keyValuePairs[i].split('=');
+      let paramName = keyValuePair[0];
+      let paramValue = keyValuePair[1] || '';
+      urlParams[paramName] = decodeURIComponent(paramValue.replace(/\+/g, ' '));
+    }
+  }
+
+  return urlParams;
 }

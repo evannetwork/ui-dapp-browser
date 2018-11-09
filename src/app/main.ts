@@ -25,23 +25,24 @@
   https://evan.network/license/
 */
 
+import * as bccHelper from './bcc/bcc';
 import * as core from './core';
 import * as dapp from './dapp';
 import * as ipfs from './ipfs';
 import * as lightwallet from './lightwallet';
 import * as loading from './loading';
+import * as notifications from './notifications';
 import * as queue from './queue';
 import * as routing from './routing';
 import * as solc from './solc';
-import { Solc } from './solc';
 import * as utils from './utils';
-import * as notifications from './notifications';
 import * as web3Helper from './web3';
 import { AccountStore } from './bcc/AccountStore';
 import { config } from './config';
 import { KeyProvider, getLatestKeyProvider } from './bcc/KeyProvider';
+import { Solc } from './solc';
+import { startWatchers } from './watchers';
 import { updateCoreRuntime, getCoreOptions } from './bcc/bcc';
-import * as bccHelper from './bcc/bcc';
 
 
 /**
@@ -96,6 +97,9 @@ evanGlobals.System.map['@evan.network/smart-contracts-core'] = `smartcontracts.$
  * Starts the whole dapp-browser.
  */
 export async function initializeEvanNetworkStructure(): Promise<void> {
+  // activate color themes
+  utils.activateColorTheme(utils.getColorTheme());
+
   // check if we are running in dev mode, load dev mode available modules
   await utils.setUpDevMode();
 
@@ -167,6 +171,9 @@ export async function initializeEvanNetworkStructure(): Promise<void> {
 
         // add account watcher
         core.watchAccountChange();
+
+        // watch for specific frontend events (low eve, ...)
+        startWatchers();
 
         if (utils.devMode) {
           window['evanGlobals'] = evanGlobals;

@@ -246,3 +246,29 @@ export function getDAppName(ensAddress: string) {
   return dappName;
 }
 
+/**
+ * Gets the color theme.
+ *
+ * @return     {string}  the current color theme
+ */
+export function getColorTheme() {
+  return window.localStorage['evan-color-theme'] || '';
+}
+
+/**
+ * Adds the current color theme class to the body.
+ *
+ * @param      {string}  colorTheme  the color theme name (e.g. light)
+ */
+export function activateColorTheme(colorTheme: string) {
+  // remove previous evan themes
+  (<any>document.body.classList).forEach((className) => {
+    if (className.indexOf('evan') !== -1) {
+      document.body.classList.remove(className);
+    }
+  });
+
+  if (colorTheme) {
+    document.body.classList.add(`evan-${ colorTheme}`);
+  }
+}

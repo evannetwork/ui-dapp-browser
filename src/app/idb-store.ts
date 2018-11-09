@@ -25,6 +25,8 @@
   https://evan.network/license/
 */
 
+import * as utils from './utils';
+
 /**
  * IndexDB store wrapper
  *
@@ -126,10 +128,24 @@ export function get<Type>(key: IDBValidKey, store = getDefaultStore()): Promise<
  * @param      {any}          value   value to set
  * @param      {store}        store   idb store to set the value in
  */
-export function set(key: IDBValidKey, value: any, store = getDefaultStore()): Promise<void> {
-  return store._withIDBStore('readwrite', idbStore => {
-    idbStore.put(value, key);
-  });
+export async function set(key: IDBValidKey, value: any, store = getDefaultStore()): Promise<void> {
+  try {
+    const result = await store._withIDBStore('readwrite', idbStore => {
+      idbStore.put(value, key);
+    });
+
+    return result;
+  } catch (ex) {
+    if (isQuotaExceeded(ex)) {
+      utils.sendEvent('evan-warning', {
+        type: 'quota-exceeded'
+      });
+    } else {
+      utils.sendEvent('evan-warning', {
+        type: 'indexdb-not-available'
+      });
+    }
+  }
 }
 
 /**
@@ -174,4 +190,39 @@ export function keys(store: any = getDefaultStore()): Promise<IDBValidKey[]> {
       this.result.continue()
     };
   }).then(() => idbKeys);
+}
+
+/**
+ * Determines if an error is a quota exceeded error.
+ *   => http://crocodillon.com/blog/always-catch-localstorage-security-and-quota-exceeded-errors
+ *
+ * @param      {Exception}   ex      error object
+ * @return     {boolean}  True if quota exceeded, False otherwise
+ */
+function isQuotaExceeded(ex: any) {
+  let quotaExceeded = false;
+
+  if (ex) {
+    if (ex.code) {
+      switch (ex.code) {
+        case 22: {
+          quotaExceeded = true;
+          break;
+        }
+        case 1014: {
+          // Firefox
+          if (ex.name === 'NS_ERROR_DOM_QUOTA_REACHED') {
+            quotaExceeded = true;
+          }
+
+          break;
+        }
+      }
+    } else if (ex.number === -2147024882) {
+      // Internet Explorer 8
+      quotaExceeded = true;
+    }
+  }
+
+  return quotaExceeded;
 }

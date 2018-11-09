@@ -5,6 +5,15 @@
 ### Fixes
 ### Deprecations
 
+## Version 1.5.0
+### Features
+- remove UrlSearchParams and include own created function (was not supported in edge)
+- support light theme
+- getColorTheme, activateColorTheme
+- add opened dapp ens parameter to startDApp function
+- add low eve watchers
+- add warning for quota limit exceeded and for index db not available
+
 ## Version 1.4.0
 ### Features
 - add support for overwriting dapp.origin.entrypoint using file system paths to require different files from dbcp (e.g. `System.import('mydapp/myfile2!dapp-content')`)

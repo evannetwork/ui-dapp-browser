@@ -24,7 +24,6 @@
   For more information, please contact evan GmbH at this address:
   https://evan.network/license/
 */
-
 const process = {
   env: {
     ENS_ADDRESS: window.localStorage['evan-ens-address'],
@@ -34,7 +33,7 @@ const process = {
     ENS_EVENTS: window.localStorage['evan-ens-events'],
     ENS_PROFILES: window.localStorage['evan-ens-profiles'],
     ENS_MAILBOX: window.localStorage['evan-ens-mailbox'],
-  }
+  },
 };
 const config = {
   web3Provider: 'ws://localhost:8546',

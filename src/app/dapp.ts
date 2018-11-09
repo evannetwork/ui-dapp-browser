@@ -28,6 +28,7 @@
 import * as utils from './utils';
 import { config } from './config';
 import { finishDAppLoading } from './loading';
+import { watchForEveLow } from './watchers';
 
 
 /**
@@ -41,6 +42,11 @@ declare let evanGlobals: any;
 export let loadedDeps = { };
 loadedDeps[`bcc.${ getDomainName() }!dapp-content`] = true;
 loadedDeps[`smartcontracts.${ getDomainName() }!dapp-content`] = true;
+
+/**
+ * check warnings only, after the first DApp was loaded
+ */
+let firstDApp = true;
 
 /**
  * Splits an version, removes non number characters, reduce length to 3 and adds
@@ -349,8 +355,13 @@ export async function startDApp(dappEns: string, container = document.body, useD
     if (entrypoint.endsWith('.js')) {
       // load the DApp and start it
       const dappModule = await evanGlobals.System.import(`${dappEns}!dapp-content`);
+      await dappModule.startDApp(container, ensDefinition.name, dappEns);
 
-      await dappModule.startDApp(container, ensDefinition.name);
+      // check warnings, after first DApp was opened
+      if (firstDApp) {
+        firstDApp = false;
+        setTimeout(() => watchForEveLow(), 3000);
+      }
     // html entrypoint => create iframe
     } else if (entrypoint.endsWith('.html')) {
       const iframe = document.createElement('iframe');
