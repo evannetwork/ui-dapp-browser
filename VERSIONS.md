@@ -3,6 +3,8 @@
 ## Next Version
 ### Features
 ### Fixes
+- remove `classList` usage for `activateTheme` function to fix older versions of edge browsers
+
 ### Deprecations
 
 ## Version 1.5.0
