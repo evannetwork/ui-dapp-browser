@@ -5,6 +5,10 @@
 ### Fixes
 ### Deprecations
 
+## Version 1.5.2
+### Fixes
+- fix deployment: initialize dfs creation using accountStore of deployment account
+
 ## Version 1.5.1
 ### Fixes
 - remove `classList` usage for `activateTheme` function to fix older versions of edge browsers
