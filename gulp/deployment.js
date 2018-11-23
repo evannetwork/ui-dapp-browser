@@ -48,7 +48,11 @@ const Web3 = require('web3');
 const gulp = require('gulp');
 
 // blockchain-core / DBCP stuff
-const { Ipfs, createDefaultRuntime, } = require('@evan.network/api-blockchain-core');
+const {
+  AccountStore,
+  createDefaultRuntime,
+  Ipfs,
+} = require('@evan.network/api-blockchain-core');
 
 // search for root ui-dapp-browser path
 let runFolder = process.cwd();
@@ -143,9 +147,15 @@ async function createRuntime() {
   }
 
   // initialize dependencies
+  const accountId = Object.keys(config.runtimeConfig.accountMap)[0];
   const web3 = new Web3();
   web3.setProvider(new web3.providers.WebsocketProvider(config.runtimeConfig.web3Provider));
-  const dfs = new Ipfs({ remoteNode: new IpfsApi(config.runtimeConfig.ipfs), });
+  const dfs = new Ipfs({
+    accountId: accountId,
+    accountStore: new AccountStore({ accounts: config.runtimeConfig.accountMap, }),
+    remoteNode: new IpfsApi(config.runtimeConfig.ipfs),
+    web3: web3,
+  });
 
   return await createDefaultRuntime(web3, dfs, { accountMap: config.runtimeConfig.accountMap, });
 }
