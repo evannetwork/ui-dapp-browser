@@ -262,13 +262,14 @@ export function getColorTheme() {
  */
 export function activateColorTheme(colorTheme: string) {
   // remove previous evan themes
-  (<any>document.body.classList).forEach((className) => {
+  const splitClassName = document.body.className.split(' ');
+  splitClassName.forEach((className) => {
     if (className.indexOf('evan') !== -1) {
-      document.body.classList.remove(className);
+      document.body.className = document.body.className.replace(className, '');
     }
   });
 
   if (colorTheme) {
-    document.body.classList.add(`evan-${ colorTheme}`);
+    document.body.className += ` evan-${ colorTheme }`;
   }
 }

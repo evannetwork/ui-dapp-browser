@@ -5,6 +5,10 @@
 ### Fixes
 ### Deprecations
 
+## Version 1.5.1
+### Fixes
+- remove `classList` usage for `activateTheme` function to fix older versions of edge browsers
+
 ## Version 1.5.0
 ### Features
 - remove UrlSearchParams and include own created function (was not supported in edge)
