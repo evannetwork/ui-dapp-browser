@@ -29,7 +29,7 @@
   },
   "dependencies": {
     "@evan.network/api-blockchain-core": "^1.4.0",
-    "@evan.network/dbcp": "^1.4.1",
+    "@evan.network/dbcp": "^1.4.2",
     "cordova-android": "^6.4.0",
     "cordova-ios": "4.5.4",
     "del": "^2.2.2",

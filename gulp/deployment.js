@@ -237,26 +237,26 @@ const pinToIPFSContractus = function(ipfsHash) {
  * @param {string} path         Path thath should be deployed (including folderName)
  */
 async function deployIPFSFolder(folderName, path) {
-  return new Promise((resolve, reject) => {
-    runtime.dfs.remoteNode.util.addFromFs(path, { recursive: true}, (err, result) => {
-      if (err) { throw err }
-      resolve(result[result.length-1].hash || result[result.length-1].Hash);
-    })
-  });
   // return new Promise((resolve, reject) => {
-  //   exec(`ipfs add -r ${ path }`, {
-
-  //   }, (err, stdout, stderr) => {
-  //     if (err) {
-  //       reject(err);
-  //     } else {
-  //       const regex = new RegExp('(Qm[^\\s]+)\\s' + folderName + '\n$', 'g');
-  //       const folderHash = regex.exec(stdout)[1];
-
-  //       resolve(folderHash);
-  //     }
+  //   runtime.dfs.remoteNode.util.addFromFs(path, { recursive: true}, (err, result) => {
+  //     if (err) { throw err }
+  //     resolve(result[result.length-1].hash || result[result.length-1].Hash);
   //   })
-  // })
+  // });
+  return new Promise((resolve, reject) => {
+    exec(`ipfs add -r ${ path }`, {
+
+    }, (err, stdout, stderr) => {
+      if (err) {
+        reject(err);
+      } else {
+        const regex = new RegExp('(Qm[^\\s]+)\\s' + folderName + '\n$', 'g');
+        const folderHash = regex.exec(stdout)[1];
+
+        resolve(folderHash);
+      }
+    })
+  })
 }
 
 async function deployToIpns(dapp, hash, retry) {
