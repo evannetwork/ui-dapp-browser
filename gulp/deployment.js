@@ -337,12 +337,20 @@ const prepareDappsDeployment = function(dapps) {
 const replaceUmlauts = function() {
   return new Promise(resolve => {
     gulp
-      .src(`${ dappDeploymentFolder }/**/*`)
+      .src([
+        `${ dappDeploymentFolder }/**/*.js`,
+        `${ dappDeploymentFolder }/**/*.css`
+      ])
       // replace german umlauts
-      .pipe(replace(/Ä/g, '\\u00c4')).pipe(replace(/ä/g, '\\u00e4'))        
+      .pipe(replace(/Ä/g, '\\u00c4')).pipe(replace(/ä/g, '\\u00e4'))
       .pipe(replace(/Ö/g, '\\u00d6')).pipe(replace(/ö/g, '\\u00f6'))
       .pipe(replace(/Ü/g, '\\u00dc')).pipe(replace(/ü/g, '\\u00fc'))
       .pipe(replace(/ß/g, '\\u00df'))
+
+      // replace weird stuff in angular-libs => gulp-uglify will transform special character encodes
+      // to special characters and the ui will crash
+      .pipe(replace('new RegExp("[^" + WS_CHARS + "]")', '/[^ \\f\\n\\r\\t\\v\\u1680\\u180e\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000\\ufeff]/'))
+      .pipe(replace('new RegExp("[" + WS_CHARS + "]{2,}", \'g\')', '/[ \\f\\n\\r\\t\\v\\u1680\\u180e\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000\\ufeff]{2,}/g'))
       .pipe(gulp.dest(`${ dappDeploymentFolder }`))
       .on('end', () => {
         resolve();
