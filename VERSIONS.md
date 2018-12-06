@@ -2,6 +2,7 @@
 
 ## Next Version
 ### Features
+- add ipfs identification header to enable future ipfs payments
 ### Fixes
 ### Deprecations
 

@@ -50,7 +50,7 @@ let internalWeb3;
 async function getCoreOptions(CoreBundle: any, SmartContracts: any, provider?: string): Promise<any> {
   const coreOptions: any = {
     config: config,
-    dfsRemoteNode: CoreBundle.IpfsRemoteConstructor(ipfsConfig),
+    dfsConfig: ipfsConfig,
     ipfsCache: new IPFSCache(),
     solc: new Solc(SmartContracts),
   };
