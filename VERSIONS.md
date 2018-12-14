@@ -3,7 +3,11 @@
 ## Next Version
 ### Features
 - add ipfs identification header to enable future ipfs payments
+- use web3 1.0.0-beta.37
+
 ### Fixes
+- disable angular-libs preload, so it won't load duplicated files
+
 ### Deprecations
 
 ## Version 1.5.2

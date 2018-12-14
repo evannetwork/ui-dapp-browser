@@ -108,7 +108,7 @@ export async function initializeEvanNetworkStructure(): Promise<void> {
 
   // check if angular-libs are already cached as the latest version => load it directly from ipfs
   // simoultaniously to bcc
-  const preloadAngular = dapp.preloadAngularLibs();
+  // const preloadAngular = dapp.preloadAngularLibs();
 
   // load smart-contracts and blockchain-core minimal setup for accessing ens from ipfs
   Promise
@@ -145,7 +145,7 @@ export async function initializeEvanNetworkStructure(): Promise<void> {
         window['Promise'] = zoneJSPromise;
 
         // wait for device ready event so we can load notifications
-        await preloadAngular;
+        // await preloadAngular;
         await utils.onDeviceReady();
 
         // initialize queue
