@@ -28,8 +28,8 @@
     }
   },
   "dependencies": {
-    "@evan.network/api-blockchain-core": "^1.4.0",
-    "@evan.network/dbcp": "^1.4.1",
+    "@evan.network/api-blockchain-core": "^1.6.0",
+    "@evan.network/dbcp": "^1.4.3",
     "cordova-android": "^6.4.0",
     "cordova-ios": "4.5.4",
     "del": "^2.2.2",
@@ -50,12 +50,12 @@
   },
   "description": "Contractus dapp root project for building sub dapps and compiling the whole ionic project.",
   "devDependencies": {
-    "@evan.network/ui-angular-sass": "^1.5.0",
     "@angular/compiler": "^5.1.0",
     "@angular/compiler-cli": "^5.0.5",
     "@angular/core": "^5.1.0",
     "@compodoc/compodoc": "^1.0.5",
     "@compodoc/gulp-compodoc": "0.0.8",
+    "@evan.network/ui-angular-sass": "^1.6.0",
     "@ionic-native/camera": "^4.7.0",
     "@ionic-native/file": "^4.7.0",
     "@ionic-native/file-path": "^4.7.0",
@@ -130,26 +130,7 @@
     "tsc": "^1.20150623.0",
     "tslint": "^5.7.0",
     "typescript": "^3.1.1",
-    "web3": "1.0.0-beta.27",
-    "web3-bzz": "1.0.0-beta.27",
-    "web3-core": "1.0.0-beta.27",
-    "web3-core-helpers": "1.0.0-beta.27",
-    "web3-core-method": "1.0.0-beta.27",
-    "web3-core-promievent": "1.0.0-beta.27",
-    "web3-core-requestmanager": "1.0.0-beta.27",
-    "web3-core-subscriptions": "1.0.0-beta.27",
-    "web3-eth": "1.0.0-beta.27",
-    "web3-eth-abi": "1.0.0-beta.27",
-    "web3-eth-accounts": "1.0.0-beta.27",
-    "web3-eth-contract": "1.0.0-beta.27",
-    "web3-eth-iban": "1.0.0-beta.27",
-    "web3-eth-personal": "1.0.0-beta.27",
-    "web3-net": "1.0.0-beta.27",
-    "web3-providers-http": "1.0.0-beta.27",
-    "web3-providers-ipc": "1.0.0-beta.27",
-    "web3-providers-ws": "1.0.0-beta.27",
-    "web3-shh": "1.0.0-beta.27",
-    "web3-utils": "1.0.0-beta.27"
+    "web3": "1.0.0-beta.37"
   },
   "homepage": "https://evannetwork.github.io/",
   "keywords": [
@@ -184,5 +165,5 @@
     "serve": "gulp --cwd . --gulpfile gulp/serve.js serve",
     "serve-build": "gulp --cwd . --gulpfile gulp/serve.js serve --build"
   },
-  "version": "1.5.2"
+  "version": "1.6.0"
 }

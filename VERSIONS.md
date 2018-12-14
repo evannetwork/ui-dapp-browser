@@ -5,6 +5,14 @@
 ### Fixes
 ### Deprecations
 
+## Version 1.6.0
+### Features
+- add ipfs identification header to enable future ipfs payments
+- use web3 1.0.0-beta.37
+
+### Fixes
+- disable angular-libs preload, so it won't load duplicated files
+
 ## Version 1.5.2
 ### Fixes
 - fix deployment: initialize dfs creation using accountStore of deployment account

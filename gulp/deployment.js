@@ -237,26 +237,26 @@ const pinToIPFSContractus = function(ipfsHash) {
  * @param {string} path         Path thath should be deployed (including folderName)
  */
 async function deployIPFSFolder(folderName, path) {
-  return new Promise((resolve, reject) => {
-    runtime.dfs.remoteNode.util.addFromFs(path, { recursive: true}, (err, result) => {
-      if (err) { throw err }
-      resolve(result[result.length-1].hash || result[result.length-1].Hash);
-    })
-  });
   // return new Promise((resolve, reject) => {
-  //   exec(`ipfs add -r ${ path }`, {
-
-  //   }, (err, stdout, stderr) => {
-  //     if (err) {
-  //       reject(err);
-  //     } else {
-  //       const regex = new RegExp('(Qm[^\\s]+)\\s' + folderName + '\n$', 'g');
-  //       const folderHash = regex.exec(stdout)[1];
-
-  //       resolve(folderHash);
-  //     }
+  //   runtime.dfs.remoteNode.util.addFromFs(path, { recursive: true}, (err, result) => {
+  //     if (err) { throw err }
+  //     resolve(result[result.length-1].hash || result[result.length-1].Hash);
   //   })
-  // })
+  // });
+  return new Promise((resolve, reject) => {
+    exec(`ipfs add -r ${ path }`, {
+
+    }, (err, stdout, stderr) => {
+      if (err) {
+        reject(err);
+      } else {
+        const regex = new RegExp('(Qm[^\\s]+)\\s' + folderName + '\n$', 'g');
+        const folderHash = regex.exec(stdout)[1];
+
+        resolve(folderHash);
+      }
+    })
+  })
 }
 
 async function deployToIpns(dapp, hash, retry) {
@@ -337,12 +337,20 @@ const prepareDappsDeployment = function(dapps) {
 const replaceUmlauts = function() {
   return new Promise(resolve => {
     gulp
-      .src(`${ dappDeploymentFolder }/**/*`)
+      .src([
+        `${ dappDeploymentFolder }/**/*.js`,
+        `${ dappDeploymentFolder }/**/*.css`
+      ])
       // replace german umlauts
-      .pipe(replace(/Ä/g, '\\u00c4')).pipe(replace(/ä/g, '\\u00e4'))        
+      .pipe(replace(/Ä/g, '\\u00c4')).pipe(replace(/ä/g, '\\u00e4'))
       .pipe(replace(/Ö/g, '\\u00d6')).pipe(replace(/ö/g, '\\u00f6'))
       .pipe(replace(/Ü/g, '\\u00dc')).pipe(replace(/ü/g, '\\u00fc'))
       .pipe(replace(/ß/g, '\\u00df'))
+
+      // replace weird stuff in angular-libs => gulp-uglify will transform special character encodes
+      // to special characters and the ui will crash
+      .pipe(replace('new RegExp("[^" + WS_CHARS + "]")', '/[^ \\f\\n\\r\\t\\v\\u1680\\u180e\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000\\ufeff]/'))
+      .pipe(replace('new RegExp("[" + WS_CHARS + "]{2,}", \'g\')', '/[ \\f\\n\\r\\t\\v\\u1680\\u180e\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000\\ufeff]{2,}/g'))
       .pipe(gulp.dest(`${ dappDeploymentFolder }`))
       .on('end', () => {
         resolve();
