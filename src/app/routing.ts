@@ -265,9 +265,8 @@ export function getQueryParameterValue(name, url = window.location.href) {
  *
  * @return     {any}  all parameters with its values
  */
-export function getQueryParameters() {
+export function getQueryParameters(url: string = window.location.search.split('#')[0]) {
   // http://stackoverflow.com/a/23946023/2407309
-  let url: string = window.location.search.split('#')[0]; // Discard fragment identifier.
   let urlParams = {};
   let queryString = url.split('?')[1];
 

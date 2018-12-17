@@ -5,6 +5,10 @@
 ### Fixes
 ### Deprecations
 
+## Version 1.6.1
+### Features
+- enhance `routing.getQueryParameters` to be able to overwrite the url
+
 ## Version 1.6.0
 ### Features
 - add ipfs identification header to enable future ipfs payments
