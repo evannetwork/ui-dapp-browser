@@ -5,6 +5,10 @@
 ### Fixes
 ### Deprecations
 
+## Version 1.6.2
+### Features
+- fix npmignore
+
 ## Version 1.6.1
 ### Features
 - enhance `routing.getQueryParameters` to be able to overwrite the url
