@@ -2,6 +2,8 @@
 
 ## Next Version
 ### Features
+- enhance `routing.getQueryParameters` to be able to overwrite the url
+
 ### Fixes
 ### Deprecations
 

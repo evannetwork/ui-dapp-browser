@@ -3,14 +3,15 @@
 .csscomb.json
 .editorconfig
 config.xml
+deployment/
 flat-icons/
 ionic.config.json
+platforms/
+plugins/
 resources/
 runtime/external/*
 src/
 systemjs.config.js
 tsconfig.json
 tslint.json
-platforms/
-plugins/
 www/
