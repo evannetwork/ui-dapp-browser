@@ -237,26 +237,26 @@ const pinToIPFSContractus = function(ipfsHash) {
  * @param {string} path         Path thath should be deployed (including folderName)
  */
 async function deployIPFSFolder(folderName, path) {
-  // return new Promise((resolve, reject) => {
-  //   runtime.dfs.remoteNode.util.addFromFs(path, { recursive: true}, (err, result) => {
-  //     if (err) { throw err }
-  //     resolve(result[result.length-1].hash || result[result.length-1].Hash);
-  //   })
-  // });
   return new Promise((resolve, reject) => {
-    exec(`ipfs add -r ${ path }`, {
-
-    }, (err, stdout, stderr) => {
-      if (err) {
-        reject(err);
-      } else {
-        const regex = new RegExp('(Qm[^\\s]+)\\s' + folderName + '\n$', 'g');
-        const folderHash = regex.exec(stdout)[1];
-
-        resolve(folderHash);
-      }
+    runtime.dfs.remoteNode.util.addFromFs(path, { recursive: true}, (err, result) => {
+      if (err) { throw err }
+      resolve(result[result.length-1].hash || result[result.length-1].Hash);
     })
-  })
+  });
+  // return new Promise((resolve, reject) => {
+  //   exec(`ipfs add -r ${ path }`, {
+
+  //   }, (err, stdout, stderr) => {
+  //     if (err) {
+  //       reject(err);
+  //     } else {
+  //       const regex = new RegExp('(Qm[^\\s]+)\\s' + folderName + '\n$', 'g');
+  //       const folderHash = regex.exec(stdout)[1];
+
+  //       resolve(folderHash);
+  //     }
+  //   })
+  // })
 }
 
 async function deployToIpns(dapp, hash, retry) {
@@ -265,32 +265,32 @@ async function deployToIpns(dapp, hash, retry) {
   }
 
   console.log(`\n\nStart ipns deployment: ${ dapp } : ${ hash }`);
-  // await new Promise((resolve, reject) => {
-  //   exec(`ipfs key gen --type=rsa --size=2048 ${ ipnsPrivateKeys[dapp] }`, {
-
-  //   }, (err, stdout, stderr) => {
-  //     resolve(stdout);
-  //   })
-  // })
-
   await new Promise((resolve, reject) => {
-    console.log(`Publish to ipns: ${ dapp } : ${ hash }`);
+    exec(`ipfs key gen --type=rsa --size=2048 ${ ipnsPrivateKeys[dapp] }`, {
 
-    exec(`ipfs name publish --key=${ ipnsPrivateKeys[dapp] } --lifetime=8760h /ipfs/${ hash }`, {
-
-    }, async (err, stdout, stderr) => {
-      console.log('ipfs name publish');
-      console.log(err);
-      console.log(stdout);
-      console.log(stderr);
-
-      if (err) {
-        reject(err);
-      } else {
-        resolve();
-      }
+    }, (err, stdout, stderr) => {
+      resolve(stdout);
     })
   })
+
+  // await new Promise((resolve, reject) => {
+  //   console.log(`Publish to ipns: ${ dapp } : ${ hash }`);
+
+  //   exec(`ipfs name publish --key=${ ipnsPrivateKeys[dapp] } --lifetime=8760h /ipfs/${ hash }`, {
+
+  //   }, async (err, stdout, stderr) => {
+  //     console.log('ipfs name publish');
+  //     console.log(err);
+  //     console.log(stdout);
+  //     console.log(stderr);
+
+  //     if (err) {
+  //       reject(err);
+  //     } else {
+  //       resolve();
+  //     }
+  //   })
+  // })
 }
 
 keyPressToContinue = async function() {
