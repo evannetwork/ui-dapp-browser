@@ -165,5 +165,5 @@
     "serve": "gulp --cwd . --gulpfile gulp/serve.js serve",
     "serve-build": "gulp --cwd . --gulpfile gulp/serve.js serve --build"
   },
-  "version": "1.6.2"
+  "version": "1.6.3"
 }
