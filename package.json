@@ -41,7 +41,6 @@
     "inquirer": "^5.1.0",
     "ionic-angular": "^3.9.2",
     "ionic-plugin-keyboard": "^2.2.1",
-    "ipfs": "^0.27.7",
     "ipfs-api": "^26.1.2",
     "node-sass": "^4.5.2",
     "node-sass-tilde-importer": "^1.0.0",
