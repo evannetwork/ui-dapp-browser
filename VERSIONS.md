@@ -5,6 +5,10 @@
 ### Fixes
 ### Deprecations
 
+## Version 1.6.3
+### Features
+- use correct remote ipfs deployment node
+
 ## Version 1.6.2
 ### Features
 - fix npmignore
