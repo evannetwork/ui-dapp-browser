@@ -70,6 +70,7 @@ const originFolder = path.resolve('runtime/external');
 const dappDeploymentFolder = path.resolve('deployment');
 const platformFolder = path.resolve('platforms');
 const ionicDeploymentFolder = path.resolve('www');
+const licensesFolder = path.resolve('licenses');
 
 // globals
 let config;
@@ -107,21 +108,23 @@ let dbcps = [
 ];
 
 const ipnsPrivateKeys = {
-  dappbrowser: 'evan.network-dapp-browser',
   bcc: 'evan.network-blockchain-core',
-  smartcontracts: 'evan.network-smart-contracts',
   bccdocs: 'evan.network-bccdocs',
+  dappbrowser: 'evan.network-dapp-browser',
+  dbcpdocs: 'evan.network-dbcpdocs',
+  licenses: 'evan.network-licenses',
+  smartcontracts: 'evan.network-smart-contracts',
   uidocs: 'evan.network-uidocs',
-  dbcpdocs: 'evan.network-dbcpdocs'
 };
 
 const ipnsValues = {
-  dappbrowser: 'QmeaaYgC38Ai993NUKbgvfBw11mrmK9THb6GtR48TmcsGj',
   bcc: 'Qme9gmKpueriR7qMH5SNW3De3b9AFBkUGvFMS8ve1SuYBy',
-  smartcontracts: 'QmRMz7yzMqjbEqXNdcmqk2WMFcXtpY41Nt9CqsLwMgkF43',
   bccdocs: 'QmYmsPTdPPDLig6gKB1wu1De4KJtTqAXFLF1498umYs4M6',
+  dappbrowser: 'QmeaaYgC38Ai993NUKbgvfBw11mrmK9THb6GtR48TmcsGj',
+  dbcpdocs: 'QmSXPThSm6u3BDE1X4C9QofFfcNH86cCWAR1W5Sqe9VWKn',
+  licenses: 'QmT1FwnYyURjLj7nKMwEuTPUBc5uJ6z1zAVsYnKfUL1X1q',
+  smartcontracts: 'QmRMz7yzMqjbEqXNdcmqk2WMFcXtpY41Nt9CqsLwMgkF43',
   uidocs: 'QmReXE5YkiXviaHNG1ASfY6fFhEoiDKuSkgY4hxgZD9Gm8',
-  dbcpdocs: 'QmSXPThSm6u3BDE1X4C9QofFfcNH86cCWAR1W5Sqe9VWKn'
 };
 
 // version mapping for version bump select
@@ -273,24 +276,24 @@ async function deployToIpns(dapp, hash, retry) {
     })
   })
 
-  // await new Promise((resolve, reject) => {
-  //   console.log(`Publish to ipns: ${ dapp } : ${ hash }`);
+  await new Promise((resolve, reject) => {
+    console.log(`Publish to ipns: ${ dapp } : ${ hash }`);
 
-  //   exec(`ipfs name publish --key=${ ipnsPrivateKeys[dapp] } --lifetime=8760h /ipfs/${ hash }`, {
+    exec(`ipfs name publish --key=${ ipnsPrivateKeys[dapp] } --lifetime=8760h /ipfs/${ hash }`, {
 
-  //   }, async (err, stdout, stderr) => {
-  //     console.log('ipfs name publish');
-  //     console.log(err);
-  //     console.log(stdout);
-  //     console.log(stderr);
+    }, async (err, stdout, stderr) => {
+      console.log('ipfs name publish');
+      console.log(err);
+      console.log(stdout);
+      console.log(stderr);
 
-  //     if (err) {
-  //       reject(err);
-  //     } else {
-  //       resolve();
-  //     }
-  //   })
-  // })
+      if (err) {
+        reject(err);
+      } else {
+        resolve();
+      }
+    })
+  })
 }
 
 keyPressToContinue = async function() {
@@ -562,9 +565,6 @@ const loadDbcps = async function(externals) {
 
 /********************************** ionic functions ***********************************************/
 prepareIonicDeploy = async function () {
-  const bcc = getDbcpFromList('bcc');
-  const smartcontracts = getDbcpFromList('smartcontracts');
-
   await del.sync(`${ionicDeploymentFolder}`, { force: true });
 
   await new Promise(resolve => gulp
@@ -630,7 +630,6 @@ const ionicDeploy = async function (version) {
   const folderHash = await deployIPFSFolder('www', ionicDeploymentFolder);
 
   await pinToIPFSContractus(folderHash);
-
   for (let file of dappBrowserFiles) {
     await pinToIPFSContractus(`${ folderHash }/${ file }`);
   }
@@ -638,10 +637,31 @@ const ionicDeploy = async function (version) {
   await deployToIpns('dappbrowser', folderHash);
 
   addDbcpToList({
-    name: 'Ionic DApp',
+    name: 'ionic-dapp._evan',
+    version: '-.-.-',
     dapp: {
       origin: folderHash,
-      ipns: 'QmeaaYgC38Ai993NUKbgvfBw11mrmK9THb6GtR48TmcsGj'
+      ipns: ipnsValues.dappbrowser
+    }
+  });
+};
+
+const licensesDeploy = async function() {
+  const folderHash = await deployIPFSFolder('licenses', licensesFolder);
+
+  await pinToIPFSContractus(folderHash);
+  for (let file of [ 'AGPL-3.0-only.txt', 'Apache-2.0.txt' ]) {
+    await pinToIPFSContractus(`${ folderHash }/${ file }`);
+  }
+
+  await deployToIpns('licenses', folderHash);
+
+  addDbcpToList({
+    name: 'licenses._evan',
+    version: '-.-.-',
+    dapp: {
+      origin: folderHash,
+      ipns: ipnsValues.dappbrowser
     }
   });
 };
@@ -734,45 +754,36 @@ const deploymentMenu = async function() {
   if (!initialized) {
     await initializeDBCPs(dapps);
   }
+
+  if (advancedDeployment) {
+    dapps.push('ionic-dapp._evan');
+    dapps.push('licenses._evan');
+
+    dbcps.push({
+      name: 'ionic-dapp._evan',
+      version: '-.-.-',
+      dapp: {
+        origin: '',
+        ipns: ipnsValues.dappbrowser
+      }
+    });
+
+    dbcps.push({
+      name: 'licenses._evan',
+      version: '-.-.-',
+      dapp: {
+        origin: '',
+        ipns: ipnsValues.licenses
+      }
+    });
+  }
   
   const questions = [
-    {
-      name: 'deploymentType',
-      message: `What do you want to deploy? (${ deploymentDomain })`,
-      type: 'list',
-      choices: [
-        new inquirer.Separator(),
-        {
-          name: 'All DApps & Ionic DApp',
-          value: 'everything',
-        },
-        {
-          name: 'All DApps',
-          value: 'all-dapps',
-        },
-        {
-          name: 'Ionic DApp',
-          value: 'ionic-dapp',
-        },
-        {
-          name: 'Specific DApps',
-          value: 'specific-dapps',
-        },
-        new inquirer.Separator(),
-      ]
-    },
     {
       name: 'dapps',
       message: `Whichs DApps do you want to deploy? (${ deploymentDomain })`,
       type: 'checkbox',
       choices: [ ],
-      when: (results) => {
-        if (!advancedDeployment || results.deploymentType === 'specific-dapps') {
-          return true;
-        } else {
-          return false;
-        }
-      },
       validate: (dapps) => {
         // if no advaned deployment was selected, it could be possible, that exit was selected,
         // so we need to stop the application
@@ -848,17 +859,6 @@ const deploymentMenu = async function() {
     }
   });
 
-  questions[0].choices.forEach((choice) => {
-    if (choice.name) {
-      // fill ui choice name until the longest dappname is reached
-      while (choice.name.length < dappNameLength) {
-        choice.name = choice.name + ' ';
-      }
-
-      choice.name = choice.name + '.' + deploymentDomain;
-    }
-  });
-
   // add choices for dapps
   for (let i = 0; i < dapps.length; i++) {
     const choice = {
@@ -876,16 +876,16 @@ const deploymentMenu = async function() {
     // search for loaded dbcps and add the verison to the display
     const foundDBCP = dbcps.filter(desc => desc.name === dapps[i]);
     if (foundDBCP.length > 0) {
-      choice.name = choice.name + ` (${ foundDBCP[0].version }) - ${ foundDBCP[0].dapp.origin }`;
+      choice.name = ' ' + choice.name + ` (${ foundDBCP[0].version }) - ${ foundDBCP[0].dapp.origin }`;
     } else {
-      choice.name = choice.name + ` (not deployed)`;
+      choice.name = ' ' + choice.name + ` (not deployed)`;
     }
 
-    questions[1].choices.push(choice);
+    questions[0].choices.push(choice);
   }
 
   // sort them using parent domains
-  questions[1].choices = questions[1].choices.sort((a, b) => {
+  questions[0].choices = questions[0].choices.sort((a, b) => {
     const reverseA = a.value.split('.').reverse();
     const reverseB = b.value.split('.').reverse();
 
@@ -900,25 +900,13 @@ const deploymentMenu = async function() {
     }
   });
 
-  if (advancedDeployment) {
-    questions[0].choices.push({
-      name: 'Exit',
-      value: 'exit'
-    });
-  } else {
-    questions[1].choices.push(new inquirer.Separator());
-    questions[1].choices.push({
-      name: 'Exit',
-      value: 'exit'
-    });
-  }
+  questions[0].choices.push(new inquirer.Separator());
+  questions[0].choices.push({
+    name: ' Exit',
+    value: 'exit'
+  });
 
   questions[0].pageSize = questions[0].choices.length;
-  questions[1].pageSize = questions[1].choices.length;
-
-  if (!advancedDeployment) {
-    questions.splice(0, 1);
-  }
   
   try {
     await new Promise((resolve, reject) => {
@@ -927,65 +915,52 @@ const deploymentMenu = async function() {
       clearConsole();
       prompt(questions)
         .then(async results => {
-          // if no ionic dapp should be deployed, show only the dapps
-          if (!advancedDeployment) {
-            results.deploymentType = 'specific-dapps';
-          }
-
           clearConsole();
 
-          switch (results.deploymentType) {
-            case 'everything':
-            case 'all-dapps': {
-              await prepareDappsDeployment(dapps);
+          // stop the program, when exit was selected
+          if (results.dapps.indexOf('exit') !== -1) {
+            process.exit();
+          }
 
-              if (results.uglify) {
-                await uglify(results.deploymentType, dappDeploymentFolder);
-              }
+          // ionic dapp deployment
+          const ionicDAppIndex = results.dapps.indexOf('ionic-dapp._evan');
+          if (ionicDAppIndex !== -1) {
+            // remove ionic-dapp._evan as normal dapp, would break the deployment process
+            results.dapps.splice(ionicDAppIndex, 1);
 
-              await replaceUmlauts();
-      
-              if (enableDeploy) {
-                await deployDApps(dapps, results.version);
-              }
+            await prepareIonicDeploy();
 
-              if (results.deploymentType !=='everything') {
-                break;
-              }
+            if (results.uglify) {
+              await uglify(results.deploymentType, ionicDeploymentFolder);
             }
-            case 'ionic-dapp': {
-              await prepareIonicDeploy();
 
-              if (results.uglify) {
-                await uglify(results.deploymentType, ionicDeploymentFolder);
-              }
+            await replaceUmlauts();
 
-              await replaceUmlauts();
-
-              if (enableDeploy) {
-                await ionicDeploy(results.version);
-              }
-      
-              break;
+            if (enableDeploy) {
+              await ionicDeploy(results.version);
             }
-            case 'exit': {
-              process.exit();
-            }
-            default: {
-              await prepareDappsDeployment(results.dapps);
-              
-              if (results.uglify) {
-                await uglify(results.deploymentType, dappDeploymentFolder);
-              }
+          }
 
-              await replaceUmlauts();
-      
-              if (enableDeploy) {
-                await deployDApps(results.dapps, results.version);
-              }
-      
-              break;
-            }
+          // check if licenses should be deployed
+          const licensesIndex = results.dapps.indexOf('licenses._evan');
+          if (licensesIndex !== -1) {
+            // remove licenses._evan as normal dapp, would break the deployment process
+            results.dapps.splice(ionicDAppIndex, 1);
+
+            await licensesDeploy();
+          }
+
+          // start deployment of dapps
+          await prepareDappsDeployment(results.dapps);
+          
+          if (results.uglify) {
+            await uglify(results.deploymentType, dappDeploymentFolder);
+          }
+
+          await replaceUmlauts();
+  
+          if (enableDeploy) {
+            await deployDApps(results.dapps, results.version);
           }
   
           resolve();
