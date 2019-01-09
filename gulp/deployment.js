@@ -160,7 +160,10 @@ async function createRuntime() {
     web3: web3,
   });
 
-  return await createDefaultRuntime(web3, dfs, { accountMap: config.runtimeConfig.accountMap, });
+  return await createDefaultRuntime(web3, dfs, {
+    accountMap: config.runtimeConfig.accountMap,
+    nameResolver: config.bcConfig.nameResolver,
+  });
 }
 
 /********************************** ipfs functions ************************************************/
@@ -482,7 +485,6 @@ async function deployDApps(externals, version) {
       address += `.${ deploymentDomain }`;
 
       let beforeHash = await runtime.nameResolver.getContent(address);
-
       if (beforeHash) {
         beforeHash = beforeHash.startsWith('Qm') ? beforeHash : Ipfs.bytes32ToIpfsHash(beforeHash);
       }
@@ -495,6 +497,14 @@ async function deployDApps(externals, version) {
         saveDBCPFile(dbcpPath, dbcp);
       }
 
+      // check if the address was claimed before
+      const owner = await runtime.executor.executeContractCall(
+        runtime.nameResolver.ensContract, 'owner', runtime.nameResolver.namehash(address));
+      if (owner === '0x0000000000000000000000000000000000000000') {
+        await runtime.nameResolver.claimPermanentAddress(address, deploymentAccount);
+      } 
+
+      // set the description
       await runtime.description.setDescriptionToEns(address, {
         public: dbcp.public
       }, deploymentAccount);
