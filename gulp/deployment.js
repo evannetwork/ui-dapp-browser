@@ -498,11 +498,22 @@ async function deployDApps(externals, version) {
       }
 
       // check if the address was claimed before
-      const owner = await runtime.executor.executeContractCall(
-        runtime.nameResolver.ensContract, 'owner', runtime.nameResolver.namehash(address));
-      if (owner === '0x0000000000000000000000000000000000000000') {
-        await runtime.nameResolver.claimPermanentAddress(address, deploymentAccount);
-      } 
+      //   --> trace from first level and claim permanent addresses when no owner was set before 
+      const splitEns = address.split('.');
+      for (let i = splitEns.length; i > -1; i--) {
+        const checkAddress = splitEns.slice(i, splitEns.length).join('.');
+
+        const owner = await runtime.executor.executeContractCall(
+          runtime.nameResolver.ensContract, 'owner', runtime.nameResolver.namehash(checkAddress));
+        if (owner === '0x0000000000000000000000000000000000000000') {
+          try {
+            await runtime.nameResolver.claimPermanentAddress(checkAddress, deploymentAccount);
+          } catch (ex) {
+            // claim permanent address is only needed for root addresses
+            await runtime.nameResolver.setAddress(checkAddress, '0x0000000000000000000000000000000000000000', deploymentAccount);
+          }
+        }
+      }
 
       // set the description
       await runtime.description.setDescriptionToEns(address, {

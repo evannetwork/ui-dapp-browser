@@ -222,7 +222,7 @@ async function getProfileForAccount(CoreBundle: any, accountId: string) {
   //              set it by yourself
   keyProvider.setKeysForAccount(
     accountId,
-    lightwallet.getEncryptionKeyFromPassword('unencrypted')
+    lightwallet.getEncryptionKeyFromPassword(accountId, 'unencrypted')
   );
 
   const ipldInstance = new CoreBundle.Ipld({
@@ -281,19 +281,22 @@ async function getProfileForAccount(CoreBundle: any, accountId: string) {
 /**
  * Check if the password for a given account id and its profile is valid.
  *
- * @param      {any}      CoreBundle  blockchain-core ipfs bundle
- * @param      {string}   accountId   account id to check
- * @param      {string}   password    password to check
+ * @param      {any}      CoreBundle      blockchain-core ipfs bundle
+ * @param      {string}   accountId       account id to check
+ * @param      {string}   password        password to check
+ * @param      {string}   encryptionSalt  encryption salt to retrieve the encryption key with
+ *                                        (default account id)
  * @return     {boolean}  True if account password valid, False otherwise
  */
-async function isAccountPasswordValid(CoreBundle: any, accountId: string, password: string) {
+async function isAccountPasswordValid(CoreBundle: any, accountId: string, password: string,
+  encryptionSalt = accountId) {
   const profile = await getProfileForAccount(CoreBundle, accountId);
 
   // set the keys for the temporary profile using the password input, so we can try to get the
   // private key
   profile.ipld.keyProvider.setKeysForAccount(
     accountId,
-    lightwallet.getEncryptionKeyFromPassword(password)
+    lightwallet.getEncryptionKeyFromPassword(encryptionSalt, password)
   );
 
   let targetPrivateKey;
@@ -308,7 +311,19 @@ async function isAccountPasswordValid(CoreBundle: any, accountId: string, passwo
   if (targetPrivateKey) {
     return true;
   } else {
-    return false;
+    // TODO: remove duplicated check, when old profiles without accountId salt are gone
+    if (encryptionSalt && isAccountPasswordValid(CoreBundle, accountId, password, '')) {
+      // WARNING: for old accounts: overwrite current encryption key, to use the key without a
+      // accountId
+      await lightwallet.overwriteVaultEncryptionKey(
+        accountId,
+        lightwallet.getEncryptionKeyFromPassword('', password)
+      );
+
+      return true;
+    } else {
+      return false;
+    }
   }
 }
 
