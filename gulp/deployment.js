@@ -952,7 +952,7 @@ const deploymentMenu = async function() {
             await prepareIonicDeploy();
 
             if (results.uglify) {
-              await uglify(results.deploymentType, ionicDeploymentFolder);
+              await uglify('ionic-dapp._evan', ionicDeploymentFolder);
             }
 
             await replaceUmlauts();
@@ -975,7 +975,7 @@ const deploymentMenu = async function() {
           await prepareDappsDeployment(results.dapps);
           
           if (results.uglify) {
-            await uglify(results.deploymentType, dappDeploymentFolder);
+            await uglify('DApps', dappDeploymentFolder);
           }
 
           await replaceUmlauts();
