@@ -2,12 +2,15 @@
 
 ## Next Version
 ### Features
+### Fixes
+### Deprecations
+
+## Version 1.7.0
+### Features
 - add salting for encryptionKeys accountId + password
 
 ### Fixes
 - NodeJS 10 compatibility
-
-### Deprecations
 
 ## Version 1.6.3
 ### Features
