@@ -45,25 +45,31 @@ gulp.task('serve', async function () {
     require(path.resolve('./gulp/ionic.js'));
 
     await new Promise((resolve, reject) => runSequence('build', () => {
-      gulp.watch([
-        'src/**/*.ts',
-        'src/**/*.js',
-        'systemjs.config.js',
-        '!src/build/*.js'
-      ],
-        ['build']);
+      gulp.watch(
+        [
+          'src/**/*.ts',
+          'src/**/*.js',
+          'systemjs.config.js',
+          '!src/build/*.js'
+        ],
+        ['build']
+      );
 
-      gulp.watch([
-        'src/**/*.scss',
-        '../ui-angular-sass/src/**/*.scss',
-      ],
-        ['ionic-sass', 'copy']);
+      gulp.watch(
+        [
+          'src/**/*.scss',
+          '../ui-angular-sass/src/**/*.scss',
+        ],
+        ['ionic-sass', 'copy']
+      );
 
-      gulp.watch([
-        'src/**/*.html',
-        '!src/build/*.html'
-      ],
-        ['copy']);
+      gulp.watch(
+        [
+          'src/**/*.html',
+          '!src/build/*.html'
+        ],
+        ['copy']
+      );
 
       resolve();
     }))

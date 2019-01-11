@@ -5,6 +5,13 @@
 ### Fixes
 ### Deprecations
 
+## Version 1.7.0
+### Features
+- add salting for encryptionKeys accountId + password
+
+### Fixes
+- NodeJS 10 compatibility
+
 ## Version 1.6.3
 ### Features
 - use correct remote ipfs deployment node

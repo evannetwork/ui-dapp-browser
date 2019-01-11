@@ -37,11 +37,17 @@
  */
 declare let evanGlobals: any;
 
+/********************* !IMPORTANT: dont export it to avoid security leaks! ************************/
 /**
  * cache existing vault locally
- * !IMPORTANT: dont export it to avoid security leaks!
  */
 let _vault;
+
+/**
+ * custom encryption keys, to overwrite the default one (password salted using accountId)
+ */
+let _customEncryptionKeys = { };
+/**************************************************************************************************/
 
 /**
  * cached password function, can set during the application runtime to implement
@@ -156,7 +162,7 @@ async function getNewVault(mnemonic: string, password: string): Promise<any> {
   const pwDerivedKey = await keyFromPassword(vault, password);
 
   vault.pwDerivedKey = pwDerivedKey;
-  vault.encryptionKey = getEncryptionKeyFromPassword(password);
+  vault.encryptionKey = getEncryptionKeyFromPassword(getPrimaryAccount(vault), password);
 
   // if the accountId was specified externally, we should load the first account to be able to run
   // calls for this account
@@ -184,6 +190,16 @@ function getAccounts(vault: any, amount?: number): Array<string> {
   const accounts = vault.getAddresses();
 
   return accounts.map(account => evanGlobals.CoreRuntime.web3.utils.toChecksumAddress(account));
+}
+
+/**
+ * Get the first account from the vault.
+ *
+ * @param      {any}  vault   vault to get accounts from
+ * @return     {string}  The account.
+ */
+function getPrimaryAccount(vault: any) {
+  return getAccounts(vault, 1)[0];
 }
 
 /**
@@ -255,6 +271,7 @@ async function getPassword(accountId?: string): Promise<string> {
  */
 async function loadUnlockedVault(): Promise<any> {
   let vault;
+  let primaryAccount;
 
   // if a mnemonic and a password were specified over the url, load the vault with this values
   if (evanGlobals.queryParams.mnemonic && evanGlobals.queryParams.password) {
@@ -265,15 +282,22 @@ async function loadUnlockedVault(): Promise<any> {
 
   if (vault && !vault.pwDerivedKey) {
     const password = await getPassword();
-
-    // TODO: ask for password
     vault.pwDerivedKey = await keyFromPassword(vault, password);
-    vault.encryptionKey = getEncryptionKeyFromPassword(password);
+
+    // only load the encryption key, when it wasn't set before (could be overwritten by using
+    // overwriteVaultEncryptionKey for old or custom logic accounts)
+    primaryAccount = getPrimaryAccount(vault);
+    if (!_customEncryptionKeys[primaryAccount]) {
+      vault.encryptionKey = getEncryptionKeyFromPassword(getPrimaryAccount(vault), password);
+    }
   }
 
   // if the accountId was specified externally, we should load the first account to be able to run
   // calls for this account
-  getAccounts(vault, 1);
+  primaryAccount = primaryAccount || getPrimaryAccount(vault);
+  if (_customEncryptionKeys[primaryAccount]) {
+    vault.encryptionKey = _customEncryptionKeys[primaryAccount];
+  }
 
   return vault;
 }
@@ -300,7 +324,10 @@ async function getEncryptionKey(): Promise<string> {
     } else {
       const password = await getPassword();
 
-      return getEncryptionKeyFromPassword(password);
+      return getEncryptionKeyFromPassword(
+        evanGlobals.CoreRuntime.web3.eth.defaultAccount,
+        password
+      );
     }
   }
 }
@@ -311,8 +338,19 @@ async function getEncryptionKey(): Promise<string> {
  * @param      {string}  password  password that should be hashed
  * @return     {string}  The encryption key from password.
  */
-function getEncryptionKeyFromPassword(password: string): string {
-  return evanGlobals.CoreBundle.CoreRuntime.nameResolver.sha3(password).replace(/0x/g, '');
+function getEncryptionKeyFromPassword(accountId: string, password: string): string {
+  return evanGlobals.CoreBundle.CoreRuntime.nameResolver
+    .sha3(accountId + password)
+    .replace(/0x/g, '');
+}
+
+/**
+ * Overwrites the encryption key for the current vault.
+ *
+ * @param      {string}  encryptionKey  the encryption key that should be used
+ */
+async function overwriteVaultEncryptionKey(accountId: string, encryptionKey: string) {
+  _customEncryptionKeys[accountId] = encryptionKey
 }
 
 /**
@@ -349,22 +387,23 @@ function isValidMnemonicWord(word: string) {
 }
 
 export {
-  loadUnlockedVault,
+  createVault,
+  createVaultAndSetActive,
+  deleteActiveVault,
+  generateMnemonic,
+  getAccounts,
   getEncryptionKey,
   getEncryptionKeyFromPassword,
-  deleteActiveVault,
+  getMnemonicLib,
+  getNewVault,
+  getPassword,
+  getPrivateKey,
   isValidMnemonic,
   isValidMnemonicWord,
-  getPassword,
-  loadVault,
-  generateMnemonic,
-  createVault,
-  setVaultActive,
-  createVaultAndSetActive,
   keyFromPassword,
-  getNewVault,
-  getAccounts,
-  getPrivateKey,
-  getMnemonicLib,
-  setPasswordFunction
+  loadUnlockedVault,
+  loadVault,
+  overwriteVaultEncryptionKey,
+  setPasswordFunction,
+  setVaultActive,
 }
