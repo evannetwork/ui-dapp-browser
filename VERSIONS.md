@@ -2,8 +2,11 @@
 
 ## Next Version
 ### Features
+- add salting for encryptionKeys accountId + password
+
 ### Fixes
 - NodeJS 10 compatibility
+
 ### Deprecations
 
 ## Version 1.6.3
