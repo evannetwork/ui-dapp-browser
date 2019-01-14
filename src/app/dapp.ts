@@ -343,15 +343,12 @@ export async function startDApp(dappEns: string, container = document.body, useD
   const ensDefinition = await loadDAppDependencies(dappEns, useDefaultDomain);
 
   // asynchroniously start dapp to speed up synchroniously loaded css files from dapp
-  // do we need this?
-  // setTimeout(async () => {
   if (ensDefinition.dapp && ensDefinition.dapp.entrypoint) {
     if (!ensDefinition.dapp.origin) {
       dappEns = `${ ensDefinition.name }.${ getDomainName() }`;
     }
 
     const entrypoint = ensDefinition.dapp.entrypoint;
-
     if (entrypoint.endsWith('.js')) {
       // load the DApp and start it
       const dappModule = await evanGlobals.System.import(`${dappEns}!dapp-content`);
@@ -408,33 +405,3 @@ export function getDomainName(...subLabels): string {
   }
 }
 
-/**
- * Check if angular libs was loaded before and cached within the ens cache, so we can load it before
- * bcc was loaded.
- *
- * @return     {Promise<void>}  resolved when done
- */
-export function preloadAngularLibs() {
-  // check if any ens entries were loaded before, so we can check, if the angular-libs were loaded
-  // before => speed it up scotty!
-  let ensCache = { };
-  try {
-    ensCache = JSON.parse(window.localStorage['evan-ens-cache']);
-  } catch (ex) { }
-
-  // check if evan-dev-dapps-domain is enabled, so we need to check if angular libs are deployed
-  // there
-  let angularLibsEns = `angularlibs.${ getDomainName() }`
-
-  // check if the angular-libs are cached => load them!
-  if (ensCache[`angularlibs.${ window.localStorage['evan-dev-dapps-domain'] }`] ||
-      ensCache[angularLibsEns]) {
-    angularLibsEns = `${ angularLibsEns }!dapp-content`;
-
-    // set that the angular-libs were already loaded, so we don't require it twice
-    evanGlobals.System.map['angular-libs'] = angularLibsEns;
-    loadedDeps[angularLibsEns] = true;
-
-    return evanGlobals.System.import(angularLibsEns);
-  }
-}
