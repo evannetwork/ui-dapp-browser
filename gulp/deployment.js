@@ -344,8 +344,7 @@ const replaceUmlauts = function() {
   return new Promise(resolve => {
     gulp
       .src([
-        `${ dappDeploymentFolder }/**/*.js`,
-        `${ dappDeploymentFolder }/**/*.css`
+        `${ dappDeploymentFolder }/**/*.js`
       ])
       // replace german umlauts
       .pipe(replace(/Ä/g, '\\u00c4')).pipe(replace(/ä/g, '\\u00e4'))

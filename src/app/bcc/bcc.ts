@@ -312,7 +312,7 @@ async function isAccountPasswordValid(CoreBundle: any, accountId: string, passwo
     return true;
   } else {
     // TODO: remove duplicated check, when old profiles without accountId salt are gone
-    if (encryptionSalt && isAccountPasswordValid(CoreBundle, accountId, password, '')) {
+    if (encryptionSalt && await isAccountPasswordValid(CoreBundle, accountId, password, '')) {
       // WARNING: for old accounts: overwrite current encryption key, to use the key without a
       // accountId
       await lightwallet.overwriteVaultEncryptionKey(
