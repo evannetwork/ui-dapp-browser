@@ -115,6 +115,7 @@ const ipnsPrivateKeys = {
   licenses: 'evan.network-licenses',
   smartcontracts: 'evan.network-smart-contracts',
   uidocs: 'evan.network-uidocs',
+  pxStatus: 'evan.px-status',
 };
 
 const ipnsValues = {
@@ -125,6 +126,7 @@ const ipnsValues = {
   licenses: 'QmT1FwnYyURjLj7nKMwEuTPUBc5uJ6z1zAVsYnKfUL1X1q',
   smartcontracts: 'QmRMz7yzMqjbEqXNdcmqk2WMFcXtpY41Nt9CqsLwMgkF43',
   uidocs: 'QmReXE5YkiXviaHNG1ASfY6fFhEoiDKuSkgY4hxgZD9Gm8',
+  pxStatus: 'QmYgEK2oynRAdB9UTeCs76EFMU9mcutj1izXpi7ckSdzbS'
 };
 
 // version mapping for version bump select
@@ -488,6 +490,10 @@ async function deployDApps(externals, version) {
         beforeHash = beforeHash.startsWith('Qm') ? beforeHash : Ipfs.bytes32ToIpfsHash(beforeHash);
       }
       dbcp.public.dapp.origin = await deployIPFSFolder(external, `${folderName}`);
+
+      if (dbcp.public.versions) {
+        dbcp.public.versions[dbcp.public.version] = dbcp.public.dapp.origin;
+      }
 
       updateDBCPVersion(dbcp, version, beforeHash);
       saveDBCPFile(`${ runtimeFolder }/external/${external}/dbcp.json`, dbcp);
