@@ -3,6 +3,9 @@
 ## Next Version
 ### Features
 ### Fixes
+- fix loading of DBCP libraries with different versions (for detailed description have a look at https://github.com/evannetwork/issue-tracking/issues/443)
+- deployment: only publish new hashes to ipns, if the root evan domain is used
+
 ### Deprecations
 
 ## Version 1.7.0

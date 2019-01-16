@@ -47,7 +47,7 @@
     "request": "^2.83.0",
     "run-sequence": "^1.2.2"
   },
-  "description": "Contractus dapp root project for building sub dapps and compiling the whole ionic project.",
+  "description": "evan dapp root project for loading sub dapps, that can also be compiled as a mobile application",
   "devDependencies": {
     "@angular/compiler": "^5.1.0",
     "@angular/compiler-cli": "^5.0.5",

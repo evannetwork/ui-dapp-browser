@@ -76,6 +76,10 @@ function getSplittedVersion(versionString: string): Array<number|string> {
 /**
  * Returns the ipfs hash to the dbcp of the child with the correct version.
  *
+ * = > if its the latest version, the ipfs hash will be replaced by using the ens address.
+ *     As a result of this, the ens & dapp loader plugin will also resolve dev versions,
+ *     if the latest version is required.
+ *
  * @param      {string}  requiredVersion  version that should be loaded from the
  *                                        child
  * @param      {string}  childENS         ens address of the child (the current
@@ -161,6 +165,17 @@ function getVersionDBCPHashFromDAppVersion(requiredVersion: string, childENS: st
  * Loads all (sub) dependencies dbcp's of the provided dapp and set systemjs
  * maps to the correct dbcp hashes.
  *
+ * Explanation:
+ *   - load the latest dbcp.json from the dapp ens address
+ *   - after this, the correct lib ipfs hash gets extracted from the version history of the latest
+ *     dbcp.json
+ *   - the new definition will loaded from the extracted ipfs hash and this versions will be
+ *     overwritten by the latest one, to be sure, that all versions, including the latest one, are 
+ *     included
+ *   - the used definition will now not the latest one, only the correct dbcp description of the
+ *     desired version
+ *   - dev version only used for DApps, that also requires the latest current version of the library
+ *
  * @param      {string}           originName     name of the module that should
  *                                               be traversed
  * @param      {any}              ensDefinition  ens definition of the module
@@ -217,21 +232,31 @@ export async function getDAppDependencies(originName: string, ensDefinition: any
         // load all dependencies, check for its location and trigger the sub loading
         for (let dependency of depKeys) {
           let subDefinition = await evanGlobals.System
-            .import(`${dependency}.${getDomainName()}!ens`);
-          let versionLocation;
+            .import(`${ dependency }.${ getDomainName() }!ens`);
 
-          // if we are loading an contract, always load dbcp configuration
-          // if not, check for devMode to load files from local server or from ipfs
-          // temporary enabled for everything, to enable it only for contracts use :
-          //   originName.indexOf('0x') === 0
-          if (!evanGlobals.devMode || !utils.isDevAvailable(dependency)) {
-            versionLocation = getVersionDBCPHashFromDAppVersion(
-              dependencies[dependency],
-              dependency,
-              subDefinition
-            );
-          } else {
-            versionLocation = `${ dependency.replace(/\-/g, '') }.${ getDomainName() }!dapp-content`;
+          // resolve the correct ipfs hash from dbcp versions list
+          // = > if its the latest version, the ipfs hash will be replaced by using the ens address.
+          //     As a result of this, the ens & dapp loader plugin will also resolve dev versions,
+          //     if the latest version is required.
+          let versionLocation = getVersionDBCPHashFromDAppVersion(
+            dependencies[dependency],
+            dependency,
+            subDefinition
+          );
+
+          // if a ipfs hash was returned by the getVersionDBCPHash... function, we are not loading
+          // the latest version from ens, so we need to require the correct, version specific dbcp
+          // json and merge the versions
+          if (versionLocation.indexOf('Qm') === 0) {
+            const previousDefinition = await evanGlobals.System
+              .import(`${ versionLocation.replace('!dapp-content', '') }!ens`);
+
+            // use the latest version history, to be sure, that the correct latest version is
+            // included
+            previousDefinition.versions = subDefinition.versions;
+
+            // overwrite latest sub definition
+            subDefinition = previousDefinition;
           }
 
           deps.unshift({

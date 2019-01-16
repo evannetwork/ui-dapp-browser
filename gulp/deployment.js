@@ -272,6 +272,10 @@ async function deployToIpns(dapp, hash, retry) {
     throw new Error(`ipns key for dapp ${ dapp } not registered!`);
   }
 
+  if (deploymentDomain !== 'evan') {
+    throw new Error(`deploymentDomain ${ deploymentDomain } is not evan, IPNS will not be enrolled!`);
+  }
+
   console.log(`\n\nStart ipns deployment: ${ dapp } : ${ hash }`);
   await new Promise((resolve, reject) => {
     exec(`ipfs key gen --type=rsa --size=2048 ${ ipnsPrivateKeys[dapp] }`, {
@@ -538,8 +542,13 @@ async function deployDApps(externals, version) {
         }
       }
 
-      if (ipnsPrivateKeys[dbcp.public.name]) {
-        await deployToIpns(dbcp.public.name, dbcp.public.dapp.origin);
+      if (ipnsPrivateKeys[dbcp.public.name] ) {
+        try {
+          await deployToIpns(dbcp.public.name, dbcp.public.dapp.origin);
+        } catch (ex) {
+          console.log(`   Failed to publish to ipns : ${ external }`);
+          console.dir(ex);
+        }
       }
 
       addDbcpToList(dbcp.public);
