@@ -170,7 +170,7 @@ function getVersionDBCPHashFromDAppVersion(requiredVersion: string, childENS: st
  *   - after this, the correct lib ipfs hash gets extracted from the version history of the latest
  *     dbcp.json
  *   - the new definition will loaded from the extracted ipfs hash and this versions will be
- *     overwritten by the latest one, to be sure, that all versions, including the latest one, are 
+ *     overwritten by the latest one, to be sure, that all versions, including the latest one, are
  *     included
  *   - the used definition will now not the latest one, only the correct dbcp description of the
  *     desired version
@@ -370,7 +370,7 @@ export async function startDApp(dappEns: string, container = document.body, useD
   const ensDefinition = await loadDAppDependencies(dappEns, useDefaultDomain);
 
   // asynchroniously start dapp to speed up synchroniously loaded css files from dapp
-  setTimeout(async () => {
+  // setTimeout(async () => {
     if (ensDefinition.dapp && ensDefinition.dapp.entrypoint) {
       if (!ensDefinition.dapp.origin) {
         dappEns = `${ ensDefinition.name }.${ getDomainName() }`;
@@ -414,7 +414,7 @@ export async function startDApp(dappEns: string, container = document.body, useD
     } else {
       throw new Error('No entry point defined!');
     }
-  }, 0);
+  // }, 0);
 }
 
 /**
