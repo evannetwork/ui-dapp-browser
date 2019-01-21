@@ -24,6 +24,9 @@
   For more information, please contact evan GmbH at this address:
   https://evan.network/license/
 */
+
+// use localStorage params to overwrite default values. The default options correspond to those of
+// the test net. By deploying other configurations, the comments will be replaced using this values.
 const process = {
   env: {
     ENS_ADDRESS: window.localStorage['evan-ens-address'],

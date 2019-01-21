@@ -81,6 +81,25 @@ let ipfsInstance;
 let runtime;
 let web3;
 
+// values will be overwritten after the deployment configuration was loaded, to check, which dapp
+// should be bind on an ips hash
+let ipnsPrivateKeys = { };
+let ipnsHashes = { };
+
+// Original ipns hashes for the testnet that also are entered per default into the UI for
+// development. By deploying other inps hashes for the several base libs and dapps, the testnet
+// hashes will be replaced by the entered ones.
+const testnetIpnsHashes = {
+  bcc: 'Qme9gmKpueriR7qMH5SNW3De3b9AFBkUGvFMS8ve1SuYBy',
+  bccdocs: 'QmYmsPTdPPDLig6gKB1wu1De4KJtTqAXFLF1498umYs4M6',
+  dappbrowser: 'QmeaaYgC38Ai993NUKbgvfBw11mrmK9THb6GtR48TmcsGj',
+  dbcpdocs: 'QmSXPThSm6u3BDE1X4C9QofFfcNH86cCWAR1W5Sqe9VWKn',
+  licenses: 'QmT1FwnYyURjLj7nKMwEuTPUBc5uJ6z1zAVsYnKfUL1X1q',
+  smartcontracts: 'QmRMz7yzMqjbEqXNdcmqk2WMFcXtpY41Nt9CqsLwMgkF43',
+  uidocs: 'QmReXE5YkiXviaHNG1ASfY6fFhEoiDKuSkgY4hxgZD9Gm8',
+  pxStatus: 'QmYgEK2oynRAdB9UTeCs76EFMU9mcutj1izXpi7ckSdzbS'
+};
+
 // runtime parameters
 const enableDeploy = true;
 
@@ -107,28 +126,6 @@ let dbcps = [
   }
 ];
 
-const ipnsPrivateKeys = {
-  bcc: 'evan.network-blockchain-core',
-  bccdocs: 'evan.network-bccdocs',
-  dappbrowser: 'evan.network-dapp-browser',
-  dbcpdocs: 'evan.network-dbcpdocs',
-  licenses: 'evan.network-licenses',
-  smartcontracts: 'evan.network-smart-contracts',
-  uidocs: 'evan.network-uidocs',
-  pxStatus: 'evan.px-status',
-};
-
-const ipnsValues = {
-  bcc: 'Qme9gmKpueriR7qMH5SNW3De3b9AFBkUGvFMS8ve1SuYBy',
-  bccdocs: 'QmYmsPTdPPDLig6gKB1wu1De4KJtTqAXFLF1498umYs4M6',
-  dappbrowser: 'QmeaaYgC38Ai993NUKbgvfBw11mrmK9THb6GtR48TmcsGj',
-  dbcpdocs: 'QmSXPThSm6u3BDE1X4C9QofFfcNH86cCWAR1W5Sqe9VWKn',
-  licenses: 'QmT1FwnYyURjLj7nKMwEuTPUBc5uJ6z1zAVsYnKfUL1X1q',
-  smartcontracts: 'QmRMz7yzMqjbEqXNdcmqk2WMFcXtpY41Nt9CqsLwMgkF43',
-  uidocs: 'QmReXE5YkiXviaHNG1ASfY6fFhEoiDKuSkgY4hxgZD9Gm8',
-  pxStatus: 'QmYgEK2oynRAdB9UTeCs76EFMU9mcutj1izXpi7ckSdzbS'
-};
-
 // version mapping for version bump select
 const versionMap = [
   'major',
@@ -147,8 +144,12 @@ async function createRuntime() {
     }
     
     deploymentAccount = Object.keys(config.runtimeConfig.accountMap)[0];
+
+    ipnsHashes = config.ipnsHashes || { };
+    ipnsPrivateKeys = config.ipnsPrivateKeys || { };
   } catch (ex) {
-    throw new Error('No or invalid config file specified!');
+    console.error(ex);
+    throw new Error(`No or invalid config file specified!`);
   }
 
   // initialize dependencies
@@ -321,6 +322,59 @@ const clearConsole = function() {
 };
 
 /********************************** dapps deployment functions ************************************/
+/**
+ * Checks all testnet hashes and configurations and replace them with the correct ones that are
+ * passed to the script.
+ */
+const replaceConfigurationValues = async function(folderPath) {
+
+  await new Promise(resolve => gulp
+    .src([ `${ folderPath }/**/*` ])
+    .pipe(replace(new RegExp('QmPTsi86ckJdErp1kKAoew6R9XeqP86HZMgoU6We4bx98A', 'g'), 'blaaaaaaaa'))
+    .pipe(gulp.dest(folderPath))
+    .on('end', () => resolve())
+  );
+
+  // replace testnet ipns values
+  for (let dappKey of Object.keys(ipnsHashes)) {
+    if (testnetIpnsHashes[dappKey]) {
+      await new Promise(resolve => gulp
+        .src([ `${ folderPath }/**/*` ])
+        .pipe(replace(new RegExp(testnetIpnsHashes[dappKey], 'g'), ipnsHashes[dappKey]))
+        .pipe(gulp.dest(folderPath))
+        .on('end', () => resolve())
+      );
+    }
+  }
+
+  // replace configuration values
+  await new Promise(resolve => gulp
+    .src([ `${ folderPath }/**/*` ])
+
+    // replace bcc configurations
+    .pipe(replace(/window\.localStorage\[\'evan-ens-address\'\]/g, `window.localStorage['evan-ens-address'] || '${ config.bcConfig.nameResolver.ensAddress }'`))
+    .pipe(replace(/window\.localStorage\[\'evan-ens-resolver\'\]/g, `window.localStorage['evan-ens-resolver'] || '${ config.bcConfig.nameResolver.ensResolver }'`))
+    .pipe(replace(/window\.localStorage\[\'evan-bc-root\'\]/g, `window.localStorage['evan-bc-root'] || '${ config.bcConfig.nameResolver.labels.businessCenterRoot }'`))
+    .pipe(replace(/window\.localStorage\[\'evan-ens-root\'\]/g, `window.localStorage['evan-ens-root'] || '${ config.bcConfig.nameResolver.labels.ensRoot }'`))
+    .pipe(replace(/window\.localStorage\[\'evan-ens-events\'\]/g, `window.localStorage['evan-ens-events'] || '${ JSON.stringify(config.bcConfig.nameResolver.domains.eventhub) }'`))
+    .pipe(replace(/window\.localStorage\[\'evan-ens-profiles\'\]/g, `window.localStorage['evan-ens-profiles'] || '${ JSON.stringify(config.bcConfig.nameResolver.domains.profile) }'`))
+    .pipe(replace(/window\.localStorage\[\'evan-ens-mailbox\'\]/g, `window.localStorage['evan-ens-mailbox'] || '${ JSON.stringify(config.bcConfig.nameResolver.domains.mailbox) }'`))
+
+    // web3 configurations
+    .pipe(replace(/wss\:\/\/testcore.evan.network\/ws/g, `${ config.runtimeConfig.web3Provider }`))
+
+    // ipfs config
+    .pipe(replace(/\{\ host\:\ \'ipfs\.evan\.network\'\,\ port\:\ \'443\'\,\ protocol\:\ \'https\'\ \}/g, JSON.stringify(config.runtimeConfig.ipfs)))
+
+    // smart agent configuratiuon
+    .pipe(replace(/https\:\/\/agents\.evan\.network/g, config.runtimeConfig.coreSmartAgent))
+
+    .pipe(gulp.dest(folderPath))
+    .on('end', () => resolve())
+  );
+
+  await keyPressToContinue();
+}
 
 const prepareDappsDeployment = function(dapps) {
   del.sync(`${dappDeploymentFolder}`, { force: true });
@@ -330,10 +384,12 @@ const prepareDappsDeployment = function(dapps) {
       gulp
         .src(`${ originFolder }/${ dapp }/**/*`)
         .pipe(gulp.dest(`${ dappDeploymentFolder }/${ dapp }`))
-        .on('end', () => {
+        .on('end', async () => {
           del.sync([
             `${ dappDeploymentFolder }/${ dapp }/*.map`
           ], { force : true })
+
+          await replaceConfigurationValues(dappDeploymentFolder);
         
           resolve();
         })
@@ -380,7 +436,7 @@ const logDbcps = function() {
       version: dbcp.version,
       description: dbcp.dapp.descriptionHash,
       folder: dbcp.dapp.origin,
-      ipns: dbcp.dapp.ipns || ipnsValues[dbcp.name],
+      ipns: dbcp.dapp.ipns || ipnsHashes[dbcp.name],
       file: dbcp.file
     }
   }));
@@ -628,6 +684,9 @@ prepareIonicDeploy = async function () {
     .pipe(gulp.dest(`${ ionicDeploymentFolder }/build`))
     .on('end', () => resolve())
   );
+
+  // insert correct inps values for the current configuration
+  await replaceConfigurationValues(ionicDeploymentFolder);
 };
 
 const prepareIonicAppBuild = async function(platform) {
@@ -676,7 +735,7 @@ const ionicDeploy = async function (version) {
     version: '-.-.-',
     dapp: {
       origin: folderHash,
-      ipns: ipnsValues.dappbrowser
+      ipns: ipnsHashes.dappbrowser
     }
   });
 };
@@ -696,7 +755,7 @@ const licensesDeploy = async function() {
     version: '-.-.-',
     dapp: {
       origin: folderHash,
-      ipns: ipnsValues.dappbrowser
+      ipns: ipnsHashes.dappbrowser
     }
   });
 };
@@ -799,7 +858,7 @@ const deploymentMenu = async function() {
       version: '-.-.-',
       dapp: {
         origin: '',
-        ipns: ipnsValues.dappbrowser
+        ipns: ipnsHashes.dappbrowser
       }
     });
 
@@ -808,7 +867,7 @@ const deploymentMenu = async function() {
       version: '-.-.-',
       dapp: {
         origin: '',
-        ipns: ipnsValues.licenses
+        ipns: ipnsHashes.licenses
       }
     });
   }
@@ -971,9 +1030,9 @@ const deploymentMenu = async function() {
 
             await replaceUmlauts();
 
-            if (enableDeploy) {
-              await ionicDeploy(results.version);
-            }
+            // if (enableDeploy) {
+            //   await ionicDeploy(results.version);
+            // }
           }
 
           // check if licenses should be deployed
