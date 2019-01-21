@@ -163,10 +163,15 @@ async function createRuntime() {
     web3: web3,
   });
 
-  return await createDefaultRuntime(web3, dfs, {
+  const runtime = await createDefaultRuntime(web3, dfs, {
     accountMap: config.runtimeConfig.accountMap,
     nameResolver: config.bcConfig.nameResolver,
   });
+
+  // set correct gas price
+  runtime.executor.defaultOptions = { gasPrice: config.bcConfig.gasPrice }
+
+  return runtime;
 }
 
 /********************************** ipfs functions ************************************************/
@@ -327,14 +332,6 @@ const clearConsole = function() {
  * passed to the script.
  */
 const replaceConfigurationValues = async function(folderPath) {
-
-  await new Promise(resolve => gulp
-    .src([ `${ folderPath }/**/*` ])
-    .pipe(replace(new RegExp('QmPTsi86ckJdErp1kKAoew6R9XeqP86HZMgoU6We4bx98A', 'g'), 'blaaaaaaaa'))
-    .pipe(gulp.dest(folderPath))
-    .on('end', () => resolve())
-  );
-
   // replace testnet ipns values
   for (let dappKey of Object.keys(ipnsHashes)) {
     if (testnetIpnsHashes[dappKey]) {
@@ -360,20 +357,21 @@ const replaceConfigurationValues = async function(folderPath) {
     .pipe(replace(/window\.localStorage\[\'evan-ens-profiles\'\]/g, `window.localStorage['evan-ens-profiles'] || '${ JSON.stringify(config.bcConfig.nameResolver.domains.profile) }'`))
     .pipe(replace(/window\.localStorage\[\'evan-ens-mailbox\'\]/g, `window.localStorage['evan-ens-mailbox'] || '${ JSON.stringify(config.bcConfig.nameResolver.domains.mailbox) }'`))
 
+    // smart agent configuratiuon
+    .pipe(replace(/https\:\/\/agents\.evan\.network/g, config.bcConfig.coreSmartAgent))
+
+    // insert the correct gas price
+    .pipe(replace(/window\.localStorage\[\'evan\-gas\-price\'\]\ \|\|\ \'20000000000\'/g, `window.localStorage['evan-gas-price'] || '${ config.bcConfig.gasPrice }'`))
+
     // web3 configurations
     .pipe(replace(/wss\:\/\/testcore.evan.network\/ws/g, `${ config.runtimeConfig.web3Provider }`))
 
     // ipfs config
     .pipe(replace(/\{\ host\:\ \'ipfs\.evan\.network\'\,\ port\:\ \'443\'\,\ protocol\:\ \'https\'\ \}/g, JSON.stringify(config.runtimeConfig.ipfs)))
 
-    // smart agent configuratiuon
-    .pipe(replace(/https\:\/\/agents\.evan\.network/g, config.runtimeConfig.coreSmartAgent))
-
     .pipe(gulp.dest(folderPath))
     .on('end', () => resolve())
   );
-
-  await keyPressToContinue();
 }
 
 const prepareDappsDeployment = function(dapps) {
@@ -1030,9 +1028,9 @@ const deploymentMenu = async function() {
 
             await replaceUmlauts();
 
-            // if (enableDeploy) {
-            //   await ionicDeploy(results.version);
-            // }
+            if (enableDeploy) {
+              await ionicDeploy(results.version);
+            }
           }
 
           // check if licenses should be deployed
