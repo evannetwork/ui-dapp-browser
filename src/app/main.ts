@@ -66,7 +66,7 @@ window['evanloadTime'] = Date.now();
 // TODO: when bcc is loaded multiple times, zoneJS should also be saved
 const zoneJSPromise = window['Promise'];
 const System = window['System'];
-const getDomainName = dapp.getDomainName;
+const getDomainName = utils.getDomainName;
 let web3;
 let CoreRuntime;
 let definition;

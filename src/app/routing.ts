@@ -25,7 +25,7 @@
   https://evan.network/license/
 */
 
-import { startDApp, getDomainName } from './dapp';
+import { startDApp, } from './dapp';
 import * as core from './core';
 import * as utils from './utils';
 
@@ -54,14 +54,14 @@ export function goToOnboarding() {
   const activeRoute = hashOrigin.split('?')[0];
   const queryParams = hashOrigin.split('?')[1];
 
-  router.navigate(`/onboarding.${ getDomainName() }?origin=${ activeRoute }${ queryParams ? '&' + queryParams : '' }`);
+  router.navigate(`/onboarding.${ utils.getDomainName() }?origin=${ activeRoute }${ queryParams ? '&' + queryParams : '' }`);
 }
 
 /**
  * Go to dashboard.  (#/dashboard.evan)
  */
 export function goToDashboard() {
-  router.navigate(`/dashboard.${ getDomainName() }`);
+  router.navigate(`/dashboard.${ utils.getDomainName() }`);
 }
 
 /**
@@ -70,7 +70,7 @@ export function goToDashboard() {
  * @return     {boolean}  True if onboarding, False otherwise.
  */
 export function isOnboarding(): boolean {
-  return window.location.hash.indexOf(`/onboarding.${ getDomainName() }`) !== -1;
+  return window.location.hash.indexOf(`/onboarding.${ utils.getDomainName() }`) !== -1;
 }
 
 /**
@@ -108,7 +108,7 @@ export async function getDefaultDAppENS(): Promise<string> {
     } catch (ex) { }
   }
 
-  return `dashboard.${ getDomainName() }`;
+  return `dashboard.${ utils.getDomainName() }`;
 }
 
 /**

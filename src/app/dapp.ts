@@ -40,8 +40,8 @@ declare let evanGlobals: any;
  * Set defaults for preloaded applications.
  */
 export let loadedDeps = { };
-loadedDeps[`bcc.${ getDomainName() }!dapp-content`] = true;
-loadedDeps[`smartcontracts.${ getDomainName() }!dapp-content`] = true;
+loadedDeps[`bcc.${ utils.getDomainName() }!dapp-content`] = true;
+loadedDeps[`smartcontracts.${ utils.getDomainName() }!dapp-content`] = true;
 
 /**
  * check warnings only, after the first DApp was loaded
@@ -71,6 +71,28 @@ function getSplittedVersion(versionString: string): Array<number|string> {
   }
 
   return splittedVersion;
+}
+
+/**
+ * Takes an dbcp object and calculates the base path, where all the files are deployed, for this
+ * DApp using the dbcp origin. When dev mode is enabled, the localhost path will be returned.
+ *
+ * @param      {any}     dbcp     dbcp object (with merged public / private)
+ * @param      {string}  address  ens address or contract id, where the dbcp definition was loaded
+ *                                from
+ * @return     {string}  base url
+ */
+export function getDAppBaseUrl(dbcp: any, address: string): string {
+  try {
+    address = /^(.*)\.[^.]+$/.exec(address)[1];
+  } catch (ex) { }
+
+  if (utils.isDevAvailable(address) && address.indexOf('0x') !== 0) {
+      return window.location.origin + '/external/' + address;
+  } else {
+    return evanGlobals.restIpfs
+      .api_url('/' + (dbcp.dapp.isIpns ? 'ipns' : 'ipfs') + '/' + dbcp.dapp.origin);
+  }
 }
 
 /**
@@ -146,7 +168,7 @@ function getVersionDBCPHashFromDAppVersion(requiredVersion: string, childENS: st
       if (childVersions[requiredVersion].indexOf('Qm') === 0) {
         return `${childVersions[requiredVersion]}!dapp-content`;
       } else {
-        return `${ childVersions[requiredVersion] }.${ getDomainName() }!dapp-content`;
+        return `${ childVersions[requiredVersion] }.${ utils.getDomainName() }!dapp-content`;
       }
     } else {
       const msg = `Version not found: ${requiredVersion} for DApp ${childDefinition.name}`;
@@ -232,7 +254,7 @@ export async function getDAppDependencies(originName: string, ensDefinition: any
         // load all dependencies, check for its location and trigger the sub loading
         for (let dependency of depKeys) {
           let subDefinition = await evanGlobals.System
-            .import(`${ dependency }.${ getDomainName() }!ens`);
+            .import(`${ dependency }.${ utils.getDomainName() }!ens`);
 
           // resolve the correct ipfs hash from dbcp versions list
           // = > if its the latest version, the ipfs hash will be replaced by using the ens address.
@@ -289,7 +311,7 @@ export async function loadDAppDependencies(dappEns: string, useDefaultDomain?: b
   window['evanDApploadTime'] = Date.now();
 
   if (dappEns.indexOf('0x') !== 0 && useDefaultDomain) {
-    dappEns = `${dappEns}.${getDomainName()}`;
+    dappEns = `${dappEns}.${utils.getDomainName()}`;
   }
 
   // load ens definition for the dapp that should be loaded
@@ -370,67 +392,43 @@ export async function startDApp(dappEns: string, container = document.body, useD
   const ensDefinition = await loadDAppDependencies(dappEns, useDefaultDomain);
 
   // asynchroniously start dapp to speed up synchroniously loaded css files from dapp
-  // setTimeout(async () => {
-    if (ensDefinition.dapp && ensDefinition.dapp.entrypoint) {
-      if (!ensDefinition.dapp.origin) {
-        dappEns = `${ ensDefinition.name }.${ getDomainName() }`;
-      }
-
-      const entrypoint = ensDefinition.dapp.entrypoint;
-      if (entrypoint.endsWith('.js')) {
-        // load the DApp and start it
-        const dappModule = await evanGlobals.System.import(`${dappEns}!dapp-content`);
-        await dappModule.startDApp(container, ensDefinition.name, dappEns);
-
-        // check warnings, after first DApp was opened
-        if (firstDApp) {
-          firstDApp = false;
-          setTimeout(() => watchForEveLow(), 3000);
-        }
-      // html entrypoint => create iframe
-      } else if (entrypoint.endsWith('.html')) {
-        const iframe = document.createElement('iframe');
-        iframe.className += ' evan-dapp';
-
-        // dev mode checks
-        if (utils.isDevAvailable(ensDefinition.name)) {
-          iframe.setAttribute(
-            'src',
-            `${ window.location.origin }/external/${ ensDefinition.name }/${ensDefinition.dapp.entrypoint}#/${ dappEns }`
-          );
-        } else {
-          iframe.setAttribute(
-            'src',
-            evanGlobals.restIpfs.api_url(`/ipfs/${ ensDefinition.dapp.origin }/${ ensDefinition.dapp.entrypoint }#/${ dappEns }`)
-          );
-
-          finishDAppLoading();
-        }
-
-        container.appendChild(iframe);
-      } else {
-        throw new Error('Invalid entry point defined!');
-      }
-    } else {
-      throw new Error('No entry point defined!');
+  if (ensDefinition.dapp && ensDefinition.dapp.entrypoint) {
+    if (!ensDefinition.dapp.origin) {
+      dappEns = `${ ensDefinition.name }.${ utils.getDomainName() }`;
     }
-  // }, 0);
-}
 
-/**
- * builds a full domain name for the current bcc config
- *
- * @param      {Array<string>}  subLabels  used to enhance nameResolver config
- * @return     {<type>}         The domain name.
- */
-export function getDomainName(...subLabels): string {
-  const domainConfig = config.nameResolver.domains.root;
+    // lookup entrypoint and load dapp base url to provide it directly into the startDApp
+    const entrypoint = ensDefinition.dapp.entrypoint;
+    const dappBaseUrl = getDAppBaseUrl(ensDefinition, dappEns);
+    if (entrypoint.endsWith('.js')) {
+      // load the DApp and start it
+      const dappModule = await evanGlobals.System.import(`${dappEns}!dapp-content`);
+      await dappModule.startDApp(container, ensDefinition.name, dappEns, dappBaseUrl);
 
-  if (Array.isArray(domainConfig)) {
-    return subLabels.filter(label => label).concat(domainConfig.map(
-      label => config.nameResolver.labels[label])).join('.').toLowerCase();
+      // check warnings, after first DApp was opened
+      if (firstDApp) {
+        firstDApp = false;
+        setTimeout(() => watchForEveLow(), 3000);
+      }
+    // html entrypoint => create iframe
+    } else if (entrypoint.endsWith('.html')) {
+      const iframe = document.createElement('iframe');
+      iframe.className += ' evan-dapp';
+
+      // open the iframe using the dappBaseUrl
+      iframe.setAttribute('src', `${ dappBaseUrl }#/${ dappEns }`);
+
+      // remove the loading screen
+      finishDAppLoading();
+
+      // and append the iframe to the dom
+      container.appendChild(iframe);
+    } else {
+      throw new Error('Invalid entry point defined!');
+    }
   } else {
-    return domainConfig;
+    throw new Error('No entry point defined!');
   }
 }
+
 

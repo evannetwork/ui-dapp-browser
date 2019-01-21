@@ -26,6 +26,7 @@
 */
 
 import * as browserIpfs from '../libs/browser-ipfs.js';
+import * as utils from './utils';
 
 /**
  * set the default provider for the browser ipfs for the current window location
