@@ -134,6 +134,98 @@ const versionMap = [
 ];
 
 /********************************** bcc runtime ************************************************/
+ /**
+   * add reconnect to websocker provider and use it as web3 provider
+   *
+   * @param      {object}  Web3         Web3 module
+   * @param      {object}  web3         web3 instance (without provider)
+   * @param      {string}  providerUrl  websocker provider url
+   */
+function addWebsocketReconnect(Web3, web3, providerUrl) {
+  let websocketProvider;
+  let reconnecting;
+
+  /**
+   * Reconnect the current websocket connection
+   *
+   * @param      {url}       url       url to connect to the websocket
+   * @param      {Function}  callback  optional callback that is called when the
+   *                                   reconnect is done
+   */
+  let reconnect = (url, callback) => {
+    if (!reconnecting) {
+      console.log('Lost connection to Websocket, reconnecting in 1000ms');
+
+      reconnecting = [ ];
+
+      setTimeout(() => {
+        // stop last provider
+        websocketProvider._timeout();
+        websocketProvider.reset();
+        websocketProvider.removeAllListeners();
+
+        // create new provider
+        websocketProvider = new web3.providers.WebsocketProvider(url);
+        websocketProvider.on('end', () => reconnect(url));
+
+        // remove the old provider from requestManager to prevent errors on reconnect
+        delete web3._requestManager.provider;
+        web3.setProvider(websocketProvider);
+        // run reconnecting callbacks
+        for (let i = 0; i < reconnecting.length; i++) {
+          reconnecting[i]();
+        }
+
+        reconnecting = undefined;
+      }, 1000);
+    }
+
+    // add callback to the reconnecting array to call them after reconnect
+    if (typeof callback === 'function') {
+      reconnecting.push(callback);
+    }
+  }
+
+  // connect to web3
+  Web3.providers.WebsocketProvider.prototype.send = function(payload, callback) {
+    let _this = this;
+
+    // if the connection is already connecting, wait 100ms and try again
+    if (websocketProvider.connection.readyState === websocketProvider.connection.CONNECTING) {
+      setTimeout(function () {
+        _this.send(payload, callback);
+      }, 100);
+      return;
+    }
+
+    // if the connection is lost, try to reconnect to the url
+    if (websocketProvider.connection.readyState !== websocketProvider.connection.OPEN) {
+      reconnect(websocketProvider.connection.url, () => {
+        _this.send(payload, callback);
+      });
+
+      return;
+    }
+
+    // send the request
+    websocketProvider.connection.send(JSON.stringify(payload));
+    websocketProvider._addResponseCallback(payload, callback);
+  };
+
+  // check if an websockerProvider exists and if the url has changed => reset old one
+  if (websocketProvider && websocketProvider.connection.url !== providerUrl) {
+    websocketProvider.reset();
+  }
+
+  // create a new websocket connection, when its the first or the url has changed
+  if (!websocketProvider || websocketProvider.connection.url !== providerUrl) {
+    websocketProvider = new web3.providers.WebsocketProvider(providerUrl);
+    websocketProvider.on('end', () => reconnect(providerUrl));
+
+    web3.setProvider(websocketProvider);
+  }
+}
+
 async function createRuntime() {
   // deployment configuration and accounts
   try {
@@ -155,6 +247,7 @@ async function createRuntime() {
   // initialize dependencies
   const accountId = Object.keys(config.runtimeConfig.accountMap)[0];
   const web3 = new Web3();
+  addWebsocketReconnect(Web3, web3, config.runtimeConfig.web3Provider)
   web3.setProvider(new web3.providers.WebsocketProvider(config.runtimeConfig.web3Provider));
   const dfs = new Ipfs({
     accountId: accountId,
@@ -332,11 +425,13 @@ const clearConsole = function() {
  * passed to the script.
  */
 const replaceConfigurationValues = async function(folderPath) {
+  const replacePaths = [ `${ folderPath }/**/*.js` ];
+
   // replace testnet ipns values
   for (let dappKey of Object.keys(ipnsHashes)) {
     if (testnetIpnsHashes[dappKey]) {
       await new Promise(resolve => gulp
-        .src([ `${ folderPath }/**/*` ])
+        .src(replacePaths)
         .pipe(replace(new RegExp(testnetIpnsHashes[dappKey], 'g'), ipnsHashes[dappKey]))
         .pipe(gulp.dest(folderPath))
         .on('end', () => resolve())
@@ -346,7 +441,7 @@ const replaceConfigurationValues = async function(folderPath) {
 
   // replace configuration values
   await new Promise(resolve => gulp
-    .src([ `${ folderPath }/**/*` ])
+    .src(replacePaths)
 
     // replace bcc configurations
     .pipe(replace(/window\.localStorage\[\'evan-ens-address\'\]/g, `window.localStorage['evan-ens-address'] || '${ config.bcConfig.nameResolver.ensAddress }'`))
@@ -374,25 +469,25 @@ const replaceConfigurationValues = async function(folderPath) {
   );
 }
 
-const prepareDappsDeployment = function(dapps) {
+const prepareDappsDeployment = async function(dapps) {
+  console.log('    ...prepare dapps deployment');
+
   del.sync(`${dappDeploymentFolder}`, { force: true });
 
-  return Promise.all(dapps.map(dapp => {
-    return new Promise(resolve => {
-      gulp
-        .src(`${ originFolder }/${ dapp }/**/*`)
-        .pipe(gulp.dest(`${ dappDeploymentFolder }/${ dapp }`))
-        .on('end', async () => {
-          del.sync([
-            `${ dappDeploymentFolder }/${ dapp }/*.map`
-          ], { force : true })
+  await Promise.all(dapps.map(dapp => new Promise(resolve => 
+    gulp
+      .src(`${ originFolder }/${ dapp }/**/*`)
+      .pipe(gulp.dest(`${ dappDeploymentFolder }/${ dapp }`))
+      .on('end', async () => {
+        del.sync([
+          `${ dappDeploymentFolder }/${ dapp }/*.map`
+        ], { force : true });
+      
+        resolve();
+      })
+  )));
 
-          await replaceConfigurationValues(dappDeploymentFolder);
-        
-          resolve();
-        })
-    })
-  }));
+  await replaceConfigurationValues(dappDeploymentFolder);
 };
 
 /**
@@ -401,6 +496,8 @@ const prepareDappsDeployment = function(dapps) {
  * @return     {Promise}  resolved when done
  */
 const replaceUmlauts = function() {
+  console.log('    ...fixing umlauts');
+
   return new Promise(resolve => {
     gulp
       .src([
@@ -511,6 +608,8 @@ function saveDBCPFile(dbcpPath, dbcp) {
  * @param {Ipfs} ipfs                 Blockchain-Core IPFS instance
  */
 async function deployDApps(externals, version) {
+  console.log('    ...deploying dapps');
+
   for (let external of externals) {
     const currIndex = externals.indexOf(external);
 
@@ -519,7 +618,7 @@ async function deployDApps(externals, version) {
     for (let i = 0; i < externals.length; i++) {
       statusTable.push({
         name: `${ i + 1 }. ${ externals[i] }`,
-        status: i < currIndex ? 'done' : i > currIndex ? 'outstanding' : 'running' 
+        status: i < currIndex ? 'done' : i > currIndex ? 'outstanding' : 'deploying' 
       });
     }
 
@@ -654,6 +753,7 @@ const loadDbcps = async function(externals) {
 
 /********************************** ionic functions ***********************************************/
 prepareIonicDeploy = async function () {
+  console.log('    ...prepare dapp-browser deployment');
   await del.sync(`${ionicDeploymentFolder}`, { force: true });
 
   await new Promise(resolve => gulp
@@ -719,6 +819,8 @@ const prepareIonicAppBuild = async function(platform) {
 }
 
 const ionicDeploy = async function (version) {
+  console.log('    ...deploying dapp-browser');
+
   const folderHash = await deployIPFSFolder('www', ionicDeploymentFolder);
 
   await pinToIPFSContractus(folderHash);
@@ -729,7 +831,7 @@ const ionicDeploy = async function (version) {
   await deployToIpns('dappbrowser', folderHash);
 
   addDbcpToList({
-    name: 'ionic-dapp._evan',
+    name: 'dapp-browser._evan',
     version: '-.-.-',
     dapp: {
       origin: folderHash,
@@ -739,6 +841,8 @@ const ionicDeploy = async function (version) {
 };
 
 const licensesDeploy = async function() {
+  console.log('    ...deploy licenses');
+
   const folderHash = await deployIPFSFolder('licenses', licensesFolder);
 
   await pinToIPFSContractus(folderHash);
@@ -780,7 +884,6 @@ const uglifyJS = async function(folder) {
       .pipe(replace('isMultiaddr=function(', 'isMultiaddr=function(){return true;},function('))
       .pipe(gulp.dest(folder))
       .on('end', () => {
-        console.log('on end')
         resolve()
       });
   });
@@ -797,11 +900,10 @@ const uglifyCSS = async function (folder) {
 };
 
 const uglify = async function(mode, folder) {
-  console.log(`Uglify sources (${ mode })...`);
-
-  console.log(`\nUglify js...`);
+  console.log(`    ...uglify sources (${ mode })`);
+  console.log(`      ...Uglify js`);
   await uglifyJS(folder);
-  console.log(`\nUglify css...`);
+  console.log(`      ...Uglify css`);
   await uglifyCSS(folder);
 };
 
@@ -848,11 +950,11 @@ const deploymentMenu = async function() {
   }
 
   if (advancedDeployment) {
-    dapps.push('ionic-dapp._evan');
+    dapps.push('dapp-browser._evan');
     dapps.push('licenses._evan');
 
     dbcps.push({
-      name: 'ionic-dapp._evan',
+      name: 'dapp-browser._evan',
       version: '-.-.-',
       dapp: {
         origin: '',
@@ -873,7 +975,7 @@ const deploymentMenu = async function() {
   const questions = [
     {
       name: 'dapps',
-      message: `Whichs DApps do you want to deploy? (${ deploymentDomain })`,
+      message: `Which DApps do you want to deploy? (${ deploymentDomain })`,
       type: 'checkbox',
       choices: [ ],
       validate: (dapps) => {
@@ -992,12 +1094,10 @@ const deploymentMenu = async function() {
     }
   });
 
-  questions[0].choices.push(new inquirer.Separator());
-  questions[0].choices.push({
-    name: ' Exit',
-    value: 'exit'
-  });
-
+  if (advancedDeployment) {
+    questions[0].choices.splice(0, 0, new inquirer.Separator());
+    questions[0].choices.splice(3, 0, new inquirer.Separator());
+  }
   questions[0].pageSize = questions[0].choices.length;
   
   try {
@@ -1015,15 +1115,15 @@ const deploymentMenu = async function() {
           }
 
           // ionic dapp deployment
-          const ionicDAppIndex = results.dapps.indexOf('ionic-dapp._evan');
+          const ionicDAppIndex = results.dapps.indexOf('dapp-browser._evan');
           if (ionicDAppIndex !== -1) {
-            // remove ionic-dapp._evan as normal dapp, would break the deployment process
+            // remove dapp-browser._evan as normal dapp, would break the deployment process
             results.dapps.splice(ionicDAppIndex, 1);
 
             await prepareIonicDeploy();
 
             if (results.uglify) {
-              await uglify('ionic-dapp._evan', ionicDeploymentFolder);
+              await uglify('dapp-browser._evan', ionicDeploymentFolder);
             }
 
             await replaceUmlauts();
