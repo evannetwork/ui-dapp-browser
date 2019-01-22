@@ -262,7 +262,7 @@ async function createRuntime() {
   });
 
   // set correct gas price
-  runtime.executor.defaultOptions = { gasPrice: config.bcConfig.gasPrice }
+  runtime.executor.defaultOptions = { gasPrice: config.dappConfigSwitches.gasPrice }
 
   return runtime;
 }
@@ -452,17 +452,20 @@ const replaceConfigurationValues = async function(folderPath) {
     .pipe(replace(/window\.localStorage\[\'evan-ens-profiles\'\]/g, `window.localStorage['evan-ens-profiles'] || '${ JSON.stringify(config.bcConfig.nameResolver.domains.profile) }'`))
     .pipe(replace(/window\.localStorage\[\'evan-ens-mailbox\'\]/g, `window.localStorage['evan-ens-mailbox'] || '${ JSON.stringify(config.bcConfig.nameResolver.domains.mailbox) }'`))
 
-    // smart agent configuratiuon
-    .pipe(replace(/https\:\/\/agents\.evan\.network/g, config.bcConfig.coreSmartAgent))
-
-    // insert the correct gas price
-    .pipe(replace(/window\.localStorage\[\'evan\-gas\-price\'\]\ \|\|\ \'20000000000\'/g, `window.localStorage['evan-gas-price'] || '${ config.bcConfig.gasPrice }'`))
-
     // web3 configurations
     .pipe(replace(/wss\:\/\/testcore.evan.network\/ws/g, `${ config.runtimeConfig.web3Provider }`))
 
     // ipfs config
     .pipe(replace(/\{\ host\:\ \'ipfs\.evan\.network\'\,\ port\:\ \'443\'\,\ protocol\:\ \'https\'\ \}/g, JSON.stringify(config.runtimeConfig.ipfs)))
+
+    // smart agent configuratiuon
+    .pipe(replace(/https\:\/\/agents\.evan\.network/g, config.dappConfigSwitches.coreSmartAgent))
+
+    // insert the correct gas price
+    .pipe(replace(/window\.localStorage\[\'evan\-gas\-price\'\]\ \|\|\ \'20000000000\'/g, `window.localStorage['evan-gas-price'] || '${ config.dappConfigSwitches.gasPrice }'`))
+
+    // mainnet texts (e.g. for onboarding)
+    .pipe(replace(/mainnetTexts\ \=\ false/g, `mainnetTexts = ${ config.runtimeConfig.mainnetTexts }`))
 
     .pipe(gulp.dest(folderPath))
     .on('end', () => resolve())
