@@ -425,7 +425,7 @@ const clearConsole = function() {
  * passed to the script.
  */
 const replaceConfigurationValues = async function(folderPath) {
-  const replacePaths = [ `${ folderPath }/**/*.js` ];
+  const replacePaths = [ `${ folderPath }/**/*.js`, `${ folderPath }/**/*.html`, ];
 
   // replace testnet ipns values
   for (let dappKey of Object.keys(ipnsHashes)) {
@@ -448,9 +448,9 @@ const replaceConfigurationValues = async function(folderPath) {
     .pipe(replace(/window\.localStorage\[\'evan-ens-resolver\'\]/g, `window.localStorage['evan-ens-resolver'] || '${ config.bcConfig.nameResolver.ensResolver }'`))
     .pipe(replace(/window\.localStorage\[\'evan-bc-root\'\]/g, `window.localStorage['evan-bc-root'] || '${ config.bcConfig.nameResolver.labels.businessCenterRoot }'`))
     .pipe(replace(/window\.localStorage\[\'evan-ens-root\'\]/g, `window.localStorage['evan-ens-root'] || '${ config.bcConfig.nameResolver.labels.ensRoot }'`))
-    .pipe(replace(/window\.localStorage\[\'evan-ens-events\'\]/g, `window.localStorage['evan-ens-events'] || '${ JSON.stringify(config.bcConfig.nameResolver.domains.eventhub) }'`))
-    .pipe(replace(/window\.localStorage\[\'evan-ens-profiles\'\]/g, `window.localStorage['evan-ens-profiles'] || '${ JSON.stringify(config.bcConfig.nameResolver.domains.profile) }'`))
-    .pipe(replace(/window\.localStorage\[\'evan-ens-mailbox\'\]/g, `window.localStorage['evan-ens-mailbox'] || '${ JSON.stringify(config.bcConfig.nameResolver.domains.mailbox) }'`))
+    .pipe(replace(/window\.localStorage\[\'evan-ens-events\'\]/g, `window.localStorage['evan-ens-events'] || ${ JSON.stringify(config.bcConfig.nameResolver.domains.eventhub) }`))
+    .pipe(replace(/window\.localStorage\[\'evan-ens-profiles\'\]/g, `window.localStorage['evan-ens-profiles'] || ${ JSON.stringify(config.bcConfig.nameResolver.domains.profile) }`))
+    .pipe(replace(/window\.localStorage\[\'evan-ens-mailbox\'\]/g, `window.localStorage['evan-ens-mailbox'] || ${ JSON.stringify(config.bcConfig.nameResolver.domains.mailbox) }`))
 
     // web3 configurations
     .pipe(replace(/wss\:\/\/testcore.evan.network\/ws/g, `${ config.runtimeConfig.web3Provider }`))
@@ -465,7 +465,7 @@ const replaceConfigurationValues = async function(folderPath) {
     .pipe(replace(/window\.localStorage\[\'evan\-gas\-price\'\]\ \|\|\ \'20000000000\'/g, `window.localStorage['evan-gas-price'] || '${ config.dappConfigSwitches.gasPrice }'`))
 
     // mainnet texts (e.g. for onboarding)
-    .pipe(replace(/mainnetTexts\ \=\ false/g, `mainnetTexts = ${ config.runtimeConfig.mainnetTexts }`))
+    .pipe(replace(/mainnetTexts\ \=\ false/g, `mainnetTexts = ${ config.dappConfigSwitches.mainnetTexts }`))
 
     .pipe(gulp.dest(folderPath))
     .on('end', () => resolve())
