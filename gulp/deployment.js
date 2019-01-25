@@ -41,7 +41,6 @@ const cleanCss = require('gulp-clean-css');
 const request = require('request');
 const http = require('http');
 const https = require('https');
-const IpfsServer = require('ipfs');
 const inquirer = require('inquirer');
 const IpfsApi = require('ipfs-api');
 const Web3 = require('web3');
