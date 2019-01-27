@@ -397,6 +397,7 @@ export {
   getMnemonicLib,
   getNewVault,
   getPassword,
+  getPrimaryAccount,
   getPrivateKey,
   isValidMnemonic,
   isValidMnemonicWord,
