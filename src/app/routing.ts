@@ -116,22 +116,8 @@ export async function getDefaultDAppENS(): Promise<string> {
  * default dapp ens when necessary.
  */
 export async function beforeRoute(): Promise<void> {
-  if (core.getAccountId()) {
-    let isOnboarded = false;
-
-    try {
-      isOnboarded = await evanGlobals.CoreBundle.isAccountOnboarded(core.getAccountId());
-    } catch (ex) { }
-
-    if (!isOnboarded) {
-      goToOnboarding();
-    } else {
-      if (!getActiveRootENS()) {
-        router.navigate(`/${ defaultDAppENS }`);
-      }
-    }
-  } else if (!isOnboarding()) {
-    goToOnboarding();
+  if (!getActiveRootENS()) {
+    router.navigate(`/${ defaultDAppENS }`);
   }
 }
 

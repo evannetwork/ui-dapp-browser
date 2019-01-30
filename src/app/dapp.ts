@@ -397,6 +397,25 @@ export async function startDApp(dappEns: string, container = document.body, useD
       dappEns = `${ ensDefinition.name }.${ utils.getDomainName() }`;
     }
 
+    // save previous element that were included into the container and remove them, after the new
+    // dapp has started (transform it into an array, to use it as an copy)
+    let previousContainerChilds = [ ].map.call(document.body.childNodes, (el) => el);
+    /**
+     * Remove the previous container children to force previously opened dapp in this container, to
+     * stop. Mostly used after the new dapp has started, to keep eventually loading screen that is
+     * shown by the dapp.
+     */
+    const removePreviousContainerChilds = () => {
+      previousContainerChilds.forEach((childElement: any) => {
+        if (childElement.parentElement === container) {
+          container.removeChild(childElement);
+        }
+      });
+
+      // delete dom element references to trigger garbage collection
+      previousContainerChilds = [ ];
+    };
+
     // lookup entrypoint and load dapp base url to provide it directly into the startDApp
     const entrypoint = ensDefinition.dapp.entrypoint;
     const dappBaseUrl = getDAppBaseUrl(ensDefinition, dappEns);
@@ -404,6 +423,9 @@ export async function startDApp(dappEns: string, container = document.body, useD
       // load the DApp and start it
       const dappModule = await evanGlobals.System.import(`${dappEns}!dapp-content`);
       await dappModule.startDApp(container, ensDefinition.name, dappEns, dappBaseUrl);
+
+      // remove other elements from the container when they are still existing
+      removePreviousContainerChilds();
 
       // check warnings, after first DApp was opened
       if (firstDApp) {
@@ -423,6 +445,9 @@ export async function startDApp(dappEns: string, container = document.body, useD
 
       // and append the iframe to the dom
       container.appendChild(iframe);
+
+      // remove other elements from the container when they are still existing
+      removePreviousContainerChilds();
     } else {
       throw new Error('Invalid entry point defined!');
     }
