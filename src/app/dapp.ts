@@ -27,7 +27,7 @@
 
 import * as utils from './utils';
 import { config } from './config';
-import { finishDAppLoading } from './loading';
+import * as loading  from './loading';
 import { watchForEveLow } from './watchers';
 
 
@@ -393,6 +393,11 @@ export async function startDApp(dappEns: string, container = document.body, useD
 
   // asynchroniously start dapp to speed up synchroniously loaded css files from dapp
   if (ensDefinition.dapp && ensDefinition.dapp.entrypoint) {
+    // copy is firstLoad flag to check if its the first dapp that is started, so we can wait for
+    // start screen loading animation to be finished
+    const isFirstDApp = loading.isFirstLoad;
+
+    // prefill origin, if it's missing
     if (!ensDefinition.dapp.origin) {
       dappEns = `${ ensDefinition.name }.${ utils.getDomainName() }`;
     }
@@ -405,7 +410,11 @@ export async function startDApp(dappEns: string, container = document.body, useD
      * stop. Mostly used after the new dapp has started, to keep eventually loading screen that is
      * shown by the dapp.
      */
-    const removePreviousContainerChilds = () => {
+    const removePreviousContainerChilds = async () => {
+      if (isFirstDApp) {
+        await new Promise(resolve => setTimeout(resolve, 500));
+      }
+
       previousContainerChilds.forEach((childElement: any) => {
         if (childElement.parentElement === container) {
           container.removeChild(childElement);
@@ -441,7 +450,7 @@ export async function startDApp(dappEns: string, container = document.body, useD
       iframe.setAttribute('src', `${ dappBaseUrl }#/${ dappEns }`);
 
       // remove the loading screen
-      finishDAppLoading();
+      loading.finishDAppLoading();
 
       // and append the iframe to the dom
       container.appendChild(iframe);
