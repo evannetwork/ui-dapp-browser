@@ -31,7 +31,7 @@ require('console.table');
 process.env.DBCP_LOGLEVEL = 'debug';
 
 // runtime parameters
-const enableDeploy = false;
+const enableDeploy = true;
 
 // node_modules
 const path = require('path');
