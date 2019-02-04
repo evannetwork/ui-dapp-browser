@@ -155,8 +155,10 @@ async function startBCC(
 ) {
   const coreOptions = await getCoreOptions(CoreBundle, SmartContracts, provider);
 
+  // recreate core instance
   await CoreBundle.createAndSetCore(coreOptions);
 
+  // create bcc runtime options profile
   const bccProfileOptions: any = {
     accountId: core.activeAccount(),
     CoreBundle: CoreBundle,
@@ -176,7 +178,7 @@ async function startBCC(
       contractLoader: CoreBundle.CoreRuntime.contractLoader,
       logLog: CoreBundle.logLog,
       logLogLevel: CoreBundle.logLogLevel,
-      signer: bccProfileOptions,
+      signer: bccProfileOptions.signer,
       token: agentExecutor.token,
       web3: CoreBundle.CoreRuntime.web3,
     });
