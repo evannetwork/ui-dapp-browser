@@ -6,6 +6,7 @@
 - `startDApp` function gets 4. parameter the dappBaseUrl, where the result of getDAppBaseUrl for the loaded dbcp.json is passed to (https://ipfs.evan.network/ipfs/.../, http://localhost:3000/external/...)
 - add support using multiple chain configurations (ipns and configuration values will be replaced)
 - add deployment web3 reconnect
+- add `System.map('@evan.network/ui-dapp-browser')` so the dapp-browser import can be correctly
 
 ### Fixes
 - fix loading of DBCP libraries with different versions (for detailed description have a look at https://github.com/evannetwork/issue-tracking/issues/443)

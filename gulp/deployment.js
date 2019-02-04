@@ -30,6 +30,9 @@ require('console.table');
 // enable dev logs
 process.env.DBCP_LOGLEVEL = 'debug';
 
+// runtime parameters
+const enableDeploy = false;
+
 // node_modules
 const path = require('path');
 const exec = require('child_process').exec;
@@ -98,9 +101,6 @@ const testnetIpnsHashes = {
   uidocs: 'QmReXE5YkiXviaHNG1ASfY6fFhEoiDKuSkgY4hxgZD9Gm8',
   pxStatus: 'QmYgEK2oynRAdB9UTeCs76EFMU9mcutj1izXpi7ckSdzbS'
 };
-
-// runtime parameters
-const enableDeploy = true;
 
 // dapp-browser files that should be copied by default for browser
 const dappBrowserFiles = [
@@ -620,7 +620,7 @@ async function deployDApps(externals, version) {
     for (let i = 0; i < externals.length; i++) {
       statusTable.push({
         name: `${ i + 1 }. ${ externals[i] }`,
-        status: i < currIndex ? 'done' : i > currIndex ? 'outstanding' : 'deploying' 
+        status: i < currIndex ? 'done' : i > currIndex ? 'pending' : 'deploying' 
       });
     }
 
