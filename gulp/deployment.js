@@ -54,6 +54,8 @@ const {
   AccountStore,
   createDefaultRuntime,
   Ipfs,
+  Wallet,
+  ExecutorWallet
 } = require('@evan.network/api-blockchain-core');
 
 // search for root ui-dapp-browser path
@@ -233,7 +235,7 @@ async function createRuntime() {
     if (!config || !config.bcConfig || !config.runtimeConfig) {
       throw new Error('No or invalid config file specified!');
     }
-    
+
     deploymentAccount = Object.keys(config.runtimeConfig.accountMap)[0];
 
     ipnsHashes = config.ipnsHashes || { };
@@ -247,7 +249,7 @@ async function createRuntime() {
   const accountId = Object.keys(config.runtimeConfig.accountMap)[0];
   const web3 = new Web3();
   addWebsocketReconnect(Web3, web3, config.runtimeConfig.web3Provider)
-  web3.setProvider(new web3.providers.WebsocketProvider(config.runtimeConfig.web3Provider));
+
   const dfs = new Ipfs({
     accountId: accountId,
     accountStore: new AccountStore({ accounts: config.runtimeConfig.accountMap, }),
@@ -260,6 +262,36 @@ async function createRuntime() {
     nameResolver: config.bcConfig.nameResolver,
   });
 
+  // replace executor with wallet if required
+  if (config.runtimeConfig.walletAddress) {
+
+    const walletAddress = config.runtimeConfig.walletAddress
+    const wallet = new Wallet(Object.assign({}, runtime))
+    wallet.load(walletAddress)
+    const executorWallet = new ExecutorWallet({
+      contractLoader: runtime.contractLoader,
+      accountId: deploymentAccount,
+      config: JSON.parse(JSON.stringify(runtime.executor.config)),
+      signer: runtime.executor.signer,
+      wallet,
+      web3: web3,
+    })
+    executorWallet.eventHub = runtime.eventHub;
+    deploymentAccount = config.runtimeConfig.walletAddress
+    // replace executor usages in runtime submodules
+    for (let key of Object.keys(runtime)) {
+      if (runtime[key].executor) {
+        runtime[key].executor = executorWallet;
+      } else if (runtime[key].options && runtime[key].options.executor) {
+        runtime[key].options.executor = executorWallet;
+      }
+    }
+    // set executor in runtime (top level)
+    runtime.innerExecutor = runtime.executor
+    runtime.innerAccount = accountId
+    runtime.walletAddress = walletAddress
+    runtime.executor = executorWallet
+  }
   // set correct gas price
   runtime.executor.defaultOptions = { gasPrice: config.dappConfigSwitches.gasPrice }
 
@@ -279,7 +311,7 @@ const requestFileFromEVANIpfs = function(hash) {
     request(`https://ipfs.evan.network/ipfs/${hash}`, function (error, response, body) {
       if (pinTimeout) {
         clearTimeout(pinTimeout);
-        
+
         resolve();
       }
     });
@@ -385,7 +417,7 @@ async function deployToIpns(dapp, hash, retry) {
 
   await new Promise((resolve, reject) => {
     console.log(`Publish to ipns: ${ dapp } : ${ hash }`);
-
+    return resolve();
     exec(`ipfs name publish --key=${ ipnsPrivateKeys[dapp] } --lifetime=8760h /ipfs/${ hash }`, {
 
     }, async (err, stdout, stderr) => {
@@ -476,7 +508,7 @@ const prepareDappsDeployment = async function(dapps) {
 
   del.sync(`${dappDeploymentFolder}`, { force: true });
 
-  await Promise.all(dapps.map(dapp => new Promise(resolve => 
+  await Promise.all(dapps.map(dapp => new Promise(resolve =>
     gulp
       .src(`${ originFolder }/${ dapp }/**/*`)
       .pipe(gulp.dest(`${ dappDeploymentFolder }/${ dapp }`))
@@ -484,7 +516,7 @@ const prepareDappsDeployment = async function(dapps) {
         del.sync([
           `${ dappDeploymentFolder }/${ dapp }/*.map`
         ], { force : true });
-      
+
         resolve();
       })
   )));
@@ -553,11 +585,11 @@ const addDbcpToList = function(dbcp) {
   for (let i = 0; i < dbcps.length; i++) {
     if (dbcps[i].name === dbcp.name) {
       dbcps.splice(i, 1);
-      
+
       break;
     }
   }
-  
+
   dbcps.push(dbcp);
 }
 
@@ -569,7 +601,7 @@ const updateDBCPVersion = function(dbcp, version, beforeHash) {
   let splittedVersion = (dbcp.public.version || '').split('.');
   splittedVersion = splittedVersion.map(versionNumber => parseInt(versionNumber));
   splittedVersion.splice(3, splittedVersion.length);
-  
+
   // fill missing version numbers
   while (splittedVersion.length < 3) {
     splittedVersion.push(0);
@@ -625,7 +657,7 @@ async function deployDApps(externals, version) {
     }
 
     clearConsole();
-  
+
     console.log(`\n\nDeploying Dapps... (${ currIndex + 1} / ${ externals.length })\n`);
     console.table(statusTable);
     console.log('\n\n');
@@ -656,13 +688,13 @@ async function deployDApps(externals, version) {
 
       updateDBCPVersion(dbcp, version, beforeHash);
       saveDBCPFile(`${ runtimeFolder }/external/${external}/dbcp.json`, dbcp);
-      
+
       if (dbcpPath) {
         saveDBCPFile(dbcpPath, dbcp);
       }
 
       // check if the address was claimed before
-      //   --> trace from first level and claim permanent addresses when no owner was set before 
+      //   --> trace from first level and claim permanent addresses when no owner was set before
       const splitEns = address.split('.');
       for (let i = splitEns.length; i > -1; i--) {
         const checkAddress = splitEns.slice(i, splitEns.length).join('.');
@@ -735,10 +767,10 @@ const loadDbcps = async function(externals) {
 
         if (descriptionHash) {
           descriptionHash = descriptionHash.startsWith('Qm') ? descriptionHash : Ipfs.bytes32ToIpfsHash(descriptionHash);
-        
+
           let loaded = await runtime.description.getDescriptionFromEns(address);
           loaded = Object.assign(loaded.public, loaded.private);
-    
+
           dbcp.dapp.origin = loaded.dapp.origin;
 
           addDbcpToList(dbcp);
@@ -931,7 +963,7 @@ const initializeDBCPs = async function(dapps) {
   if (!deploymentDomain) {
     clearConsole();
     const prompt = inquirer.createPromptModule();
-    
+
     deploymentDomain = (await prompt([{
       name: 'deploymentDomain',
       message: 'On which domain do you want to deploy your DApps?',
@@ -973,7 +1005,7 @@ const deploymentMenu = async function() {
       }
     });
   }
-  
+
   const questions = [
     {
       name: 'dapps',
@@ -1101,11 +1133,11 @@ const deploymentMenu = async function() {
     questions[0].choices.splice(3, 0, new inquirer.Separator());
   }
   questions[0].pageSize = questions[0].choices.length;
-  
+
   try {
     await new Promise((resolve, reject) => {
       var prompt = inquirer.createPromptModule();
-      
+
       clearConsole();
       prompt(questions)
         .then(async results => {
@@ -1146,21 +1178,21 @@ const deploymentMenu = async function() {
 
           // start deployment of dapps
           await prepareDappsDeployment(results.dapps);
-          
+
           if (results.uglify) {
             await uglify('DApps', dappDeploymentFolder);
           }
 
           await replaceUmlauts();
-  
+
           if (enableDeploy) {
             await deployDApps(results.dapps, results.version);
           }
-  
+
           resolve();
         });
     })
-  
+
     await deploymentMenu();
   } catch(ex) {
     console.log(`   Error: `);
