@@ -79,12 +79,20 @@ const getDefinitionFromEns = function(ensAddress, domain) {
   } else {
     const validEnsAddress = ensAddress.replace(/-/g, '');
     const cacheDbcp = shouldBeCached(validEnsAddress);
-    let loader;
+    const cacheAvailable = ensCache[validEnsAddress] && ensCache[validEnsAddress] !== 'invalid';
+    let loader = Promise.resolve();
 
+    // delay loading for 3 seconds, to wait the heavy page load is over
+    if (cacheAvailable) {
+      loader = new Promise(resolve => setTimeout(() => resolve(), 3000));
+    }
+
+    // trigger the loader
     if (validEnsAddress.indexOf('Qm') === 0) {
-      loader = ipfsCatPromise(validEnsAddress);
+      loader = loader.then(() => ipfsCatPromise(validEnsAddress));
     } else {
-      loader = utils.bccReady
+      loader = loader
+        .then(utils.bccReady)
         .then(() => evanGlobals.CoreRuntime.description.getDescription(validEnsAddress));
     }
 
@@ -115,7 +123,7 @@ const getDefinitionFromEns = function(ensAddress, domain) {
         }
       });
 
-    if (cacheDbcp && ensCache[validEnsAddress] && ensCache[validEnsAddress] !== 'invalid') {
+    if (cacheAvailable) {
       return ensCache[validEnsAddress];
     } else {
       return loader;

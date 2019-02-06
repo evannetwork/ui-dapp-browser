@@ -174,20 +174,22 @@ async function getNewVault(mnemonic: string, password: string): Promise<any> {
 /**
  * Get an specific amount of accounts from the vault.
  *
- * @param      {any}  vault   vault to get accounts from
- * @param      {number}  amount  number of accounts to return
+ * @param      {any}            vault   vault to get accounts from
+ * @param      {number}         amount  number of accounts to return
  * @return     {Array<string>}  The accounts.
  */
 function getAccounts(vault: any, amount?: number): Array<string> {
-  if (amount) {
+  let accounts = vault.getAddresses();
+
+  // only generate so much accounts, that are realy needed, do not generate new ones, if the amount
+  // of addresses are already loaded
+  if (amount && (!accounts || accounts.length < amount)) {
     if (!vault.pwDerivedKey) {
       throw new Error('could not generate new addresses on locked vault!');
     }
 
-    vault.generateNewAddress(vault.pwDerivedKey, amount);
+    vault.generateNewAddress(vault.pwDerivedKey, amount - accounts.length);
   }
-
-  const accounts = vault.getAddresses();
 
   return accounts.map(account => evanGlobals.CoreRuntime.web3.utils.toChecksumAddress(account));
 }

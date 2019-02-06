@@ -64,7 +64,6 @@ window['evanloadTime'] = Date.now();
  * `(window|global).Promise` has been overwritten.
  */
 // TODO: when bcc is loaded multiple times, zoneJS should also be saved
-const zoneJSPromise = window['Promise'];
 const System = window['System'];
 const getDomainName = utils.getDomainName;
 let web3;
@@ -140,9 +139,6 @@ export async function initializeEvanNetworkStructure(): Promise<void> {
         definition = CoreRuntime.definition;
         nameResolver = CoreRuntime.nameResolver;
         web3 = CoreRuntime.web3;
-
-        // restore zoneJSpromise
-        window['Promise'] = zoneJSPromise;
 
         // wait for device ready event so we can load notifications
         // await preloadAngular;

@@ -7,6 +7,7 @@
 - add support using multiple chain configurations (ipns and configuration values will be replaced)
 - add deployment web3 reconnect
 - add `System.map('@evan.network/ui-dapp-browser')` so the dapp-browser import can be correctly
+- delay loading of cached dbcp files for 3 seconds to speedup initial heavy load
 
 ### Fixes
 - fix loading of DBCP libraries with different versions (for detailed description have a look at https://github.com/evannetwork/issue-tracking/issues/443)
@@ -14,8 +15,10 @@
 - move get `getDomainName` function to utils
 - `startDApp` removes previously contained content from the dapp container, after the dapp was started
 - throw an error, when the ui is started using an agent executor and the private key should be exported
+- reduce amount of calls of `vault.generateNewAddresses()`
 
 ### Deprecations
+- move `zone.js` to `@evan.network/ui-angular-libs` (it's only needed by angular) 
 
 ## Version 1.7.0
 ### Features
