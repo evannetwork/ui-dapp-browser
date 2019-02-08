@@ -612,7 +612,6 @@ const updateDBCPVersion = function(dbcp, version, beforeHash) {
   }
 
   const versionBump = versionMap.indexOf(version);
-
   if (versionBump > -1) {
     splittedVersion[versionBump] = splittedVersion[versionBump] + 1;
 

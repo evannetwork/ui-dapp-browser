@@ -114,6 +114,7 @@ export function getDAppBaseUrl(dbcp: any, address: string): string {
  */
 function getVersionDBCPHashFromDAppVersion(requiredVersion: string, childENS: string, childDefinition: any): string {
   if (childDefinition && childDefinition) {
+    const originalVersion = requiredVersion;
     const childVersions = childDefinition.versions || { };
     childVersions[childDefinition.version] = childENS.replace(/-/g, '');
 
@@ -171,9 +172,9 @@ function getVersionDBCPHashFromDAppVersion(requiredVersion: string, childENS: st
         return `${ childVersions[requiredVersion] }.${ utils.getDomainName() }!dapp-content`;
       }
     } else {
-      const msg = `Version not found: ${requiredVersion} for DApp ${childDefinition.name}`;
+      const msg = `Version not found: ${originalVersion} for DApp ${childDefinition.name}`;
       console.error(msg);
-      throw new Error(`Version not found: ${ requiredVersion } for DApp ${ childDefinition.name }`);
+      throw new Error(`Version not found: ${ originalVersion } for DApp ${ childDefinition.name }`);
     }
   } else {
     const msg = `Invalid DApp definition detected`;

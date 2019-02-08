@@ -64,10 +64,8 @@ const shouldBeCached = function(address) {
  */
 const getDefinitionFromEns = function(ensAddress, domain) {
   // remove domain from the end of the ensAddress to get the dapp name
-  let dappName = ensAddress.replace(/\-/g, '').slice(
-    0,
-    ensAddress.lastIndexOf('.' + domain)
-  );
+  let dappName = ensAddress.replace(/\-/g, '').split('.');
+  dappName = dappName.slice(0, dappName.length - 1).join('.');
 
   if (utils.isDevAvailable(dappName) && ensAddress.indexOf('0x') !== 0) {
     // load json and resolve it as stringified
@@ -79,11 +77,11 @@ const getDefinitionFromEns = function(ensAddress, domain) {
   } else {
     const validEnsAddress = ensAddress.replace(/-/g, '');
     const cacheDbcp = shouldBeCached(validEnsAddress);
-    const cacheAvailable = ensCache[validEnsAddress] && ensCache[validEnsAddress] !== 'invalid';
+    const cacheAvailable = false // ensCache[validEnsAddress] && ensCache[validEnsAddress] !== 'invalid';
     let loader = Promise.resolve();
 
     // delay loading for 3 seconds, to wait the heavy page load is over
-    if (cacheAvailable) {
+    if (cacheAvailable && cacheDbcp) {
       loader = new Promise(resolve => setTimeout(() => resolve(), 3000));
     }
 
