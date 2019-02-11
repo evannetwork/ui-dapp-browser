@@ -15,7 +15,7 @@ The src folder includes a dev.html and a index.html file. By opening the dev.htm
 The DApp browser provides several functionallities to access
 - DApp routing
 - global utillity functions like log
-- informations of the current logged in user
+- information of the current logged in user
   - account id
   - lightwallet vault
   - provider (internal, external)
