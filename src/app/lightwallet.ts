@@ -188,7 +188,9 @@ function getAccounts(vault: any, amount?: number): Array<string> {
       throw new Error('could not generate new addresses on locked vault!');
     }
 
+    // generate new ones and reload
     vault.generateNewAddress(vault.pwDerivedKey, amount - accounts.length);
+    accounts = vault.getAddresses();
   }
 
   return accounts.map(account => evanGlobals.CoreRuntime.web3.utils.toChecksumAddress(account));
