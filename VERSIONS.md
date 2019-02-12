@@ -2,6 +2,12 @@
 
 ## Next Version
 ### Features
+### Fixes
+### Deprecations
+
+
+## Version 2.0.0
+### Features
 - add `dapp.getDAppBaseUrl` function to, Takes an dbcp object and calculates the base path, where all the files are deployed, for this DApp using the dbcp origin. When dev mode is enabled, the localhost path will be returned.
 - `startDApp` function gets 4. parameter the dappBaseUrl, where the result of getDAppBaseUrl for the loaded dbcp.json is passed to (https://ipfs.evan.network/ipfs/.../, http://localhost:3000/external/...)
 - add support using multiple chain configurations (ipns and configuration values will be replaced)

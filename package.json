@@ -35,7 +35,7 @@
     "@compodoc/compodoc": "^1.0.5",
     "@compodoc/gulp-compodoc": "0.0.8",
     "@evan.network/api-blockchain-core": "^2.0.0",
-    "@evan.network/dbcp": "^1.5.1",
+    "@evan.network/dbcp": "^1.5.2",
     "@evan.network/ui-angular-sass": "^2.0.0",
     "@ionic-native/camera": "^4.7.0",
     "@ionic-native/file": "^4.7.0",
