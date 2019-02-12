@@ -80,6 +80,7 @@
 
       'dapp': 'src/app/main.ts',
       'dapp-browser': 'src/app/main.ts',
+      '@evan.network/ui-dapp-browser': 'src/app/main.ts',
 
       // npm
       'ts': 'npm:plugin-typescript/lib/plugin.js',

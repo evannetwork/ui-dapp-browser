@@ -26,6 +26,7 @@
 */
 
 import * as browserIpfs from '../libs/browser-ipfs.js';
+import * as utils from './utils';
 
 /**
  * set the default provider for the browser ipfs for the current window location
@@ -40,12 +41,8 @@ browserIpfs.default.setProvider({
 /**
  * default evan.network ipfs configuration
  */
-export let ipfsConfig = {
-  host: 'ipfs.evan.network',
-  port: '443',
-  protocol: 'https',
-  ipfsCache: null
-};
+export let ipfsConfig: any = { host: 'ipfs.evan.network', port: '443', protocol: 'https' };
+ipfsConfig.ipfsCache = ipfsConfig.ipfsCache || null
 
 /**
  * Rest ipfs instance

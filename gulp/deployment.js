@@ -30,6 +30,9 @@ require('console.table');
 // enable dev logs
 process.env.DBCP_LOGLEVEL = 'debug';
 
+// runtime parameters
+const enableDeploy = true;
+
 // node_modules
 const path = require('path');
 const exec = require('child_process').exec;
@@ -41,7 +44,6 @@ const cleanCss = require('gulp-clean-css');
 const request = require('request');
 const http = require('http');
 const https = require('https');
-const IpfsServer = require('ipfs');
 const inquirer = require('inquirer');
 const IpfsApi = require('ipfs-api');
 const Web3 = require('web3');
@@ -52,6 +54,8 @@ const {
   AccountStore,
   createDefaultRuntime,
   Ipfs,
+  Wallet,
+  ExecutorWallet
 } = require('@evan.network/api-blockchain-core');
 
 // search for root ui-dapp-browser path
@@ -81,8 +85,24 @@ let ipfsInstance;
 let runtime;
 let web3;
 
-// runtime parameters
-const enableDeploy = true;
+// values will be overwritten after the deployment configuration was loaded, to check, which dapp
+// should be bind on an ips hash
+let ipnsPrivateKeys = { };
+let ipnsHashes = { };
+
+// Original ipns hashes for the testnet that also are entered per default into the UI for
+// development. By deploying other inps hashes for the several base libs and dapps, the testnet
+// hashes will be replaced by the entered ones.
+const testnetIpnsHashes = {
+  bcc: 'Qme9gmKpueriR7qMH5SNW3De3b9AFBkUGvFMS8ve1SuYBy',
+  bccdocs: 'QmYmsPTdPPDLig6gKB1wu1De4KJtTqAXFLF1498umYs4M6',
+  dappbrowser: 'QmeaaYgC38Ai993NUKbgvfBw11mrmK9THb6GtR48TmcsGj',
+  dbcpdocs: 'QmSXPThSm6u3BDE1X4C9QofFfcNH86cCWAR1W5Sqe9VWKn',
+  licenses: 'QmT1FwnYyURjLj7nKMwEuTPUBc5uJ6z1zAVsYnKfUL1X1q',
+  smartcontracts: 'QmRMz7yzMqjbEqXNdcmqk2WMFcXtpY41Nt9CqsLwMgkF43',
+  uidocs: 'QmReXE5YkiXviaHNG1ASfY6fFhEoiDKuSkgY4hxgZD9Gm8',
+  pxStatus: 'QmYgEK2oynRAdB9UTeCs76EFMU9mcutj1izXpi7ckSdzbS'
+};
 
 // dapp-browser files that should be copied by default for browser
 const dappBrowserFiles = [
@@ -107,26 +127,6 @@ let dbcps = [
   }
 ];
 
-const ipnsPrivateKeys = {
-  bcc: 'evan.network-blockchain-core',
-  bccdocs: 'evan.network-bccdocs',
-  dappbrowser: 'evan.network-dapp-browser',
-  dbcpdocs: 'evan.network-dbcpdocs',
-  licenses: 'evan.network-licenses',
-  smartcontracts: 'evan.network-smart-contracts',
-  uidocs: 'evan.network-uidocs',
-};
-
-const ipnsValues = {
-  bcc: 'Qme9gmKpueriR7qMH5SNW3De3b9AFBkUGvFMS8ve1SuYBy',
-  bccdocs: 'QmYmsPTdPPDLig6gKB1wu1De4KJtTqAXFLF1498umYs4M6',
-  dappbrowser: 'QmeaaYgC38Ai993NUKbgvfBw11mrmK9THb6GtR48TmcsGj',
-  dbcpdocs: 'QmSXPThSm6u3BDE1X4C9QofFfcNH86cCWAR1W5Sqe9VWKn',
-  licenses: 'QmT1FwnYyURjLj7nKMwEuTPUBc5uJ6z1zAVsYnKfUL1X1q',
-  smartcontracts: 'QmRMz7yzMqjbEqXNdcmqk2WMFcXtpY41Nt9CqsLwMgkF43',
-  uidocs: 'QmReXE5YkiXviaHNG1ASfY6fFhEoiDKuSkgY4hxgZD9Gm8',
-};
-
 // version mapping for version bump select
 const versionMap = [
   'major',
@@ -135,6 +135,98 @@ const versionMap = [
 ];
 
 /********************************** bcc runtime ************************************************/
+ /**
+   * add reconnect to websocker provider and use it as web3 provider
+   *
+   * @param      {object}  Web3         Web3 module
+   * @param      {object}  web3         web3 instance (without provider)
+   * @param      {string}  providerUrl  websocker provider url
+   */
+function addWebsocketReconnect(Web3, web3, providerUrl) {
+  let websocketProvider;
+  let reconnecting;
+
+  /**
+   * Reconnect the current websocket connection
+   *
+   * @param      {url}       url       url to connect to the websocket
+   * @param      {Function}  callback  optional callback that is called when the
+   *                                   reconnect is done
+   */
+  let reconnect = (url, callback) => {
+    if (!reconnecting) {
+      console.log('Lost connection to Websocket, reconnecting in 1000ms');
+
+      reconnecting = [ ];
+
+      setTimeout(() => {
+        // stop last provider
+        websocketProvider._timeout();
+        websocketProvider.reset();
+        websocketProvider.removeAllListeners();
+
+        // create new provider
+        websocketProvider = new web3.providers.WebsocketProvider(url);
+        websocketProvider.on('end', () => reconnect(url));
+
+        // remove the old provider from requestManager to prevent errors on reconnect
+        delete web3._requestManager.provider;
+        web3.setProvider(websocketProvider);
+        // run reconnecting callbacks
+        for (let i = 0; i < reconnecting.length; i++) {
+          reconnecting[i]();
+        }
+
+        reconnecting = undefined;
+      }, 1000);
+    }
+
+    // add callback to the reconnecting array to call them after reconnect
+    if (typeof callback === 'function') {
+      reconnecting.push(callback);
+    }
+  }
+
+  // connect to web3
+  Web3.providers.WebsocketProvider.prototype.send = function(payload, callback) {
+    let _this = this;
+
+    // if the connection is already connecting, wait 100ms and try again
+    if (websocketProvider.connection.readyState === websocketProvider.connection.CONNECTING) {
+      setTimeout(function () {
+        _this.send(payload, callback);
+      }, 100);
+      return;
+    }
+
+    // if the connection is lost, try to reconnect to the url
+    if (websocketProvider.connection.readyState !== websocketProvider.connection.OPEN) {
+      reconnect(websocketProvider.connection.url, () => {
+        _this.send(payload, callback);
+      });
+
+      return;
+    }
+
+    // send the request
+    websocketProvider.connection.send(JSON.stringify(payload));
+    websocketProvider._addResponseCallback(payload, callback);
+  };
+
+  // check if an websockerProvider exists and if the url has changed => reset old one
+  if (websocketProvider && websocketProvider.connection.url !== providerUrl) {
+    websocketProvider.reset();
+  }
+
+  // create a new websocket connection, when its the first or the url has changed
+  if (!websocketProvider || websocketProvider.connection.url !== providerUrl) {
+    websocketProvider = new web3.providers.WebsocketProvider(providerUrl);
+    websocketProvider.on('end', () => reconnect(providerUrl));
+
+    web3.setProvider(websocketProvider);
+  }
+}
+
 async function createRuntime() {
   // deployment configuration and accounts
   try {
@@ -143,16 +235,21 @@ async function createRuntime() {
     if (!config || !config.bcConfig || !config.runtimeConfig) {
       throw new Error('No or invalid config file specified!');
     }
-    
+
     deploymentAccount = Object.keys(config.runtimeConfig.accountMap)[0];
+
+    ipnsHashes = config.ipnsHashes || { };
+    ipnsPrivateKeys = config.ipnsPrivateKeys || { };
   } catch (ex) {
-    throw new Error('No or invalid config file specified!');
+    console.error(ex);
+    throw new Error(`No or invalid config file specified!`);
   }
 
   // initialize dependencies
   const accountId = Object.keys(config.runtimeConfig.accountMap)[0];
   const web3 = new Web3();
-  web3.setProvider(new web3.providers.WebsocketProvider(config.runtimeConfig.web3Provider));
+  addWebsocketReconnect(Web3, web3, config.runtimeConfig.web3Provider)
+
   const dfs = new Ipfs({
     accountId: accountId,
     accountStore: new AccountStore({ accounts: config.runtimeConfig.accountMap, }),
@@ -160,10 +257,45 @@ async function createRuntime() {
     web3: web3,
   });
 
-  return await createDefaultRuntime(web3, dfs, {
+  const runtime = await createDefaultRuntime(web3, dfs, {
     accountMap: config.runtimeConfig.accountMap,
     nameResolver: config.bcConfig.nameResolver,
   });
+
+  // replace executor with wallet if required
+  if (config.runtimeConfig.walletAddress) {
+
+    const walletAddress = config.runtimeConfig.walletAddress
+    const wallet = new Wallet(Object.assign({}, runtime))
+    wallet.load(walletAddress)
+    const executorWallet = new ExecutorWallet({
+      contractLoader: runtime.contractLoader,
+      accountId: deploymentAccount,
+      config: JSON.parse(JSON.stringify(runtime.executor.config)),
+      signer: runtime.executor.signer,
+      wallet,
+      web3: web3,
+    })
+    executorWallet.eventHub = runtime.eventHub;
+    deploymentAccount = config.runtimeConfig.walletAddress
+    // replace executor usages in runtime submodules
+    for (let key of Object.keys(runtime)) {
+      if (runtime[key].executor) {
+        runtime[key].executor = executorWallet;
+      } else if (runtime[key].options && runtime[key].options.executor) {
+        runtime[key].options.executor = executorWallet;
+      }
+    }
+    // set executor in runtime (top level)
+    runtime.innerExecutor = runtime.executor
+    runtime.innerAccount = accountId
+    runtime.walletAddress = walletAddress
+    runtime.executor = executorWallet
+  }
+  // set correct gas price
+  runtime.executor.defaultOptions = { gasPrice: config.dappConfigSwitches.gasPrice }
+
+  return runtime;
 }
 
 /********************************** ipfs functions ************************************************/
@@ -179,7 +311,7 @@ const requestFileFromEVANIpfs = function(hash) {
     request(`https://ipfs.evan.network/ipfs/${hash}`, function (error, response, body) {
       if (pinTimeout) {
         clearTimeout(pinTimeout);
-        
+
         resolve();
       }
     });
@@ -270,6 +402,10 @@ async function deployToIpns(dapp, hash, retry) {
     throw new Error(`ipns key for dapp ${ dapp } not registered!`);
   }
 
+  if (deploymentDomain !== 'evan') {
+    throw new Error(`deploymentDomain ${ deploymentDomain } is not evan, IPNS will not be enrolled!`);
+  }
+
   console.log(`\n\nStart ipns deployment: ${ dapp } : ${ hash }`);
   await new Promise((resolve, reject) => {
     exec(`ipfs key gen --type=rsa --size=2048 ${ ipnsPrivateKeys[dapp] }`, {
@@ -281,7 +417,7 @@ async function deployToIpns(dapp, hash, retry) {
 
   await new Promise((resolve, reject) => {
     console.log(`Publish to ipns: ${ dapp } : ${ hash }`);
-
+    return resolve();
     exec(`ipfs name publish --key=${ ipnsPrivateKeys[dapp] } --lifetime=8760h /ipfs/${ hash }`, {
 
     }, async (err, stdout, stderr) => {
@@ -315,24 +451,77 @@ const clearConsole = function() {
 };
 
 /********************************** dapps deployment functions ************************************/
+/**
+ * Checks all testnet hashes and configurations and replace them with the correct ones that are
+ * passed to the script.
+ */
+const replaceConfigurationValues = async function(folderPath) {
+  const replacePaths = [ `${ folderPath }/**/*.js`, `${ folderPath }/**/*.html`, ];
 
-const prepareDappsDeployment = function(dapps) {
+  // replace testnet ipns values
+  for (let dappKey of Object.keys(ipnsHashes)) {
+    if (testnetIpnsHashes[dappKey]) {
+      await new Promise(resolve => gulp
+        .src(replacePaths)
+        .pipe(replace(new RegExp(testnetIpnsHashes[dappKey], 'g'), ipnsHashes[dappKey]))
+        .pipe(gulp.dest(folderPath))
+        .on('end', () => resolve())
+      );
+    }
+  }
+
+  // replace configuration values
+  await new Promise(resolve => gulp
+    .src(replacePaths)
+
+    // replace bcc configurations
+    .pipe(replace(/window\.localStorage\[\'evan-ens-address\'\]/g, `window.localStorage['evan-ens-address'] || '${ config.bcConfig.nameResolver.ensAddress }'`))
+    .pipe(replace(/window\.localStorage\[\'evan-ens-resolver\'\]/g, `window.localStorage['evan-ens-resolver'] || '${ config.bcConfig.nameResolver.ensResolver }'`))
+    .pipe(replace(/window\.localStorage\[\'evan-bc-root\'\]/g, `window.localStorage['evan-bc-root'] || '${ config.bcConfig.nameResolver.labels.businessCenterRoot }'`))
+    .pipe(replace(/window\.localStorage\[\'evan-ens-root\'\]/g, `window.localStorage['evan-ens-root'] || '${ config.bcConfig.nameResolver.labels.ensRoot }'`))
+    .pipe(replace(/window\.localStorage\[\'evan-ens-events\'\]/g, `window.localStorage['evan-ens-events'] || ${ JSON.stringify(config.bcConfig.nameResolver.domains.eventhub) }`))
+    .pipe(replace(/window\.localStorage\[\'evan-ens-profiles\'\]/g, `window.localStorage['evan-ens-profiles'] || ${ JSON.stringify(config.bcConfig.nameResolver.domains.profile) }`))
+    .pipe(replace(/window\.localStorage\[\'evan-ens-mailbox\'\]/g, `window.localStorage['evan-ens-mailbox'] || ${ JSON.stringify(config.bcConfig.nameResolver.domains.mailbox) }`))
+
+    // web3 configurations
+    .pipe(replace(/wss\:\/\/testcore.evan.network\/ws/g, `${ config.runtimeConfig.web3Provider }`))
+
+    // ipfs config
+    .pipe(replace(/\{\ host\:\ \'ipfs\.evan\.network\'\,\ port\:\ \'443\'\,\ protocol\:\ \'https\'\ \}/g, JSON.stringify(config.runtimeConfig.ipfs)))
+
+    // smart agent configuratiuon
+    .pipe(replace(/https\:\/\/agents\.evan\.network/g, config.dappConfigSwitches.coreSmartAgent))
+
+    // insert the correct gas price
+    .pipe(replace(/window\.localStorage\[\'evan\-gas\-price\'\]\ \|\|\ \'20000000000\'/g, `window.localStorage['evan-gas-price'] || '${ config.dappConfigSwitches.gasPrice }'`))
+
+    // mainnet texts (e.g. for onboarding)
+    .pipe(replace(/mainnetTexts\ \=\ false/g, `mainnetTexts = ${ config.dappConfigSwitches.mainnetTexts }`))
+
+    .pipe(gulp.dest(folderPath))
+    .on('end', () => resolve())
+  );
+}
+
+const prepareDappsDeployment = async function(dapps) {
+  console.log('    ...prepare dapps deployment');
+
   del.sync(`${dappDeploymentFolder}`, { force: true });
 
-  return Promise.all(dapps.map(dapp => {
-    return new Promise(resolve => {
-      gulp
-        .src(`${ originFolder }/${ dapp }/**/*`)
-        .pipe(gulp.dest(`${ dappDeploymentFolder }/${ dapp }`))
-        .on('end', () => {
-          del.sync([
-            `${ dappDeploymentFolder }/${ dapp }/*.map`
-          ], { force : true })
-        
-          resolve();
-        })
-    })
-  }));
+  await Promise.all(dapps.map(dapp => new Promise(resolve =>
+    gulp
+      .src(`${ originFolder }/${ dapp }/**/*`)
+      .pipe(gulp.dest(`${ dappDeploymentFolder }/${ dapp }`))
+      .on('end', async () => {
+        del.sync([
+          `${ dappDeploymentFolder }/${ dapp }/*.map`
+        ], { force : true });
+
+        resolve();
+      })
+  )));
+
+  await replaceConfigurationValues(dappDeploymentFolder);
 };
 
 /**
@@ -341,11 +530,12 @@ const prepareDappsDeployment = function(dapps) {
  * @return     {Promise}  resolved when done
  */
 const replaceUmlauts = function() {
+  console.log('    ...fixing umlauts');
+
   return new Promise(resolve => {
     gulp
       .src([
-        `${ dappDeploymentFolder }/**/*.js`,
-        `${ dappDeploymentFolder }/**/*.css`
+        `${ dappDeploymentFolder }/**/*.js`
       ])
       // replace german umlauts
       .pipe(replace(/Ä/g, '\\u00c4')).pipe(replace(/ä/g, '\\u00e4'))
@@ -375,7 +565,7 @@ const logDbcps = function() {
       version: dbcp.version,
       description: dbcp.dapp.descriptionHash,
       folder: dbcp.dapp.origin,
-      ipns: dbcp.dapp.ipns || ipnsValues[dbcp.name],
+      ipns: dbcp.dapp.ipns || ipnsHashes[dbcp.name],
       file: dbcp.file
     }
   }));
@@ -395,11 +585,11 @@ const addDbcpToList = function(dbcp) {
   for (let i = 0; i < dbcps.length; i++) {
     if (dbcps[i].name === dbcp.name) {
       dbcps.splice(i, 1);
-      
+
       break;
     }
   }
-  
+
   dbcps.push(dbcp);
 }
 
@@ -411,7 +601,7 @@ const updateDBCPVersion = function(dbcp, version, beforeHash) {
   let splittedVersion = (dbcp.public.version || '').split('.');
   splittedVersion = splittedVersion.map(versionNumber => parseInt(versionNumber));
   splittedVersion.splice(3, splittedVersion.length);
-  
+
   // fill missing version numbers
   while (splittedVersion.length < 3) {
     splittedVersion.push(0);
@@ -422,7 +612,6 @@ const updateDBCPVersion = function(dbcp, version, beforeHash) {
   }
 
   const versionBump = versionMap.indexOf(version);
-
   if (versionBump > -1) {
     splittedVersion[versionBump] = splittedVersion[versionBump] + 1;
 
@@ -452,6 +641,8 @@ function saveDBCPFile(dbcpPath, dbcp) {
  * @param {Ipfs} ipfs                 Blockchain-Core IPFS instance
  */
 async function deployDApps(externals, version) {
+  console.log('    ...deploying dapps');
+
   for (let external of externals) {
     const currIndex = externals.indexOf(external);
 
@@ -460,12 +651,12 @@ async function deployDApps(externals, version) {
     for (let i = 0; i < externals.length; i++) {
       statusTable.push({
         name: `${ i + 1 }. ${ externals[i] }`,
-        status: i < currIndex ? 'done' : i > currIndex ? 'outstanding' : 'running' 
+        status: i < currIndex ? 'done' : i > currIndex ? 'pending' : 'deploying' 
       });
     }
 
     clearConsole();
-  
+
     console.log(`\n\nDeploying Dapps... (${ currIndex + 1} / ${ externals.length })\n`);
     console.table(statusTable);
     console.log('\n\n');
@@ -490,15 +681,19 @@ async function deployDApps(externals, version) {
       }
       dbcp.public.dapp.origin = await deployIPFSFolder(external, `${folderName}`);
 
+      if (dbcp.public.versions) {
+        dbcp.public.versions[dbcp.public.version] = dbcp.public.dapp.origin;
+      }
+
       updateDBCPVersion(dbcp, version, beforeHash);
       saveDBCPFile(`${ runtimeFolder }/external/${external}/dbcp.json`, dbcp);
-      
+
       if (dbcpPath) {
         saveDBCPFile(dbcpPath, dbcp);
       }
 
       // check if the address was claimed before
-      //   --> trace from first level and claim permanent addresses when no owner was set before 
+      //   --> trace from first level and claim permanent addresses when no owner was set before
       const splitEns = address.split('.');
       for (let i = splitEns.length; i > -1; i--) {
         const checkAddress = splitEns.slice(i, splitEns.length).join('.');
@@ -533,8 +728,13 @@ async function deployDApps(externals, version) {
         }
       }
 
-      if (ipnsPrivateKeys[dbcp.public.name]) {
-        await deployToIpns(dbcp.public.name, dbcp.public.dapp.origin);
+      if (ipnsPrivateKeys[dbcp.public.name] ) {
+        try {
+          await deployToIpns(dbcp.public.name, dbcp.public.dapp.origin);
+        } catch (ex) {
+          console.log(`   Failed to publish to ipns : ${ external }`);
+          console.dir(ex);
+        }
       }
 
       addDbcpToList(dbcp.public);
@@ -566,10 +766,10 @@ const loadDbcps = async function(externals) {
 
         if (descriptionHash) {
           descriptionHash = descriptionHash.startsWith('Qm') ? descriptionHash : Ipfs.bytes32ToIpfsHash(descriptionHash);
-        
+
           let loaded = await runtime.description.getDescriptionFromEns(address);
           loaded = Object.assign(loaded.public, loaded.private);
-    
+
           dbcp.dapp.origin = loaded.dapp.origin;
 
           addDbcpToList(dbcp);
@@ -586,6 +786,7 @@ const loadDbcps = async function(externals) {
 
 /********************************** ionic functions ***********************************************/
 prepareIonicDeploy = async function () {
+  console.log('    ...prepare dapp-browser deployment');
   await del.sync(`${ionicDeploymentFolder}`, { force: true });
 
   await new Promise(resolve => gulp
@@ -614,6 +815,9 @@ prepareIonicDeploy = async function () {
     .pipe(gulp.dest(`${ ionicDeploymentFolder }/build`))
     .on('end', () => resolve())
   );
+
+  // insert correct inps values for the current configuration
+  await replaceConfigurationValues(ionicDeploymentFolder);
 };
 
 const prepareIonicAppBuild = async function(platform) {
@@ -648,6 +852,8 @@ const prepareIonicAppBuild = async function(platform) {
 }
 
 const ionicDeploy = async function (version) {
+  console.log('    ...deploying dapp-browser');
+
   const folderHash = await deployIPFSFolder('www', ionicDeploymentFolder);
 
   await pinToIPFSContractus(folderHash);
@@ -658,16 +864,18 @@ const ionicDeploy = async function (version) {
   await deployToIpns('dappbrowser', folderHash);
 
   addDbcpToList({
-    name: 'ionic-dapp._evan',
+    name: 'dapp-browser._evan',
     version: '-.-.-',
     dapp: {
       origin: folderHash,
-      ipns: ipnsValues.dappbrowser
+      ipns: ipnsHashes.dappbrowser
     }
   });
 };
 
 const licensesDeploy = async function() {
+  console.log('    ...deploy licenses');
+
   const folderHash = await deployIPFSFolder('licenses', licensesFolder);
 
   await pinToIPFSContractus(folderHash);
@@ -682,7 +890,7 @@ const licensesDeploy = async function() {
     version: '-.-.-',
     dapp: {
       origin: folderHash,
-      ipns: ipnsValues.dappbrowser
+      ipns: ipnsHashes.dappbrowser
     }
   });
 };
@@ -709,7 +917,6 @@ const uglifyJS = async function(folder) {
       .pipe(replace('isMultiaddr=function(', 'isMultiaddr=function(){return true;},function('))
       .pipe(gulp.dest(folder))
       .on('end', () => {
-        console.log('on end')
         resolve()
       });
   });
@@ -726,11 +933,10 @@ const uglifyCSS = async function (folder) {
 };
 
 const uglify = async function(mode, folder) {
-  console.log(`Uglify sources (${ mode })...`);
-
-  console.log(`\nUglify js...`);
+  console.log(`    ...uglify sources (${ mode })`);
+  console.log(`      ...Uglify js`);
   await uglifyJS(folder);
-  console.log(`\nUglify css...`);
+  console.log(`      ...Uglify css`);
   await uglifyCSS(folder);
 };
 
@@ -756,7 +962,7 @@ const initializeDBCPs = async function(dapps) {
   if (!deploymentDomain) {
     clearConsole();
     const prompt = inquirer.createPromptModule();
-    
+
     deploymentDomain = (await prompt([{
       name: 'deploymentDomain',
       message: 'On which domain do you want to deploy your DApps?',
@@ -777,15 +983,15 @@ const deploymentMenu = async function() {
   }
 
   if (advancedDeployment) {
-    dapps.push('ionic-dapp._evan');
+    dapps.push('dapp-browser._evan');
     dapps.push('licenses._evan');
 
     dbcps.push({
-      name: 'ionic-dapp._evan',
+      name: 'dapp-browser._evan',
       version: '-.-.-',
       dapp: {
         origin: '',
-        ipns: ipnsValues.dappbrowser
+        ipns: ipnsHashes.dappbrowser
       }
     });
 
@@ -794,15 +1000,15 @@ const deploymentMenu = async function() {
       version: '-.-.-',
       dapp: {
         origin: '',
-        ipns: ipnsValues.licenses
+        ipns: ipnsHashes.licenses
       }
     });
   }
-  
+
   const questions = [
     {
       name: 'dapps',
-      message: `Whichs DApps do you want to deploy? (${ deploymentDomain })`,
+      message: `Which DApps do you want to deploy? (${ deploymentDomain })`,
       type: 'checkbox',
       choices: [ ],
       validate: (dapps) => {
@@ -921,18 +1127,16 @@ const deploymentMenu = async function() {
     }
   });
 
-  questions[0].choices.push(new inquirer.Separator());
-  questions[0].choices.push({
-    name: ' Exit',
-    value: 'exit'
-  });
-
+  if (advancedDeployment) {
+    questions[0].choices.splice(0, 0, new inquirer.Separator());
+    questions[0].choices.splice(3, 0, new inquirer.Separator());
+  }
   questions[0].pageSize = questions[0].choices.length;
-  
+
   try {
     await new Promise((resolve, reject) => {
       var prompt = inquirer.createPromptModule();
-      
+
       clearConsole();
       prompt(questions)
         .then(async results => {
@@ -944,15 +1148,15 @@ const deploymentMenu = async function() {
           }
 
           // ionic dapp deployment
-          const ionicDAppIndex = results.dapps.indexOf('ionic-dapp._evan');
+          const ionicDAppIndex = results.dapps.indexOf('dapp-browser._evan');
           if (ionicDAppIndex !== -1) {
-            // remove ionic-dapp._evan as normal dapp, would break the deployment process
+            // remove dapp-browser._evan as normal dapp, would break the deployment process
             results.dapps.splice(ionicDAppIndex, 1);
 
             await prepareIonicDeploy();
 
             if (results.uglify) {
-              await uglify('ionic-dapp._evan', ionicDeploymentFolder);
+              await uglify('dapp-browser._evan', ionicDeploymentFolder);
             }
 
             await replaceUmlauts();
@@ -973,21 +1177,21 @@ const deploymentMenu = async function() {
 
           // start deployment of dapps
           await prepareDappsDeployment(results.dapps);
-          
+
           if (results.uglify) {
             await uglify('DApps', dappDeploymentFolder);
           }
 
           await replaceUmlauts();
-  
+
           if (enableDeploy) {
             await deployDApps(results.dapps, results.version);
           }
-  
+
           resolve();
         });
     })
-  
+
     await deploymentMenu();
   } catch(ex) {
     console.log(`   Error: `);

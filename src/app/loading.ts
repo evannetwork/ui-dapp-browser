@@ -30,7 +30,7 @@ import * as utils from './utils';
 /**
  * control additional logs on first load
  */
-let isFirstLoad = true;
+export let isFirstLoad = true;
 
 /**
  * Hides the initial loading that is embedded to the root dapp html page. => It

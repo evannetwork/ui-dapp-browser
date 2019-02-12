@@ -24,6 +24,9 @@
   For more information, please contact evan GmbH at this address:
   https://evan.network/license/
 */
+
+// use localStorage params to overwrite default values. The default options correspond to those of
+// the test net. By deploying other configurations, the comments will be replaced using this values.
 const process = {
   env: {
     ENS_ADDRESS: window.localStorage['evan-ens-address'],
@@ -36,7 +39,7 @@ const process = {
   },
 };
 const config = {
-  web3Provider: 'ws://localhost:8546',
+  web3Provider: window.localStorage['evan-web3-provider'] || 'wss://testcore.evan.network/ws',
   nameResolver: {
     ensAddress: process.env.ENS_ADDRESS || '0x937bbC1d3874961CA38726E9cD07317ba81eD2e1',
     ensResolver: process.env.ENS_RESOLVER || '0xDC18774FA2E472D26aB91deCC4CDd20D9E82047e',

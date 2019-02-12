@@ -36,6 +36,9 @@ declare let evanGlobals: any;
  */
 export let devMode: Array<any>;
 
+// import configuration
+import { config } from './config';
+
 /**
  * add a bcc ready promise, so some functionallities can wait for finishing bcc has loaded
  */
@@ -43,7 +46,6 @@ export let setBccReady;
 export let bccReady = new Promise((resolve, reject) => {
   setBccReady = resolve;
 });
-
 
 /**
  * Initial loading cache values
@@ -271,5 +273,22 @@ export function activateColorTheme(colorTheme: string) {
 
   if (colorTheme) {
     document.body.className += ` evan-${ colorTheme }`;
+  }
+}
+
+/**
+ * builds a full domain name for the current bcc config
+ *
+ * @param      {Array<string>}  subLabels  used to enhance nameResolver config
+ * @return     {<type>}         The domain name.
+ */
+export function getDomainName(...subLabels): string {
+  const domainConfig = config.nameResolver.domains.root;
+
+  if (Array.isArray(domainConfig)) {
+    return subLabels.filter(label => label).concat(domainConfig.map(
+      label => config.nameResolver.labels[label])).join('.').toLowerCase();
+  } else {
+    return domainConfig;
   }
 }

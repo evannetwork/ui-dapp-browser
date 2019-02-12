@@ -102,7 +102,7 @@ function getSigner(CoreBundle: any, provider = core.getCurrentProvider(), accoun
   if (provider === 'internal') {
     signer = new CoreBundle.SignerInternal({
       accountStore: accountStore,
-      config: { },
+      config: { gasPrice: window.localStorage['evan-gas-price'] || '20000000000' },
       contractLoader: CoreBundle.CoreRuntime.contractLoader,
       web3: CoreBundle.CoreRuntime.web3,
       logLog: CoreBundle.logLog,
@@ -155,8 +155,10 @@ async function startBCC(
 ) {
   const coreOptions = await getCoreOptions(CoreBundle, SmartContracts, provider);
 
+  // recreate core instance
   await CoreBundle.createAndSetCore(coreOptions);
 
+  // create bcc runtime options profile
   const bccProfileOptions: any = {
     accountId: core.activeAccount(),
     CoreBundle: CoreBundle,
@@ -176,7 +178,7 @@ async function startBCC(
       contractLoader: CoreBundle.CoreRuntime.contractLoader,
       logLog: CoreBundle.logLog,
       logLogLevel: CoreBundle.logLogLevel,
-      signer: bccProfileOptions,
+      signer: bccProfileOptions.signer,
       token: agentExecutor.token,
       web3: CoreBundle.CoreRuntime.web3,
     });
@@ -312,7 +314,7 @@ async function isAccountPasswordValid(CoreBundle: any, accountId: string, passwo
     return true;
   } else {
     // TODO: remove duplicated check, when old profiles without accountId salt are gone
-    if (encryptionSalt && isAccountPasswordValid(CoreBundle, accountId, password, '')) {
+    if (encryptionSalt && await isAccountPasswordValid(CoreBundle, accountId, password, '')) {
       // WARNING: for old accounts: overwrite current encryption key, to use the key without a
       // accountId
       await lightwallet.overwriteVaultEncryptionKey(

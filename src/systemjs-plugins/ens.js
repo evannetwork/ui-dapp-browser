@@ -64,10 +64,8 @@ const shouldBeCached = function(address) {
  */
 const getDefinitionFromEns = function(ensAddress, domain) {
   // remove domain from the end of the ensAddress to get the dapp name
-  let dappName = ensAddress.replace(/\-/g, '').slice(
-    0,
-    ensAddress.lastIndexOf('.' + domain)
-  );
+  let dappName = ensAddress.replace(/\-/g, '').split('.');
+  dappName = dappName.slice(0, dappName.length - 1).join('.');
 
   if (utils.isDevAvailable(dappName) && ensAddress.indexOf('0x') !== 0) {
     // load json and resolve it as stringified
@@ -79,12 +77,20 @@ const getDefinitionFromEns = function(ensAddress, domain) {
   } else {
     const validEnsAddress = ensAddress.replace(/-/g, '');
     const cacheDbcp = shouldBeCached(validEnsAddress);
-    let loader;
+    const cacheAvailable = false // ensCache[validEnsAddress] && ensCache[validEnsAddress] !== 'invalid';
+    let loader = Promise.resolve();
 
+    // delay loading for 3 seconds, to wait the heavy page load is over
+    if (cacheAvailable && cacheDbcp) {
+      loader = new Promise(resolve => setTimeout(() => resolve(), 3000));
+    }
+
+    // trigger the loader
     if (validEnsAddress.indexOf('Qm') === 0) {
-      loader = ipfsCatPromise(validEnsAddress);
+      loader = loader.then(() => ipfsCatPromise(validEnsAddress));
     } else {
-      loader = utils.bccReady
+      loader = loader
+        .then(utils.bccReady)
         .then(() => evanGlobals.CoreRuntime.description.getDescription(validEnsAddress));
     }
 
@@ -115,7 +121,7 @@ const getDefinitionFromEns = function(ensAddress, domain) {
         }
       });
 
-    if (cacheDbcp && ensCache[validEnsAddress] && ensCache[validEnsAddress] !== 'invalid') {
+    if (cacheAvailable) {
       return ensCache[validEnsAddress];
     } else {
       return loader;
@@ -137,7 +143,8 @@ const fetchEns = function(params) {
 
   // if the dapps dev domain is enabled, try to load the dapp from this url
   if (window.localStorage['evan-developer-mode'] === 'true' &&
-      window.localStorage['evan-dev-dapps-domain']) {
+      window.localStorage['evan-dev-dapps-domain'] &&
+      ensAddress.indexOf('Qm') !== 0) {
     // replace the root domain at the end of the ens address with the dev domain
     const ensDevAddress = ensAddress.slice(
       0,

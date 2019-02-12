@@ -25,6 +25,11 @@
   https://evan.network/license/
 */
 
+/**
+ * is inserted when the application was bundled, used to prevent window usage
+ */
+declare let evanGlobals: any;
+
 import * as core from '../core';
 import * as lightwallet from '../lightwallet';
 
@@ -52,14 +57,22 @@ export class AccountStore {
   /**
    * get private key for the current logged in account
    *
+   * @param      {string}           activeAccount  account to get the private key for (default
+   *                                               activeAccount)
    * @return     {Promise<string>}  private key for this account
    */
   async getPrivateKey(activeAccount = core.activeAccount()): Promise<string> {
-    const vault = this.vault || await lightwallet.loadUnlockedVault();
+    // if the current runtime is started using an agent executor and the private key for this
+    // account gets requested, reject the request, because no private key is set
+    if (evanGlobals.agentExecutor && evanGlobals.agentExecutor.accountId === activeAccount) {
+      throw new Error('Runtime using the agent executor cannot request an private key!');
+    } else {
+      const vault = this.vault || await lightwallet.loadUnlockedVault();
 
-    this.accounts[activeAccount] = this.accounts[activeAccount] ||
-      lightwallet.getPrivateKey(vault, activeAccount);
+      this.accounts[activeAccount] = this.accounts[activeAccount] ||
+        lightwallet.getPrivateKey(vault, activeAccount);
 
-    return this.accounts[activeAccount];
+      return this.accounts[activeAccount];
+    }
   }
 }

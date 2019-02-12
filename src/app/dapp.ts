@@ -27,7 +27,7 @@
 
 import * as utils from './utils';
 import { config } from './config';
-import { finishDAppLoading } from './loading';
+import * as loading  from './loading';
 import { watchForEveLow } from './watchers';
 
 
@@ -40,8 +40,8 @@ declare let evanGlobals: any;
  * Set defaults for preloaded applications.
  */
 export let loadedDeps = { };
-loadedDeps[`bcc.${ getDomainName() }!dapp-content`] = true;
-loadedDeps[`smartcontracts.${ getDomainName() }!dapp-content`] = true;
+loadedDeps[`bcc.${ utils.getDomainName() }!dapp-content`] = true;
+loadedDeps[`smartcontracts.${ utils.getDomainName() }!dapp-content`] = true;
 
 /**
  * check warnings only, after the first DApp was loaded
@@ -74,7 +74,33 @@ function getSplittedVersion(versionString: string): Array<number|string> {
 }
 
 /**
+ * Takes an dbcp object and calculates the base path, where all the files are deployed, for this
+ * DApp using the dbcp origin. When dev mode is enabled, the localhost path will be returned.
+ *
+ * @param      {any}     dbcp     dbcp object (with merged public / private)
+ * @param      {string}  address  ens address or contract id, where the dbcp definition was loaded
+ *                                from
+ * @return     {string}  base url
+ */
+export function getDAppBaseUrl(dbcp: any, address: string): string {
+  try {
+    address = /^(.*)\.[^.]+$/.exec(address)[1];
+  } catch (ex) { }
+
+  if (utils.isDevAvailable(address) && address.indexOf('0x') !== 0) {
+      return window.location.origin + '/external/' + address;
+  } else {
+    return evanGlobals.restIpfs
+      .api_url('/' + (dbcp.dapp.isIpns ? 'ipns' : 'ipfs') + '/' + dbcp.dapp.origin);
+  }
+}
+
+/**
  * Returns the ipfs hash to the dbcp of the child with the correct version.
+ *
+ * = > if its the latest version, the ipfs hash will be replaced by using the ens address.
+ *     As a result of this, the ens & dapp loader plugin will also resolve dev versions,
+ *     if the latest version is required.
  *
  * @param      {string}  requiredVersion  version that should be loaded from the
  *                                        child
@@ -88,6 +114,7 @@ function getSplittedVersion(versionString: string): Array<number|string> {
  */
 function getVersionDBCPHashFromDAppVersion(requiredVersion: string, childENS: string, childDefinition: any): string {
   if (childDefinition && childDefinition) {
+    const originalVersion = requiredVersion;
     const childVersions = childDefinition.versions || { };
     childVersions[childDefinition.version] = childENS.replace(/-/g, '');
 
@@ -142,12 +169,12 @@ function getVersionDBCPHashFromDAppVersion(requiredVersion: string, childENS: st
       if (childVersions[requiredVersion].indexOf('Qm') === 0) {
         return `${childVersions[requiredVersion]}!dapp-content`;
       } else {
-        return `${ childVersions[requiredVersion] }.${ getDomainName() }!dapp-content`;
+        return `${ childVersions[requiredVersion] }.${ utils.getDomainName() }!dapp-content`;
       }
     } else {
-      const msg = `Version not found: ${requiredVersion} for DApp ${childDefinition.name}`;
+      const msg = `Version not found: ${originalVersion} for DApp ${childDefinition.name}`;
       console.error(msg);
-      throw new Error(`Version not found: ${ requiredVersion } for DApp ${ childDefinition.name }`);
+      throw new Error(`Version not found: ${ originalVersion } for DApp ${ childDefinition.name }`);
     }
   } else {
     const msg = `Invalid DApp definition detected`;
@@ -160,6 +187,17 @@ function getVersionDBCPHashFromDAppVersion(requiredVersion: string, childENS: st
 /**
  * Loads all (sub) dependencies dbcp's of the provided dapp and set systemjs
  * maps to the correct dbcp hashes.
+ *
+ * Explanation:
+ *   - load the latest dbcp.json from the dapp ens address
+ *   - after this, the correct lib ipfs hash gets extracted from the version history of the latest
+ *     dbcp.json
+ *   - the new definition will loaded from the extracted ipfs hash and this versions will be
+ *     overwritten by the latest one, to be sure, that all versions, including the latest one, are
+ *     included
+ *   - the used definition will now not the latest one, only the correct dbcp description of the
+ *     desired version
+ *   - dev version only used for DApps, that also requires the latest current version of the library
  *
  * @param      {string}           originName     name of the module that should
  *                                               be traversed
@@ -217,19 +255,31 @@ export async function getDAppDependencies(originName: string, ensDefinition: any
         // load all dependencies, check for its location and trigger the sub loading
         for (let dependency of depKeys) {
           let subDefinition = await evanGlobals.System
-            .import(`${dependency}.${getDomainName()}!ens`);
-          let versionLocation;
+            .import(`${ dependency }.${ utils.getDomainName() }!ens`);
 
-          // if we are loading an contract, always load dbcp configuration
-          // if not, check for devMode to load files from local server or from ipfs
-          if (originName.indexOf('0x') === 0 || !evanGlobals.devMode || !utils.isDevAvailable(dependency)) {
-            versionLocation = getVersionDBCPHashFromDAppVersion(
-              dependencies[dependency],
-              dependency,
-              subDefinition
-            );
-          } else {
-            versionLocation = `${ dependency.replace(/\-/g, '') }.${ getDomainName() }!dapp-content`;
+          // resolve the correct ipfs hash from dbcp versions list
+          // = > if its the latest version, the ipfs hash will be replaced by using the ens address.
+          //     As a result of this, the ens & dapp loader plugin will also resolve dev versions,
+          //     if the latest version is required.
+          let versionLocation = getVersionDBCPHashFromDAppVersion(
+            dependencies[dependency],
+            dependency,
+            subDefinition
+          );
+
+          // if a ipfs hash was returned by the getVersionDBCPHash... function, we are not loading
+          // the latest version from ens, so we need to require the correct, version specific dbcp
+          // json and merge the versions
+          if (versionLocation.indexOf('Qm') === 0) {
+            const previousDefinition = await evanGlobals.System
+              .import(`${ versionLocation.replace('!dapp-content', '') }!ens`);
+
+            // use the latest version history, to be sure, that the correct latest version is
+            // included
+            previousDefinition.versions = subDefinition.versions;
+
+            // overwrite latest sub definition
+            subDefinition = previousDefinition;
           }
 
           deps.unshift({
@@ -262,7 +312,7 @@ export async function loadDAppDependencies(dappEns: string, useDefaultDomain?: b
   window['evanDApploadTime'] = Date.now();
 
   if (dappEns.indexOf('0x') !== 0 && useDefaultDomain) {
-    dappEns = `${dappEns}.${getDomainName()}`;
+    dappEns = `${dappEns}.${utils.getDomainName()}`;
   }
 
   // load ens definition for the dapp that should be loaded
@@ -286,10 +336,10 @@ export async function loadDAppDependencies(dappEns: string, useDefaultDomain?: b
   for (let depCategory of depCategories) {
     if (depCategory.length > 0) {
       await Promise.all(depCategory.map(async (dep) => {
-        if (!loadedDeps[dep.location]) {
-          // set systemjs map
-          evanGlobals.System.map[dep.name] = dep.location;
+        // set systemjs map
+        evanGlobals.System.map[dep.name] = dep.location;
 
+        if (!loadedDeps[dep.location]) {
           try {
             // preimport application to handle references in code
             await evanGlobals.System.import(dep.name);
@@ -343,19 +393,49 @@ export async function startDApp(dappEns: string, container = document.body, useD
   const ensDefinition = await loadDAppDependencies(dappEns, useDefaultDomain);
 
   // asynchroniously start dapp to speed up synchroniously loaded css files from dapp
-  // do we need this?
-  // setTimeout(async () => {
   if (ensDefinition.dapp && ensDefinition.dapp.entrypoint) {
+    // copy is firstLoad flag to check if its the first dapp that is started, so we can wait for
+    // start screen loading animation to be finished
+    const isFirstDApp = loading.isFirstLoad;
+
+    // prefill origin, if it's missing
     if (!ensDefinition.dapp.origin) {
-      dappEns = `${ ensDefinition.name }.${ getDomainName() }`;
+      dappEns = `${ ensDefinition.name }.${ utils.getDomainName() }`;
     }
 
-    const entrypoint = ensDefinition.dapp.entrypoint;
+    // save previous element that were included into the container and remove them, after the new
+    // dapp has started (transform it into an array, to use it as an copy)
+    let previousContainerChilds = [ ].map.call(document.body.childNodes, (el) => el);
+    /**
+     * Remove the previous container children to force previously opened dapp in this container, to
+     * stop. Mostly used after the new dapp has started, to keep eventually loading screen that is
+     * shown by the dapp.
+     */
+    const removePreviousContainerChilds = async () => {
+      if (isFirstDApp) {
+        await new Promise(resolve => setTimeout(resolve, 500));
+      }
 
+      previousContainerChilds.forEach((childElement: any) => {
+        if (childElement.parentElement === container) {
+          container.removeChild(childElement);
+        }
+      });
+
+      // delete dom element references to trigger garbage collection
+      previousContainerChilds = [ ];
+    };
+
+    // lookup entrypoint and load dapp base url to provide it directly into the startDApp
+    const entrypoint = ensDefinition.dapp.entrypoint;
+    const dappBaseUrl = getDAppBaseUrl(ensDefinition, dappEns);
     if (entrypoint.endsWith('.js')) {
       // load the DApp and start it
       const dappModule = await evanGlobals.System.import(`${dappEns}!dapp-content`);
-      await dappModule.startDApp(container, ensDefinition.name, dappEns);
+      await dappModule.startDApp(container, ensDefinition.name, dappEns, dappBaseUrl);
+
+      // remove other elements from the container when they are still existing
+      removePreviousContainerChilds();
 
       // check warnings, after first DApp was opened
       if (firstDApp) {
@@ -367,22 +447,17 @@ export async function startDApp(dappEns: string, container = document.body, useD
       const iframe = document.createElement('iframe');
       iframe.className += ' evan-dapp';
 
-      // dev mode checks
-      if (utils.isDevAvailable(ensDefinition.name)) {
-        iframe.setAttribute(
-          'src',
-          `${ window.location.origin }/external/${ ensDefinition.name }/${ensDefinition.dapp.entrypoint}#/${ dappEns }`
-        );
-      } else {
-        iframe.setAttribute(
-          'src',
-          evanGlobals.restIpfs.api_url(`/ipfs/${ ensDefinition.dapp.origin }/${ ensDefinition.dapp.entrypoint }#/${ dappEns }`)
-        );
+      // open the iframe using the dappBaseUrl
+      iframe.setAttribute('src', `${ dappBaseUrl }#/${ dappEns }`);
 
-        finishDAppLoading();
-      }
+      // remove the loading screen
+      loading.finishDAppLoading();
 
+      // and append the iframe to the dom
       container.appendChild(iframe);
+
+      // remove other elements from the container when they are still existing
+      removePreviousContainerChilds();
     } else {
       throw new Error('Invalid entry point defined!');
     }
@@ -391,50 +466,4 @@ export async function startDApp(dappEns: string, container = document.body, useD
   }
 }
 
-/**
- * builds a full domain name for the current bcc config
- *
- * @param      {Array<string>}  subLabels  used to enhance nameResolver config
- * @return     {<type>}         The domain name.
- */
-export function getDomainName(...subLabels): string {
-  const domainConfig = config.nameResolver.domains.root;
 
-  if (Array.isArray(domainConfig)) {
-    return subLabels.filter(label => label).concat(domainConfig.map(
-      label => config.nameResolver.labels[label])).join('.').toLowerCase();
-  } else {
-    return domainConfig;
-  }
-}
-
-/**
- * Check if angular libs was loaded before and cached within the ens cache, so we can load it before
- * bcc was loaded.
- *
- * @return     {Promise<void>}  resolved when done
- */
-export function preloadAngularLibs() {
-  // check if any ens entries were loaded before, so we can check, if the angular-libs were loaded
-  // before => speed it up scotty!
-  let ensCache = { };
-  try {
-    ensCache = JSON.parse(window.localStorage['evan-ens-cache']);
-  } catch (ex) { }
-
-  // check if evan-dev-dapps-domain is enabled, so we need to check if angular libs are deployed
-  // there
-  let angularLibsEns = `angularlibs.${ getDomainName() }`
-
-  // check if the angular-libs are cached => load them!
-  if (ensCache[`angularlibs.${ window.localStorage['evan-dev-dapps-domain'] }`] ||
-      ensCache[angularLibsEns]) {
-    angularLibsEns = `${ angularLibsEns }!dapp-content`;
-
-    // set that the angular-libs were already loaded, so we don't require it twice
-    evanGlobals.System.map['angular-libs'] = angularLibsEns;
-    loadedDeps[angularLibsEns] = true;
-
-    return evanGlobals.System.import(angularLibsEns);
-  }
-}
