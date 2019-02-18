@@ -251,11 +251,22 @@ async function createRuntime() {
   addWebsocketReconnect(Web3, web3, config.runtimeConfig.web3Provider)
 
   const dfs = new Ipfs({
+    dfsConfig: config.runtimeConfig.ipfs,
+    privateKey: config.runtimeConfig.accountMap[accountId],
     accountId: accountId,
-    accountStore: new AccountStore({ accounts: config.runtimeConfig.accountMap, }),
-    remoteNode: new IpfsApi(config.runtimeConfig.ipfs),
     web3: web3,
   });
+
+
+  const signer = accountId.toLowerCase();
+  const toSignedMessage = web3.utils.soliditySha3(new Date().getTime() + accountId).replace('0x', '');
+  const hexMessage = web3.utils.utf8ToHex(toSignedMessage);
+  const signedMessage = web3.eth.accounts.sign(toSignedMessage, '0x' + config.runtimeConfig.accountMap[accountId]);
+  config.runtimeConfig.ipfs.headers = {
+    authorization: `EvanAuth ${accountId},EvanMessage ${hexMessage},EvanSignedMessage ${signedMessage.signature}`
+  };
+  ipfsInstance = new IpfsApi(config.runtimeConfig.ipfs)
+
 
   const runtime = await createDefaultRuntime(web3, dfs, {
     accountMap: config.runtimeConfig.accountMap,
@@ -308,7 +319,7 @@ const requestFileFromEVANIpfs = function(hash) {
       resolve();
     }, 20 * 1000);
 
-    request(`https://ipfs.evan.network/ipfs/${hash}`, function (error, response, body) {
+    request(`https://storage.evan.network/ipfs/${hash}`, function (error, response, body) {
       if (pinTimeout) {
         clearTimeout(pinTimeout);
 
@@ -323,7 +334,7 @@ const pinToIPFSContractus = function(ipfsHash) {
 
   return new Promise((resolve, reject) => {
     const options = {
-      hostname: 'ipfs.evan.network',
+      hostname: 'storage.evan.network',
       port: '443',
       path: `/pins/${ipfsHash}`,
       headers : {
@@ -356,7 +367,7 @@ const pinToIPFSContractus = function(ipfsHash) {
     req.write('')
     req.end()
   })
-  .then(() => {
+/*  .then(() => {
     console.log(`ipfs.evan.network: request hash "${ipfsHash}"...`)
     return requestFileFromEVANIpfs(ipfsHash)
       .catch(async () => {
@@ -366,7 +377,7 @@ const pinToIPFSContractus = function(ipfsHash) {
       .then(() => {
         console.log(`ipfs.evan.network: requested hash  "${ipfsHash}"`)
       });
-  });
+  }); */
 }
 
 /**
@@ -376,7 +387,7 @@ const pinToIPFSContractus = function(ipfsHash) {
  */
 async function deployIPFSFolder(folderName, path) {
   return new Promise((resolve, reject) => {
-    runtime.dfs.remoteNode.util.addFromFs(path, { recursive: true}, (err, result) => {
+    ipfsInstance.util.addFromFs(path, { recursive: true}, (err, result) => {
       if (err) { throw err }
       resolve(result[result.length-1].hash || result[result.length-1].Hash);
     })
@@ -651,7 +662,7 @@ async function deployDApps(externals, version) {
     for (let i = 0; i < externals.length; i++) {
       statusTable.push({
         name: `${ i + 1 }. ${ externals[i] }`,
-        status: i < currIndex ? 'done' : i > currIndex ? 'pending' : 'deploying' 
+        status: i < currIndex ? 'done' : i > currIndex ? 'pending' : 'deploying'
       });
     }
 
