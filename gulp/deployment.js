@@ -31,7 +31,7 @@ require('console.table');
 process.env.DBCP_LOGLEVEL = 'debug';
 
 // runtime parameters
-const enableDeploy = process.argv.indexOf('--disable-deploy') !== -1;
+const enableDeploy = process.argv.indexOf('--disable-deploy') === -1;
 
 // node_modules
 const path = require('path');
@@ -261,7 +261,6 @@ async function createRuntime() {
     web3: web3,
   });
 
-
   const signer = accountId.toLowerCase();
   const toSignedMessage = web3.utils.soliditySha3(new Date().getTime() + accountId).replace('0x', '');
   const hexMessage = web3.utils.utf8ToHex(toSignedMessage);
@@ -269,8 +268,7 @@ async function createRuntime() {
   config.runtimeConfig.ipfs.headers = {
     authorization: `EvanAuth ${accountId},EvanMessage ${hexMessage},EvanSignedMessage ${signedMessage.signature}`
   };
-  ipfsInstance = new IpfsApi(config.runtimeConfig.ipfs)
-
+  ipfsInstance = new IpfsApi(config.runtimeConfig.ipfs);
 
   const runtime = await createDefaultRuntime(web3, dfs, {
     accountMap: config.runtimeConfig.accountMap,
