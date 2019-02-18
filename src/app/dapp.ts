@@ -88,7 +88,7 @@ export function getDAppBaseUrl(dbcp: any, address: string): string {
   } catch (ex) { }
 
   if (utils.isDevAvailable(address) && address.indexOf('0x') !== 0) {
-      return window.location.origin + '/external/' + address;
+    return window.location.origin + '/external/' + address;
   } else {
     return evanGlobals.restIpfs
       .api_url('/' + (dbcp.dapp.isIpns ? 'ipns' : 'ipfs') + '/' + dbcp.dapp.origin);
