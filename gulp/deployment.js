@@ -31,7 +31,7 @@ require('console.table');
 process.env.DBCP_LOGLEVEL = 'debug';
 
 // runtime parameters
-const enableDeploy = process.argv.indexOf('--disable-deploy') !== -1;;
+const enableDeploy = process.argv.indexOf('--disable-deploy') !== -1;
 
 // node_modules
 const path = require('path');
@@ -256,7 +256,7 @@ async function createRuntime() {
 
   const dfs = new Ipfs({
     dfsConfig: config.runtimeConfig.ipfs,
-    privateKey: config.runtimeConfig.accountMap[accountId],
+    privateKey: '0x' + config.runtimeConfig.accountMap[accountId],
     accountId: accountId,
     web3: web3,
   });
@@ -333,17 +333,17 @@ const requestFileFromEVANIpfs = function(hash) {
   });
 }
 
-const pinToIPFSContractus = function(ipfsHash) {
+const pinToEVANIpfs = function(ipfsHash) {
   console.log(`${ ipfsConfig.host }: pinning hash "${ipfsHash}"...`)
+  return ipfsInstance.pin.add(ipfsHash);
+ /* return new Promise((resolve, reject) => {
 
-  return new Promise((resolve, reject) => {
+
     const options = {
       hostname: ipfsConfig.host,
       port: ipfsConfig.port,
       path: `/pins/${ ipfsHash }`,
-      headers : {
-        'Authorization': `Basic ${Buffer.from('contractus:c0n7r4c7u5').toString('base64')}`
-      },
+      headers : ipfsConfig.headers,
       method : 'POST'
     }
     const req = https.request(options, (res) => {
@@ -370,7 +370,7 @@ const pinToIPFSContractus = function(ipfsHash) {
     // write data to request body
     req.write('')
     req.end()
-  })
+  })*/
 /*  .then(() => {
     console.log(`ipfs.evan.network: request hash "${ipfsHash}"...`)
     return requestFileFromEVANIpfs(ipfsHash)
@@ -735,16 +735,8 @@ async function deployDApps(externals, version) {
 
       let descriptionHash = await runtime.nameResolver.getContent(address);
 
-      await pinToIPFSContractus(descriptionHash);
-      await pinToIPFSContractus(dbcp.public.dapp.origin);
-
-      if (dbcp.public.dapp.files) {
-        for (const file of dbcp.public.dapp.files) {
-          console.log(`Pinning: ${dbcp.public.dapp.origin}/${file}`);
-
-          await pinToIPFSContractus(`${dbcp.public.dapp.origin}/${file}`);
-        }
-      }
+      await pinToEVANIpfs(Ipfs.bytes32ToIpfsHash(descriptionHash));
+      await pinToEVANIpfs(dbcp.public.dapp.origin);
 
       if (ipnsPrivateKeys[dbcp.public.name] ) {
         try {
@@ -874,11 +866,7 @@ const ionicDeploy = async function (version) {
 
   const folderHash = await deployIPFSFolder('www', ionicDeploymentFolder);
 
-  await pinToIPFSContractus(folderHash);
-  for (let file of dappBrowserFiles) {
-    await pinToIPFSContractus(`${ folderHash }/${ file }`);
-  }
-
+  await pinToEVANIpfs(folderHash);
   await deployToIpns('dappbrowser', folderHash);
 
   addDbcpToList({
@@ -896,11 +884,7 @@ const licensesDeploy = async function() {
 
   const folderHash = await deployIPFSFolder('licenses', licensesFolder);
 
-  await pinToIPFSContractus(folderHash);
-  for (let file of [ 'AGPL-3.0-only.txt', 'Apache-2.0.txt' ]) {
-    await pinToIPFSContractus(`${ folderHash }/${ file }`);
-  }
-
+  await pinToEVANIpfs(folderHash);
   await deployToIpns('licenses', folderHash);
 
   addDbcpToList({
