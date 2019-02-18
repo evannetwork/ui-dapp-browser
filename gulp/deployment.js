@@ -31,7 +31,7 @@ require('console.table');
 process.env.DBCP_LOGLEVEL = 'debug';
 
 // runtime parameters
-const enableDeploy = true;
+const enableDeploy = process.argv.indexOf('--disable-deploy') !== -1;;
 
 // node_modules
 const path = require('path');
@@ -66,24 +66,24 @@ while (runFolder.indexOf('ui-dapp-browser', runFolder.length - 'ui-dapp-browser'
 }
 
 // path parameters
-const configPath = path.resolve(process.argv[process.argv.indexOf('--config') + 1]);
 const advancedDeployment = process.argv.indexOf('--advanced') !== -1;
-const dappFolder = path.resolve('..');
-const runtimeFolder = path.resolve('runtime');
-const originFolder = path.resolve('runtime/external');
+const configPath = path.resolve(process.argv[process.argv.indexOf('--config') + 1]);
 const dappDeploymentFolder = path.resolve('deployment');
-const platformFolder = path.resolve('platforms');
+const dappFolder = path.resolve('..');
 const ionicDeploymentFolder = path.resolve('www');
 const licensesFolder = path.resolve('licenses');
+const originFolder = path.resolve('runtime/external');
+const platformFolder = path.resolve('platforms');
+const runtimeFolder = path.resolve('runtime');
 
 // globals
 let config;
-let ipfsUrl;
-let ipfsConfig;
 let deploymentAccount;
 let deploymentDomain;
 let initialized;
+let ipfsConfig;
 let ipfsInstance;
+let ipfsUrl;
 let runtime;
 let web3;
 
@@ -462,7 +462,7 @@ keyPressToContinue = async function() {
 
 const clearConsole = function() {
   console.clear();
-  console.log(`\n\nevan.network - deployment (${ deploymentDomain || '---' })\n`);
+  console.log(`\n\nevan.network - deployment (${ deploymentDomain || '---' }) ${ !enableDeploy ? '- (deployment disabled)' : '' }\n`);
 };
 
 /********************************** dapps deployment functions ************************************/
