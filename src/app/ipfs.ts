@@ -41,7 +41,7 @@ browserIpfs.default.setProvider({
 /**
  * default evan.network ipfs configuration
  */
-export let ipfsConfig: any = { host: 'ipfs.evan.network', port: '443', protocol: 'https' };
+export let ipfsConfig: any = { host: 'ipfs.test.evan.network', port: '443', protocol: 'https' };
 ipfsConfig.ipfsCache = ipfsConfig.ipfsCache || null
 
 /**

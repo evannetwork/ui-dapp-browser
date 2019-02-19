@@ -7,7 +7,7 @@ To do this, however, all DApps must be started via the evan.network dapp-browser
 
 ## API Documentation and Tutorials
 - [DApp Tutorials](https://evannetwork.github.io/dapps/basics)
-- [API Reference UI](https://ipfs.evan.network/ipns/QmReXE5YkiXviaHNG1ASfY6fFhEoiDKuSkgY4hxgZD9Gm8/dapp-browser/index.html)
+- [API Reference UI](https://ipfs.test.evan.network/ipns/QmReXE5YkiXviaHNG1ASfY6fFhEoiDKuSkgY4hxgZD9Gm8/dapp-browser/index.html)
 
 ## Functionallity
 The src folder includes a dev.html and a index.html file. By opening the dev.html file, the code will bypass several code loading checks, to try to load dapps from the local file server. The compiled files from the "src/app" folder will be placed within the runtime folder. Chosen files will be copied to the www folder for deployment and native app building. Durin the dev mode the application will try to load dapps not from ens and ipfs, but from the local file server (runtime/external). This folder will be filled using [angular-gulp](https://github.com/evannetwork/angular-gulp) and the lerna DApp projects (e.g. [core-dapps](https://github.com/evannetwork/ui-core-dapps)). During production mode, each DApp or contract will be loaded using its ens or contract address and dbcp description. How to develop DApps, that can be loaded via the dapp-browser, have a look here [DApp Basics](https://evannetwork.github.io/dapps/basics).

@@ -193,7 +193,7 @@ export async function getAgentExecutor() {
   if (typeof agentExecutor === 'undefined') {
     const token = routing.getQueryParameterValue('agent-executor');
     const agentUrl = routing.getQueryParameterValue('agent-executor-url') ||
-      utils.devMode ? 'http://localhost:8080' : 'https://agents.evan.network';
+      utils.devMode ? 'http://localhost:8080' : 'https://agents.test.evan.network';
 
     // if an token is specified, load the data from the edge-server
     // TODO: currently the parameters are specified via query parameters => load it via edge-server

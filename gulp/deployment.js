@@ -370,14 +370,14 @@ const pinToEVANIpfs = function(ipfsHash) {
     req.end()
   })*/
 /*  .then(() => {
-    console.log(`ipfs.evan.network: request hash "${ipfsHash}"...`)
+    console.log(`ipfs.test.evan.network: request hash "${ipfsHash}"...`)
     return requestFileFromEVANIpfs(ipfsHash)
       .catch(async () => {
-        console.log(`ipfs.evan.network: failed to request hash from ipfs.evan.network "${ipfsHash}"; ${e.message || e}`)
+        console.log(`ipfs.test.evan.network: failed to request hash from ipfs.test.evan.network "${ipfsHash}"; ${e.message || e}`)
         await keyPressToContinue();
       })
       .then(() => {
-        console.log(`ipfs.evan.network: requested hash  "${ipfsHash}"`)
+        console.log(`ipfs.test.evan.network: requested hash  "${ipfsHash}"`)
       });
   }); */
 }
@@ -504,11 +504,14 @@ const replaceConfigurationValues = async function(folderPath) {
     .pipe(replace(/wss\:\/\/testcore.evan.network\/ws/g, `${ config.runtimeConfig.web3Provider }`))
 
     // ipfs config
-    .pipe(replace(/\{\ host\:\ \'ipfs\.evan\.network\'\,\ port\:\ \'443\'\,\ protocol\:\ \'https\'\ \}/g, JSON.stringify(ipfsConfig)))
-    .pipe(replace(/https\:\/\/ipfs\.evan\.network/g, ipfsUrl))
+    .pipe(replace(/\{\ host\:\ \'ipfs\.test\.evan\.network\'\,\ port\:\ \'443\'\,\ protocol\:\ \'https\'\ \}/g, JSON.stringify(ipfsConfig)))
+    .pipe(replace(/https\:\/\/ipfs\.test\.evan\.network/g, ipfsUrl))
 
     // smart agent configuratiuon
-    .pipe(replace(/https\:\/\/agents\.evan\.network/g, config.dappConfigSwitches.coreSmartAgent))
+    .pipe(replace(/https\:\/\/agents\.test\.evan\.network/g, config.dappConfigSwitches.coreSmartAgent))
+
+    // payment agent configuratiuon
+    .pipe(replace(/https\:\/\/payments\.test\.evan\.network/g, config.dappConfigSwitches.coreSmartAgent))
 
     // insert the correct gas price
     .pipe(replace(/window\.localStorage\[\'evan\-gas\-price\'\]\ \|\|\ \'20000000000\'/g, `window.localStorage['evan-gas-price'] || '${ config.dappConfigSwitches.gasPrice }'`))
