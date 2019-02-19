@@ -69,7 +69,7 @@ const config = {
     },
   },
   alwaysAutoGasLimit: 1.1,
-  ensRootOwner: '0xBa5384267A175542CB0E98a37875C106decDc3C3',
+  ensRootOwner: '0x4a6723fC5a926FA150bAeAf04bfD673B056Ba83D',
 }
 
 export { config }
