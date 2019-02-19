@@ -496,7 +496,7 @@ const replaceConfigurationValues = async function(folderPath) {
     .pipe(replace(/window\.localStorage\[\'evan-ens-profiles\'\]/g, `window.localStorage['evan-ens-profiles'] || ${ JSON.stringify(config.bcConfig.nameResolver.domains.profile) }`))
     .pipe(replace(/window\.localStorage\[\'evan-ens-mailbox\'\]/g, `window.localStorage['evan-ens-mailbox'] || ${ JSON.stringify(config.bcConfig.nameResolver.domains.mailbox) }`))
     // insert correct faucet account
-    .pipe(replace(/faucetAccount\:\ \'0x4a6723fC5a926FA150bAeAf04bfD673B056Ba83D\'/g, config.bcConfig.faucetAccount))
+    .pipe(replace(/faucetAccount\:\ \'0x4a6723fC5a926FA150bAeAf04bfD673B056Ba83D\'/g, `faucetAccount: '${ config.bcConfig.faucetAccount }'`))
     // insert correct ensRootOwner
     .pipe(replace(/0x4a6723fC5a926FA150bAeAf04bfD673B056Ba83D/g, config.bcConfig.ensRootOwner))
 
@@ -511,7 +511,7 @@ const replaceConfigurationValues = async function(folderPath) {
     .pipe(replace(/https\:\/\/agents\.test\.evan\.network/g, config.dappConfigSwitches.coreSmartAgent))
 
     // payment agent configuratiuon
-    .pipe(replace(/https\:\/\/payments\.test\.evan\.network/g, config.dappConfigSwitches.coreSmartAgent))
+    .pipe(replace(/https\:\/\/payments\.test\.evan\.network/g, config.dappConfigSwitches.paymentSmartAgent))
 
     // insert the correct gas price
     .pipe(replace(/window\.localStorage\[\'evan\-gas\-price\'\]\ \|\|\ \'20000000000\'/g, `window.localStorage['evan-gas-price'] || '${ config.dappConfigSwitches.gasPrice }'`))
