@@ -2,7 +2,12 @@
 
 ## Next Version
 ### Features
+- add `faucetAccount` to configuration
+- add disable deployment console parameter for testing deployment replacing jobs
+
 ### Fixes
+- insert missing replacements for different environment deployments: ipfs domains and ensRootOwner
+
 ### Deprecations
 
 
