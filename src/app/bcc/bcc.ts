@@ -102,7 +102,7 @@ function getSigner(CoreBundle: any, provider = core.getCurrentProvider(), accoun
   if (provider === 'internal') {
     signer = new CoreBundle.SignerInternal({
       accountStore: accountStore,
-      config: { gasPrice: window.localStorage['evan-gas-price'] || '20000000000' },
+      config: { gasPrice: window.localStorage['evan-gas-price'] ? parseInt(window.localStorage['evan-gas-price'], 10) : 20000000000 },
       contractLoader: CoreBundle.CoreRuntime.contractLoader,
       web3: CoreBundle.CoreRuntime.web3,
       logLog: CoreBundle.logLog,

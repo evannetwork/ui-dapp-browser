@@ -497,9 +497,15 @@ const replaceConfigurationValues = async function(folderPath) {
     .pipe(replace(/window\.localStorage\[\'evan-ens-profiles\'\]/g, `window.localStorage['evan-ens-profiles'] || ${ JSON.stringify(config.bcConfig.nameResolver.domains.profile) }`))
     .pipe(replace(/window\.localStorage\[\'evan-ens-mailbox\'\]/g, `window.localStorage['evan-ens-mailbox'] || ${ JSON.stringify(config.bcConfig.nameResolver.domains.mailbox) }`))
     // insert correct faucet account
-    .pipe(replace(/faucetAccount\:\ \'0x4a6723fC5a926FA150bAeAf04bfD673B056Ba83D\'/g, `faucetAccount: '${ config.bcConfig.faucetAccount }'`))
+    .pipe(replace(/faucetAccount\:\ \'0x4a6723fC5a926FA150bAeAf04bfD673B056Ba83D\'/g, `faucetAccount: '${ config.dappConfigSwitches.accounts.faucetAccount }'`))
     // insert correct ensRootOwner
     .pipe(replace(/0x4a6723fC5a926FA150bAeAf04bfD673B056Ba83D/g, config.bcConfig.ensRootOwner))
+
+    // insert correct payment accounts
+    // paymentAgentAccountId
+    .pipe(replace(/0xAF176885bD81D5f6C76eeD23fadb1eb0e5Fe1b1F/g, config.dappConfigSwitches.accounts.paymentAgentAccount))
+    // paymentChannelManagerAccountId
+    .pipe(replace(/0x0A0D9dddEba35Ca0D235A4086086AC704bbc8C2b/g, config.dappConfigSwitches.accounts.paymentChannelManagerAccount))
 
     // web3 configurations
     .pipe(replace(/wss\:\/\/testcore.evan.network\/ws/g, `${ config.runtimeConfig.web3Provider }`))
@@ -509,13 +515,16 @@ const replaceConfigurationValues = async function(folderPath) {
     .pipe(replace(/https\:\/\/ipfs\.test\.evan\.network/g, ipfsUrl))
 
     // smart agent configuratiuon
-    .pipe(replace(/https\:\/\/agents\.test\.evan\.network/g, config.dappConfigSwitches.coreSmartAgent))
+    .pipe(replace(/https\:\/\/agents\.test\.evan\.network/g, config.dappConfigSwitches.url.coreSmartAgent))
 
     // payment agent configuratiuon
-    .pipe(replace(/https\:\/\/payments\.test\.evan\.network/g, config.dappConfigSwitches.paymentSmartAgent))
+    .pipe(replace(/https\:\/\/payments\.test\.evan\.network/g, config.dappConfigSwitches.url.paymentSmartAgent))
 
     // insert the correct gas price
-    .pipe(replace(/window\.localStorage\[\'evan\-gas\-price\'\]\ \|\|\ \'20000000000\'/g, `window.localStorage['evan-gas-price'] || '${ config.dappConfigSwitches.gasPrice }'`))
+    .pipe(replace(
+      /gasPrice\:\ window\.localStorage\[\'evan\-gas\-price\'\]\ \?\ parseInt\(window\.localStorage\[\'evan\-gas\-price\'\]\,\ 10\)\ \:\ 20000000000/g,
+      `gasPrice: window.localStorage['evan-gas-price'] ? parseInt(window.localStorage['evan-gas-price'], 10) : ${ config.dappConfigSwitches.gasPrice }`
+    ))
 
     // mainnet texts (e.g. for onboarding)
     .pipe(replace(/mainnetTexts\ \=\ false/g, `mainnetTexts = ${ config.dappConfigSwitches.mainnetTexts }`))
