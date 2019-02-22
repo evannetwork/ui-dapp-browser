@@ -411,6 +411,7 @@ async function deployIPFSFolder(folderName, path) {
 }
 
 async function deployToIpns(dapp, hash, retry) {
+  return;
   if (!ipnsPrivateKeys[dapp]) {
     throw new Error(`ipns key for dapp ${ dapp } not registered!`);
   }
