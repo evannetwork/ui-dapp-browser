@@ -48,6 +48,7 @@
     "angular-in-memory-web-api": "^0.3.2",
     "babel-core": "^6.26.3",
     "babel-plugin-remove-comments": "^2.0.0",
+    "babel-plugin-transform-es3-property-literals": "^6.22.0",
     "babel-preset-env": "^1.7.0",
     "codelyzer": "^3.2.2",
     "concurrently": "^3.4.0",
