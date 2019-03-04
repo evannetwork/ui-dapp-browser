@@ -149,7 +149,7 @@ const loadBCCCore = function (originalFetch) {
  * @return     {any}       result of the ipfs import
  */
 const loadSmartContracts = function(originalFetch) {
-  if (utils.isDevAvailable('bcc')) {
+  if (utils.isDevAvailable('smartcontracts')) {
     return loadPredefinedLib(
       'smartcontracts',
       'smartcontracts/compiled.js',
