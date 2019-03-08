@@ -83,8 +83,15 @@ evanGlobals = {
   queryParams: routing.getQueryParameters()
 };
 
-System.map['bcc'] = `bcc.${ getDomainName() }!dapp-content`;
+evanGlobals.System.map['bcc'] = `bcc.${ getDomainName() }!dapp-content`;
+evanGlobals.System.map['bcc-profile'] = `bcc.${ getDomainName() }!dapp-content`;
+evanGlobals.System.map['bcc-bc'] = `bcc.${ getDomainName() }!dapp-content`;
+evanGlobals.System.map['@evan.network/api-blockchain-core'] = `bcc.${ getDomainName() }!dapp-content`;
+evanGlobals.System.map['@evan.network/dbcp'] = `bcc.${ getDomainName() }!dapp-content`;
 evanGlobals.System.map['smart-contracts'] = `smartcontracts.${ getDomainName() }!dapp-content`;
+evanGlobals.System.map['@evan.network/smart-contracts-core'] = `smartcontracts.${ getDomainName() }!dapp-content`;
+System.map['@evan.network/ui-angular-libs'] = 'angularlibs.evan!dapp-content';
+System.map['@evan.network/ui-angular-core'] = 'angularcore.evan!dapp-content';
 
 /**
  * Starts the whole dapp-browser.
