@@ -205,25 +205,11 @@ gulp.task('lint:ts', function() {
 });
 
 gulp.task('ionic-sass', function () {
-  let includePaths = [
-    '../ui-angular',
-    '../ui-angular/ui-angular-libs',
-    '../ui-angular/ui-angular-libs/ionic-angular',
-    '../ui-angular/ui-angular-libs/ionic-angular/themes',
-    '../ui-angular/ui-angular-libs/ionic-angular/fonts',
-    '../ui-angular/ui-angular-libs/ionicons/dist/scss',
-  ];
-
-  includePaths = includePaths.concat(includePaths
-    .map(includePath => includePath.replace('../ui-angular/ui-angular-libs', '../ui-angular/ui-angular-libs/node_modules'))
-  );
-
   return gulp
     .src(path.resolve(`src/**/*.scss`))
     .pipe(
       sass({
         outputStyle : 'compressed',
-        includePaths : includePaths.map(src => path.resolve(src))
       })
       .on('error', sass.logError)
     )
