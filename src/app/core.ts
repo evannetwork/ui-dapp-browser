@@ -86,17 +86,21 @@ function logout(disabledReload?: boolean) {
  * @return     {string}  The current provider (internal, external, agent-executor).
  */
 function getCurrentProvider() {
+  let provider;
+
   if (agentExecutor) {
-    return 'agent-executor';
+    provider = 'agent-executor';
   } else if (evanGlobals.queryParams.provider) {
-    return evanGlobals.queryParams.provider;
+    provider = evanGlobals.queryParams.provider;
   } else {
     const currentProvider = window.localStorage['evan-provider'];
 
     if (currentProvider && validProviders.indexOf(currentProvider) !== -1) {
-      return currentProvider;
+      provider = currentProvider;
     }
   }
+
+  return provider || 'internal';
 }
 
 /**

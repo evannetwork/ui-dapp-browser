@@ -132,7 +132,7 @@
     "Cordova"
   ],
   "license": "AGPL-3.0-only",
-  "main": "www/build/main.js",
+  "main": "runtime/build/main.js",
   "name": "@evan.network/ui-dapp-browser",
   "repository": {
     "type": "git",

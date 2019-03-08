@@ -38,8 +38,6 @@ declare let evanGlobals: any;
  * small navigation library Navigo is used to handle comfortable url route writing
  */
 const Navigo = window['Navigo'];
-let CoreBundle;
-let CoreRuntime;
 let lastRootENS;
 
 export let router;
@@ -156,9 +154,6 @@ export async function onRouteChange(): Promise<void> {
  * @return     {void}    resolved when routing was created
  */
 export async function initialize(initialRoute: string): Promise<void> {
-  CoreBundle = evanGlobals.CoreBundle;
-  CoreRuntime = CoreBundle.CoreRuntime;
-
   // load history from cache
   if (window.performance.navigation.type === 1 && !window.sessionStorage['evan-route-reloaded']) {
     history = [ ];
