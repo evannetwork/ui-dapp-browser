@@ -140,6 +140,11 @@ export async function initializeEvanNetworkStructure(): Promise<void> {
         nameResolver = CoreRuntime.nameResolver;
         web3 = CoreRuntime.web3;
 
+        const chainId = await web3.eth.net.getId();
+        if (chainId === 508674158) {
+          utils.showTestNetBanner();
+        }
+
         // wait for device ready event so we can load notifications
         // await preloadAngular;
         await utils.onDeviceReady();

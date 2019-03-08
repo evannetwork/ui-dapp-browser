@@ -292,3 +292,11 @@ export function getDomainName(...subLabels): string {
     return domainConfig;
   }
 }
+
+export function showTestNetBanner() {
+  const testNetElement = (<any>document.getElementById('evan-testnet'));
+
+  if (testNetElement) {
+    testNetElement.style.display = 'block';
+  }
+}

@@ -417,7 +417,7 @@ export async function startDApp(dappEns: string, container = document.body, useD
       }
 
       previousContainerChilds.forEach((childElement: any) => {
-        if (childElement.parentElement === container) {
+        if (childElement.parentElement === container && childElement.id !== 'evan-testnet') {
           container.removeChild(childElement);
         }
       });
