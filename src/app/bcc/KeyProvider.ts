@@ -69,6 +69,18 @@ export class KeyProvider {
   }
 
   /**
+   * Initializes the keyprovider using the specific profile
+   *
+   * @param      {any}     profile  blockchaincore profile instance
+   */
+  init(profile: any) {
+    this.profile = profile;
+    this.accountId = this.profile.activeAccount;
+
+    this.origin.init(profile);
+  }
+
+  /**
    * runs setKeysForAccount with the current logged in account.
    */
   async setKeys() {

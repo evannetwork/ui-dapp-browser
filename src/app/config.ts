@@ -39,6 +39,9 @@ const process = {
   },
 };
 const config = {
+  accountMap: {
+    '0x0000000000000000000000000000000000000000': ''
+  },
   web3Provider: window.localStorage['evan-web3-provider'] || 'wss://testcore.evan.network/ws',
   nameResolver: {
     ensAddress: process.env.ENS_ADDRESS || '0x937bbC1d3874961CA38726E9cD07317ba81eD2e1',

@@ -124,7 +124,6 @@ function setVaultActive(vault: any) {
  */
 async function createVaultAndSetActive(mnemonic: string, password: string): Promise<void> {
   const vault = await getNewVault(mnemonic, password);
-
   const accounts = getAccounts(vault, 1);
 
   setVaultActive(vault);
@@ -343,7 +342,7 @@ async function getEncryptionKey(): Promise<string> {
  * @return     {string}  The encryption key from password.
  */
 function getEncryptionKeyFromPassword(accountId: string, password: string): string {
-  return evanGlobals.CoreBundle.CoreRuntime.nameResolver
+  return evanGlobals.CoreRuntime.nameResolver
     .sha3(accountId + password)
     .replace(/0x/g, '');
 }

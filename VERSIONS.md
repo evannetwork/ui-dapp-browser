@@ -4,6 +4,8 @@
 ### Features
 - add `faucetAccount` to configuration
 - add disable deployment console parameter for testing deployment replacing jobs
+- add correct keyprovider init function
+- adjust systemjs configuration to do not map dependency alias, they will be set by the projects itself 
 
 ### Fixes
 - insert missing replacements for different environment deployments: ipfs domains and ensRootOwner
