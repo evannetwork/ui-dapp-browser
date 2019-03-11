@@ -25,19 +25,16 @@
   https://evan.network/license/
 */
 
-ion-app {
-  display: block;
-  overflow: hidden;
+html, body {
+  overflow-x: hidden;
 
   height: 100%;
+  margin: 0;
+  padding: 0;
 
-  background-color: #ffffff;
-}
-
-body {
-  user-select: text !important;
-
-  background-color: #000d1a;
+  &.dapp-browser {
+    font-size: 100%;
+  }
 }
 
 iframe.evan-dapp {

@@ -9,6 +9,7 @@
 
 ### Fixes
 - insert missing replacements for different environment deployments: ipfs domains and ensRootOwner
+- ensure font-size scaling to 100%
 
 ### Deprecations
 
