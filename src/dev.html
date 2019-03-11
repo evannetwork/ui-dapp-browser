@@ -37,32 +37,35 @@
     <link rel="shortcut icon" href="favicon.ico">
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#4e8ef7">
-    
+
     <!-- add to homescreen for ios -->
     <link rel="apple-touch-icon" href="logo.png">
     <link rel="apple-touch-startup-image" href="logo.png">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="#023845">
-    
+
     <!-- insertcordovahere -->
 
     <script>
       document.addEventListener("deviceready", function() {
         if (window.navigator && window.navigator.splashscreen) {
           navigator.splashscreen.hide();
-        } 
+        }
       }, false);
     </script>
     <link rel="stylesheet" href="build/dapp-root.css" async>
   </head>
 
   <body class="dapp-browser">
+    <div id="evan-testnet">
+      TESTNET
+    </div>
     <div id="evan-initial-loading">
       <div class="evan-beauty-screen"></div>
       <div class="logo">
         <svg stroke-linejoin="round" class="evan-logo-svg"
-          xmlns="http://www.w3.org/2000/svg" clip-rule="evenodd" fill-rule="evenodd" xml:space="preserve" height="100%" width="100%" version="1.1" 
-          xmlns:serif="http://www.serif.com/" stroke-miterlimit="1.4142" 
+          xmlns="http://www.w3.org/2000/svg" clip-rule="evenodd" fill-rule="evenodd" xml:space="preserve" height="100%" width="100%" version="1.1"
+          xmlns:serif="http://www.serif.com/" stroke-miterlimit="1.4142"
           xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 495 134">
           <g fill-rule="nonzero">
             <path fill="#fff" d="m26.822 7.65v6.704h-20.117v-6.704h20.117zm-26.822 26.82h33.529v-6.706h-26.824v-6.706h26.824v-20.115h-33.529v33.527z"/>
