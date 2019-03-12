@@ -239,6 +239,28 @@ iframe.evan-dapp {
           filter: blur(15px);
 }
 
+#evan-testnet {
+  font-family: 'Open Sans', sans-serif;
+  font-size: 14px;
+  font-weight: 800;
+
+  position: fixed;
+  position: fixed;
+  z-index: 1000;
+  left: 50%;
+
+  display: none;
+
+  width: 100px;
+
+  transform: translateX( -50% );
+  text-align: center;
+
+  color: #000000;
+  border-radius: 0 0 5px 5px;
+  background-color: yellow;
+}
+
 @mixin translate3d($x, $y, $z) {
   -webkit-transform: translate($x, $y);
      -moz-transform: translate($x, $y);
