@@ -89,9 +89,13 @@ const getDefinitionFromEns = function(ensAddress, domain) {
         // set ens cache to speed up initial loading
         if (dbcp.public && dbcp.public.dapp && dbcp.public.dapp.type === 'cached-dapp') {
           ensCache[validEnsAddress] = combinedStringified;
-          window.localStorage['evan-ens-cache'] = JSON.stringify(ensCache);
+        } else {
+          delete ensCache[validEnsAddress];
         }
-        
+
+        // save ens cache
+        window.localStorage['evan-ens-cache'] = JSON.stringify(ensCache);
+
         return combinedStringified;
       } else {
         if (ensCache[validEnsAddress]) {
