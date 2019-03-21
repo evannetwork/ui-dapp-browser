@@ -44,7 +44,6 @@ import { Solc } from './solc';
 import { startWatchers } from './watchers';
 import { updateCoreRuntime, getCoreOptions } from './bcc/bcc';
 
-
 /**
  * is inserted when the application was bundled, used to prevent window usage
  */
@@ -139,11 +138,6 @@ export async function initializeEvanNetworkStructure(): Promise<void> {
         definition = CoreRuntime.definition;
         nameResolver = CoreRuntime.nameResolver;
         web3 = CoreRuntime.web3;
-
-        const chainId = await web3.eth.net.getId();
-        if (chainId === 508674158) {
-          utils.showTestNetBanner();
-        }
 
         // wait for device ready event so we can load notifications
         // await preloadAngular;

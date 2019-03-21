@@ -51,9 +51,9 @@ export let bccReady = new Promise((resolve, reject) => {
  * Initial loading cache values
  */
 const percentageThreshold = 100 / 9;
-let evanLogoRectAnimated = [ ];
 let lastPercentage = 0;
-let lastAnimationFrame;
+let waitForLoadingAnimation;
+let percentagesSet = [ ];
 
 /**
  * Checks if we are running in devMode, if true, load dev-dapps from local file server, if false do nothing
@@ -134,39 +134,6 @@ export function showError() {
 }
 
 /**
- * Sets the current loading progress (animates evan.network logo)
- *
- * @param      {number}  percentage  current loading percentage
- */
-export function setProgress(percentage: number) {
-  try {
-    // cache progress el to handle faster animations
-    if (percentage > lastPercentage) {
-      lastPercentage = percentage;
-    }
-
-    // calculate the count of bars that should be animated
-    let rectsToAnimate = Math.round(lastPercentage / percentageThreshold) - 1;
-    for (let i = 0; i < rectsToAnimate; i++) {
-      if (!evanLogoRectAnimated[i]) {
-        evanLogoRectAnimated[i] = true;
-
-        // animate the symbols on the next animation frame to improve animation performance
-        (function(index) {
-          window.requestAnimationFrame(() => {
-            const rectElement = document.getElementById(`evan-logo-rect-${ index + 1 }`);
-
-            if (rectElement) {
-              rectElement.setAttribute('class', 'animate-1');
-            }
-          });
-        })(i);
-      }
-    }
-  } catch (ex) { }
-}
-
-/**
  * Takes the latest progress percentage and raise it with the incoming value.
  *
  * @param      {number}  percentage  percentage to add
@@ -175,10 +142,23 @@ export function setProgress(percentage: number) {
  *                                   instantly
  * @return     {string}  additional returnObject
  */
-export function raiseProgress(percentage: number, returnObj?: any): any {
+export async function raiseProgress(percentage: number, returnObj?: any) {
   lastPercentage += percentage;
 
-  setProgress(percentage);
+  // wait for last animation to be finished
+  await this.waitForLoadingAnimation;
+
+  // set the percentage only, if it wasn't set before
+  if (!percentagesSet[lastPercentage]) {
+    percentagesSet[lastPercentage] = true;
+    const loadingProgress = document.getElementById(`loading-progress`);
+    if (loadingProgress) {
+      loadingProgress.style.transform = `scaleX(${ lastPercentage / 100 })`;
+    }
+
+    // wait until animation is finished
+    this.waitForLoadingAnimation = new Promise(resolve => setTimeout(resolve, 100));
+  }
 
   return returnObj;
 }
@@ -290,13 +270,5 @@ export function getDomainName(...subLabels): string {
       label => config.nameResolver.labels[label])).join('.').toLowerCase();
   } else {
     return domainConfig;
-  }
-}
-
-export function showTestNetBanner() {
-  const testNetElement = (<any>document.getElementById('evan-testnet'));
-
-  if (testNetElement) {
-    testNetElement.style.display = 'block';
   }
 }

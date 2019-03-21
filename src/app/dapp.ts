@@ -328,7 +328,7 @@ export async function loadDAppDependencies(dappEns: string, useDefaultDomain?: b
 
   depCategories.forEach(depCategory => depCategory.forEach(dep => depCount++));
 
-  const loadingSteps = (100 - lastPercentage) / depCount;
+  const loadingSteps = (90 - lastPercentage) / depCount;
 
   // preload dapps
   // save zoneJSPromise to restore it, if a module provides it's own promise
@@ -416,8 +416,16 @@ export async function startDApp(dappEns: string, container = document.body, useD
         await new Promise(resolve => setTimeout(resolve, 500));
       }
 
+      // remove all childs
       previousContainerChilds.forEach((childElement: any) => {
-        if (childElement.parentElement === container && childElement.id !== 'evan-testnet') {
+        // instead of the testnet banner
+        const isTestnetBanner = childElement.id === 'evan-testnet';
+        // instead of the initial dapp loading screen (will be removed by finishDApploading
+        // function)
+        const isDappLoading = childElement.id === 'evan-initial-loading';
+
+        // instead of the evan-testnet banner
+        if (childElement.parentElement === container && !isTestnetBanner && !isDappLoading) {
           container.removeChild(childElement);
         }
       });

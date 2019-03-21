@@ -26,7 +26,7 @@
 */
 
 html, body {
-  overflow-x: hidden;
+  overflow: hidden;
 
   height: 100%;
   margin: 0;
@@ -55,102 +55,44 @@ iframe.evan-dapp {
   position: fixed;
   z-index: 100;
 
+  display: flex;
+  justify-content: center;
+
   width: 100%;
   height: 100%;
+  padding-top: 100px;
 
   transition: opacity 0.3s ease-in;
 
   opacity: 1;
+  background-color: #e9ecef;
 
   &.hidden {
     opacity: 0;
   }
 
-  .evan-logo-svg {
+  .logo {
     position: relative;
-    z-index: 100;
 
-    max-width: 100%;
-    height: 200px;
-    margin-top: 10%;
-    margin-left: -10%;
+    .loading-bar {
+      width: 100%;
+      height: 10px;
+      margin-top: 20px;
 
-    rect {
-      transform: translate(0, 0);
-
-      opacity: 0;
-
-      will-change: transform, opacity;
+      background-color: #dedede;
     }
 
-    #evan-logo-rect-1 {
-      transition: 0.3s ease-in-out opacity;
+    #loading-progress {
+      position: absolute;
+      z-index: 1;
 
-      &.animate-1 {
-        opacity: 1;
-      }
-    }
+      margin-top: -10px;
 
-    #evan-logo-rect-2 {
-      &.animate-1 {
-        animation: evan-logo-rect-2 1s linear;
+      transition: 0.3s ease-out transform;
+      transform: scaleX(0);
+      transform-origin: left;
 
-        opacity: 1;
-      }
-    }
-
-    #evan-logo-rect-3 {
-      &.animate-1 {
-        animation: evan-logo-rect-3 1s linear;
-
-        opacity: 1;
-      }
-    }
-
-    #evan-logo-rect-4 {
-      &.animate-1 {
-        animation: evan-logo-rect-4 1s linear;
-
-        opacity: 1;
-      }
-    }
-
-    #evan-logo-rect-5 {
-      &.animate-1 {
-        animation: evan-logo-rect-5 1s linear;
-
-        opacity: 1;
-      }
-    }
-
-    #evan-logo-rect-6 {
-      &.animate-1 {
-        animation: evan-logo-rect-6 1s linear;
-
-        opacity: 1;
-      }
-    }
-
-    #evan-logo-rect-7 {
-      &.animate-1 {
-        animation: evan-logo-rect-7 1s linear;
-
-        opacity: 1;
-      }
-    }
-
-    #evan-logo-rect-8 {
-      &.animate-1 {
-        animation: evan-logo-rect-8 1s linear;
-
-        opacity: 1;
-      }
-    }
-
-    @media (max-width: 1350px) {
-      max-width: calc(100% - 10%);
-      margin-top: 5%;
-      margin-left: 5%;
+      background-color: #003844;
     }
   }
 
@@ -185,58 +127,6 @@ iframe.evan-dapp {
       0 2px 1px -1px rgba(0, 0, 0, 0.12);
     }
   }
-
-  .evan-loading {
-    right: 0;
-    left: 0;
-
-    overflow: hidden;
-
-    width: 400px;
-    max-width: 70%;
-    height: 5px;
-    margin: 20px auto;
-
-    background-color: rgba(250, 250, 250, 0.5);
-
-    .evan-loading-progress {
-      width: 0;
-      max-width: 100%;
-      height: 5px;
-
-      transition: 0.3s ease-in-out transform;
-
-      background-color: #ffffff;
-    }
-  }
-}
-
-.evan-logo {
-  background-image: url('img/evan-logo.svg');
-}
-
-.evan-logo-favicon {
-  background-image: url('img/evan-favicon.png');
-}
-
-// display initial screen including blue gradient background, evan logo and text
-.evan-beauty-screen {
-  position: fixed;
-
-  width: calc(100% + 50px);
-  height: calc(100% + 50px);
-  margin: -25px;
-
-  background-image: url('img/evan-background.png');
-  background-repeat: no-repeat;
-  background-position: right;
-  background-size: cover;
-
-  -webkit-filter: blur(15px);
-     -moz-filter: blur(15px);
-      -ms-filter: blur(15px);
-       -o-filter: blur(15px);
-          filter: blur(15px);
 }
 
 #evan-testnet {
@@ -245,11 +135,8 @@ iframe.evan-dapp {
   font-weight: 800;
 
   position: fixed;
-  position: fixed;
-  z-index: 1000;
+  z-index: 99;
   left: 50%;
-
-  display: none;
 
   width: 100px;
 
@@ -259,95 +146,4 @@ iframe.evan-dapp {
   color: #000000;
   border-radius: 0 0 5px 5px;
   background-color: yellow;
-}
-
-@mixin translate3d($x, $y, $z) {
-  -webkit-transform: translate($x, $y);
-     -moz-transform: translate($x, $y);
-      -ms-transform: translate($x, $y);
-       -o-transform: translate($x, $y);
-          transform: translate($x, $y);
-}
-
-@keyframes evan-logo-rect-2 {
-  0% {
-    @include translate3d(-149.268px, -26.667px, 0px);
-  }
-  70% {
-    @include translate3d(0, -26.667px, 0px);
-  }
-  100% {
-    @include translate3d(0, 0, 0px);
-  }
-}
-
-@keyframes evan-logo-rect-3 {
-  0% {
-    @include translate3d(-107.82px,-13.264px, 0px);
-  }
-  70% {
-    @include translate3d(0, -13.264px, 0px);
-  }
-  100% {
-    @include translate3d(0, 0, 0px);
-  }
-}
-
-@keyframes evan-logo-rect-4 {
-  0% {
-    @include translate3d(-123.948px, 6.68px, 0px);
-  }
-  70% {
-    @include translate3d(0, 6.68px, 0px);
-  }
-  100% {
-    @include translate3d(0, 0, 0px);
-  }
-}
-
-@keyframes evan-logo-rect-5 {
-  0% {
-    @include translate3d(-259.158px, -79.486px, 0px);
-  }
-  70% {
-    @include translate3d(0, -79.486px, 0px);
-  }
-  100% {
-    @include translate3d(0, 0, 0px);
-  }
-}
-
-@keyframes evan-logo-rect-6 {
-  0% {
-    @include translate3d(-265.708px, -26.667px, 0px);
-  }
-  70% {
-    @include translate3d(0, -26.667px, 0px);
-  }
-  100% {
-    @include translate3d(0, 0, 0px);
-  }
-}
-
-@keyframes evan-logo-rect-7 {
-  0% {
-    @include translate3d(-302.318px, 20.005px, 0px);
-  }
-  70% {
-    @include translate3d(0, 20.005px, 0px);
-  }
-  100% {
-    @include translate3d(0, 0, 0px);
-  }
-}
-@keyframes evan-logo-rect-8 {
-  0% {
-    @include translate3d(-359.308px, 6.68px, 0px);
-  }
-  70% {
-    @include translate3d(0, 6.68px, 0px);
-  }
-  100% {
-    @include translate3d(0, 0, 0px);
-  }
 }

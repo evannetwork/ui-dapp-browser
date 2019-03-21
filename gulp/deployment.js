@@ -251,7 +251,7 @@ async function createRuntime() {
 
   // initialize dependencies
   const accountId = Object.keys(config.runtimeConfig.accountMap)[0];
-  const web3 = new Web3();
+  web3 = new Web3();
   addWebsocketReconnect(Web3, web3, config.runtimeConfig.web3Provider)
 
   const dfs = new Ipfs({
@@ -448,10 +448,15 @@ const replaceConfigurationValues = async function(folderPath) {
     }
   }
 
-  // replace configuration values
-  await new Promise(resolve => gulp
-    .src(replacePaths)
+  const replaceChain = gulp.src(replacePaths);
 
+  const chainId = await web3.eth.net.getId();
+  if (chainId !== 508674158) {
+    replaceChain.pipe(replace(/\<div\ id\=\"evan\-testnet\"\>TESTNET\<\/div\>/g, ''))
+  }
+
+  // replace configuration values
+  await new Promise(resolve => replaceChain
     // replace bcc configurations
     .pipe(replace(/window\.localStorage\[\'evan-ens-address\'\]/g, `window.localStorage['evan-ens-address'] || '${ config.bcConfig.nameResolver.ensAddress }'`))
     .pipe(replace(/window\.localStorage\[\'evan-ens-resolver\'\]/g, `window.localStorage['evan-ens-resolver'] || '${ config.bcConfig.nameResolver.ensResolver }'`))
