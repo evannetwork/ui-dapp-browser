@@ -455,10 +455,20 @@ const isAccountOnboarded = async function(account: string): Promise<boolean> {
   }
 }
 
+/**
+ * Returns the first core runtime that was created by the dapp-browser.
+ *
+ * @return     {any}  bcc core runtime (without profile)
+ */
+const getCoreRuntime = function() {
+  return coreRuntimes[Object.keys(coreRuntimes)[0]];
+}
+
 export {
   coreRuntimes,
   createDefaultRuntime,
   getCoreOptions,
+  getCoreRuntime,
   getProfileForAccount,
   getSigner,
   isAccountOnboarded,
