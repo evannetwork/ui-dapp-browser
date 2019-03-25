@@ -251,7 +251,7 @@ async function createRuntime() {
 
   // initialize dependencies
   const accountId = Object.keys(config.runtimeConfig.accountMap)[0];
-  const web3 = new Web3();
+  web3 = new Web3();
   addWebsocketReconnect(Web3, web3, config.runtimeConfig.web3Provider)
 
   const dfs = new Ipfs({
@@ -332,54 +332,9 @@ const requestFileFromEVANIpfs = function(hash) {
 }
 
 const pinToEVANIpfs = function(ipfsHash) {
-  console.log(`${ ipfsConfig.host }: pinning hash "${ipfsHash}"...`)
+  console.log(`${ ipfsConfig.host }: pinning hash "${ipfsHash}"...`);
+
   return ipfsInstance.pin.add(ipfsHash);
- /* return new Promise((resolve, reject) => {
-
-
-    const options = {
-      hostname: ipfsConfig.host,
-      port: ipfsConfig.port,
-      path: `/pins/${ ipfsHash }`,
-      headers : ipfsConfig.headers,
-      method : 'POST'
-    }
-    const req = https.request(options, (res) => {
-      res.setEncoding('utf8')
-      res.on('data', (chunk) => {  })
-      res.on('end', async () => {
-        console.log(`${ ipfsConfig.host }: pinned hash  "${ ipfsHash }"`)
-        resolve()
-      })
-    })
-
-    req.on('error', async (e) => {
-      console.log(`${ ipfsConfig.host }: failed to pin hash "${ ipfsHash }"; ${ e.message || e }`)
-      await keyPressToContinue();
-      reject(e)
-    })
-
-    req.on('timeout', async () => {
-      console.log(`${ ipfsConfig.host }: timeout during pinning of hash "${ ipfsHash }"`)
-      await keyPressToContinue();
-      resolve()
-    })
-
-    // write data to request body
-    req.write('')
-    req.end()
-  })*/
-/*  .then(() => {
-    console.log(`ipfs.test.evan.network: request hash "${ipfsHash}"...`)
-    return requestFileFromEVANIpfs(ipfsHash)
-      .catch(async () => {
-        console.log(`ipfs.test.evan.network: failed to request hash from ipfs.test.evan.network "${ipfsHash}"; ${e.message || e}`)
-        await keyPressToContinue();
-      })
-      .then(() => {
-        console.log(`ipfs.test.evan.network: requested hash  "${ipfsHash}"`)
-      });
-  }); */
 }
 
 /**
@@ -411,7 +366,6 @@ async function deployIPFSFolder(folderName, path) {
 }
 
 async function deployToIpns(dapp, hash, retry) {
-  return;
   if (!ipnsPrivateKeys[dapp]) {
     throw new Error(`ipns key for dapp ${ dapp } not registered!`);
   }
@@ -420,33 +374,43 @@ async function deployToIpns(dapp, hash, retry) {
     throw new Error(`deploymentDomain ${ deploymentDomain } is not evan, IPNS will not be enrolled!`);
   }
 
-  console.log(`\n\nStart ipns deployment: ${ dapp } : ${ hash }`);
-  await new Promise((resolve, reject) => {
-    exec(`ipfs key gen --type=rsa --size=2048 ${ ipnsPrivateKeys[dapp] }`, {
+  return new Promise((resolve, reject) => {
+    const options = {
+      hostname: '35.178.171.238',
+      port: '8080',
+      path: `/api/smart-agents/ipns-publish/add-or-update?key=${ ipnsPrivateKeys[dapp] }&hash=${ hash }`,
+      headers : ipfsConfig.headers,
+      method : 'GET'
+    };
 
-    }, (err, stdout, stderr) => {
-      resolve(stdout);
+    const req = http.request(options, (res) => {
+      res.setEncoding('utf8')
+      res.on('data', (chunk) => {  })
+      res.on('end', async () => {
+        console.log(`${ ipfsConfig.host }: pinned hash  "${ hash }"`)
+        resolve()
+      })
     })
+
+    req.on('error', async (e) => {
+      console.log(`${ ipfsConfig.host }: failed to pin hash "${ hash }"; ${ e.message || e }`)
+      await keyPressToContinue();
+      reject(e)
+    })
+
+    req.on('timeout', async () => {
+      console.log(`${ ipfsConfig.host }: timeout during pinning of hash "${ hash }"`)
+      await keyPressToContinue();
+      resolve()
+    })
+
+    // write data to request body
+    req.write('')
+    req.end()
   })
 
-  await new Promise((resolve, reject) => {
-    console.log(`Publish to ipns: ${ dapp } : ${ hash }`);
-    return resolve();
-    exec(`ipfs name publish --key=${ ipnsPrivateKeys[dapp] } --lifetime=8760h /ipfs/${ hash }`, {
+  // /api/smart-agents/ipns-publish/add-or-update?key=testnet-evan.network-dapp-browser&hash=
 
-    }, async (err, stdout, stderr) => {
-      console.log('ipfs name publish');
-      console.log(err);
-      console.log(stdout);
-      console.log(stderr);
-
-      if (err) {
-        reject(err);
-      } else {
-        resolve();
-      }
-    })
-  })
 }
 
 keyPressToContinue = async function() {
@@ -484,10 +448,15 @@ const replaceConfigurationValues = async function(folderPath) {
     }
   }
 
-  // replace configuration values
-  await new Promise(resolve => gulp
-    .src(replacePaths)
+  const replaceChain = gulp.src(replacePaths);
 
+  const chainId = await web3.eth.net.getId();
+  if (chainId !== 508674158) {
+    replaceChain.pipe(replace(/\<div\ id\=\"evan\-testnet\"\>TESTNET\<\/div\>/g, ''))
+  }
+
+  // replace configuration values
+  await new Promise(resolve => replaceChain
     // replace bcc configurations
     .pipe(replace(/window\.localStorage\[\'evan-ens-address\'\]/g, `window.localStorage['evan-ens-address'] || '${ config.bcConfig.nameResolver.ensAddress }'`))
     .pipe(replace(/window\.localStorage\[\'evan-ens-resolver\'\]/g, `window.localStorage['evan-ens-resolver'] || '${ config.bcConfig.nameResolver.ensResolver }'`))
