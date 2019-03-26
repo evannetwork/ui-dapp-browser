@@ -100,18 +100,46 @@ Be sure to have the correct cordova and ionic versions installed:
   - Google play Services
 
 To create the application for Android, run the following commands:
+
+1. Add the android platform
 ```sh
-cordova-prepare-android --config pathToConfig
-cordova-run-android
+ionic cordova platform add android 
 ```
 
-The apk is build in this folder: "platforms/android/build/outputs".
+2. open `platforms/android/build.gradle`
 
-### Android Trouble Shooting
+- Replace in the `buildscript` and `allprojects`
 
-1. Occures the following error ** ionic Manifest merger failed : Attribute meta-data#android.support.VERSION@value value=(25.4.0) from [com.android.support:appcompat-v7:25.4.0] AndroidManifest.xml:28:13-35 ** ?
+```
+maven { url "https://maven.google.com" }
+jcenter { url "http://jcenter.bintray.com/" }
+```
 
-Insert the following code at the end of the ui-dapp-browser/platforms/android/build.gradle file:
+with 
+
+```
+jcenter()
+maven {
+    url "https://maven.google.com"
+}
+
+- Replace in the `buildscript.dependencies` section
+
+```
+classpath 'com.android.tools.build:gradle:3.0.0'
+```
+
+with 
+
+
+```
+classpath 'com.android.tools.build:gradle:3.0.0'
+classpath 'com.google.gms:google-services:4.1.0'
+```
+
+- Add the following snippet to the end of the file:
+
+** ionic Manifest merger failed : Attribute meta-data#android.support.VERSION@value value=(25.4.0) from [com.android.support:appcompat-v7:25.4.0] AndroidManifest.xml:28:13-35 **
 
 ```
 configurations.all {
@@ -126,10 +154,34 @@ configurations.all {
 }
 ```
 
-2. Could not get unknown property 'ANDROID_SUPPORT_V4_VERSION'
-open ``ui-dapp-browser/platforms/android/build.gradle`` and replace ``com.android.support:support-v4:$ANDROID_SUPPORT_V4_VERSION`` with ``com.android.support:support-v4:24.1.1+``
+3. open `platforms/android/project.properties`
+`
+** Could not get unknown property 'ANDROID_SUPPORT_V4_VERSION' **
+
+- Replace
 
 ```
+com.android.support:support-v4:$ANDROID_SUPPORT_V4_VERSION
+```
+
+with
+
+```
+com.android.support:support-v4:24.1.1+
+```
+
+4. open `platforms/android/CordovaLib/build.gradle`
+
+- insert everything from part 1
+
+5. run the following script
+
+```
+./platforms/android/cordova/build
+```
+
+6. The APK is located within the directory `platforms/android/build/outputs/apk/debug`
+
 
 ### IOS deployment
 **You need to do this on an Apple Mac!**
