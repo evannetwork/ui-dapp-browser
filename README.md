@@ -94,6 +94,10 @@ Be sure to have the correct cordova and ionic versions installed:
 
 - cordova: 6.5.0
 - ionic: 3.20.0
+- gradle: 5.3
+- Android Studio
+  - SDK 28, 27, 26, 25
+  - Google play Services
 
 To create the application for Android, run the following commands:
 ```sh
@@ -103,7 +107,9 @@ cordova-run-android
 
 The apk is build in this folder: "platforms/android/build/outputs".
 
-Occures the following error ** ionic Manifest merger failed : Attribute meta-data#android.support.VERSION@value value=(25.4.0) from [com.android.support:appcompat-v7:25.4.0] AndroidManifest.xml:28:13-35 ** ?
+### Android Trouble Shooting
+
+1. Occures the following error ** ionic Manifest merger failed : Attribute meta-data#android.support.VERSION@value value=(25.4.0) from [com.android.support:appcompat-v7:25.4.0] AndroidManifest.xml:28:13-35 ** ?
 
 Insert the following code at the end of the ui-dapp-browser/platforms/android/build.gradle file:
 
@@ -118,6 +124,11 @@ configurations.all {
         }
     }
 }
+```
+
+2. Could not get unknown property 'ANDROID_SUPPORT_V4_VERSION'
+open ``ui-dapp-browser/platforms/android/build.gradle`` and replace ``com.android.support:support-v4:$ANDROID_SUPPORT_V4_VERSION`` with ``com.android.support:support-v4:24.1.1+``
+
 ```
 
 ### IOS deployment
