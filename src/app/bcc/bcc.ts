@@ -423,12 +423,34 @@ async function createDefaultRuntime(
   runtimeConfig.accountMap[accountId] = privateKey;
 
   // create the new runtime
-  return await CoreBundle.createDefaultRuntime(
+  const runtime = await CoreBundle.createDefaultRuntime(
     web3,
     dfs || coreRuntime.dfs,
     runtimeConfig,
     options,
   );
+
+  // TODO: fix temporary payments for agent-executors and disable file pinnging
+  if (core.getCurrentProvider() === 'agent-executor') {
+    delete runtime.dfs.accountId;
+    // runtime.executor.signer.accountStore = runtime.accountStore;
+  }
+
+  // initialize empy profile, when no profile could be load
+  if (!runtime.profile) {
+    runtime.profile = new CoreBundle.Profile({
+      accountId: accountId,
+      contractLoader: runtime.contractLoader,
+      dataContract: runtime.dataContract,
+      defaultCryptoAlgo: 'aes',
+      executor: runtime.executor,
+      ipld: runtime.ipld,
+      log: runtime.log,
+      nameResolver: runtime.nameResolver,
+    });
+  }
+
+  return runtime;
 }
 
 /**
