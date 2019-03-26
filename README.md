@@ -94,7 +94,7 @@ Be sure to have the correct cordova and ionic versions installed:
 
 - cordova: 6.5.0
 - ionic: 3.20.0
-- gradle: 2.4.4
+- gradle: 5.3
 - Android Studio
   - SDK 28, 27, 26, 25
   - Google play Services
