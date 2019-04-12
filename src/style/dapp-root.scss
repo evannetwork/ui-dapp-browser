@@ -25,4 +25,124 @@
   https://evan.network/license/
 */
 
-@import 'node_modules/@evan.network/ui-angular-sass/src/dapp-root';
+html, body {
+  font-size: 100% !important;
+
+  overflow: hidden;
+  overflow-x: hidden;
+
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+iframe.evan-dapp {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+
+  width: 100%;
+  height: 100%;
+  margin: auto;
+
+  border: 0;
+}
+
+#evan-initial-loading {
+  position: fixed;
+  z-index: 100;
+
+  display: flex;
+  justify-content: center;
+
+  width: 100%;
+  height: 100%;
+  padding-top: 100px;
+
+  transition: opacity 0.3s ease-in;
+
+  opacity: 1;
+  background-color: #e9ecef;
+
+  &.hidden {
+    opacity: 0;
+  }
+
+  .logo {
+    position: relative;
+
+    .loading-bar {
+      width: 100%;
+      height: 10px;
+      margin-top: 20px;
+
+      background-color: #dedede;
+    }
+
+    #loading-progress {
+      position: absolute;
+      z-index: 1;
+
+      margin-top: -10px;
+
+      transition: 0.3s ease-out transform;
+      transform: scaleX(0);
+      transform-origin: left;
+
+      background-color: #003844;
+    }
+  }
+
+  .evan-logo-error {
+    font-size: 18px;
+
+    position: fixed;
+    right: 0;
+    left: 0;
+
+    display: none;
+
+    margin-top: 25px;
+    padding: 25px;
+
+    text-align: center;
+
+    color: #ffffff;
+    background-color: #ff7676;
+
+    button {
+      padding: 10px;
+
+      cursor: pointer;
+
+      color: #ffffff;
+      border: 0;
+      border-radius: 5px;
+      background-color: #24545e;
+      box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.2),
+      0 1px 1px 0 rgba(0, 0, 0, 0.14),
+      0 2px 1px -1px rgba(0, 0, 0, 0.12);
+    }
+  }
+}
+
+#evan-testnet {
+  font-family: 'Open Sans', sans-serif;
+  font-size: 14px;
+  font-weight: 800;
+
+  position: fixed;
+  z-index: 99;
+  left: 50%;
+
+  width: 100px;
+
+  transform: translateX( -50% );
+  text-align: center;
+
+  color: #000000;
+  border-radius: 0 0 5px 5px;
+  background-color: yellow;
+}

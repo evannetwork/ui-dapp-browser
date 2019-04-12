@@ -25,9 +25,7 @@
   https://evan.network/license/
 */
 // libraries that should be cached
-const cachableDBCPs = [
-  'angularlibs'
-];
+let cachableDBCPs = [ ];
 const utils = require('../app/utils');
 const ipfsCatPromise = require('../app/ipfs').ipfsCatPromise;
 let ensCache = { };
@@ -36,24 +34,6 @@ let ensCache = { };
 try {
   ensCache = JSON.parse(window.localStorage['evan-ens-cache']);
 } catch (ex) { }
-
-/**
- * Should a dbcp should be cached.
- *
- * @param      {string}   address  ens address to check
- * @return     {boolean}  true if it should be cached, false if not
- */
-const shouldBeCached = function(address) {
-  const splitAddress = address.split('.');
-
-  for (let i = 1; i < splitAddress.length; i++) {
-    if (cachableDBCPs.indexOf(splitAddress.slice(0, i).join('.')) !== -1) {
-      return true;
-    }
-  }
-
-  return false;
-}
 
 /**
  * Wrap data handling to be able to switch between dev and production mode =>
@@ -67,24 +47,25 @@ const getDefinitionFromEns = function(ensAddress, domain) {
   let dappName = ensAddress.replace(/\-/g, '').split('.');
   dappName = dappName.slice(0, dappName.length - 1).join('.');
 
+  // get correct ens address and check if a cached ens is availabled
+  const validEnsAddress = ensAddress.replace(/-/g, '');
+  const cacheAvailable = ensCache[validEnsAddress] && ensCache[validEnsAddress] !== 'invalid';
+
+  // loading chain used to reload the ens data after 3 seconds, when cached
+  let loader = Promise.resolve();
+
+  // delay loading for 3 seconds, to wait the heavy page load is over
+  if (cacheAvailable) {
+    loader = new Promise(resolve => setTimeout(() => resolve(), 3000));
+  }
+
   if (utils.isDevAvailable(dappName) && ensAddress.indexOf('0x') !== 0) {
     // load json and resolve it as stringified
-    return evanGlobals.System
+    loader = loader.then(() => evanGlobals.System
       .import('external/' + dappName + '/dbcp.json!json')
-      .then(dbcp => JSON.stringify(
-        Object.assign(dbcp.public, dbcp.private)
-      ));
+      .then(dbcp => JSON.stringify(dbcp))
+    );
   } else {
-    const validEnsAddress = ensAddress.replace(/-/g, '');
-    const cacheDbcp = shouldBeCached(validEnsAddress);
-    const cacheAvailable = false // ensCache[validEnsAddress] && ensCache[validEnsAddress] !== 'invalid';
-    let loader = Promise.resolve();
-
-    // delay loading for 3 seconds, to wait the heavy page load is over
-    if (cacheAvailable && cacheDbcp) {
-      loader = new Promise(resolve => setTimeout(() => resolve(), 3000));
-    }
-
     // trigger the loader
     if (validEnsAddress.indexOf('Qm') === 0) {
       loader = loader.then(() => ipfsCatPromise(validEnsAddress));
@@ -93,39 +74,43 @@ const getDefinitionFromEns = function(ensAddress, domain) {
         .then(utils.bccReady)
         .then(() => evanGlobals.CoreRuntime.description.getDescription(validEnsAddress));
     }
+  }
 
-    // use api to load dbcp json from ens
-     loader = loader
-      .then(dbcp => {
-        if (dbcp) {
-          try {
-            dbcp = JSON.parse(dbcp);
-          } catch(ex) { }
+  // use api to load dbcp json from ens
+   loader = loader
+    .then(dbcp => {
+      if (dbcp) {
+        try {
+          dbcp = JSON.parse(dbcp);
+        } catch(ex) { }
 
-          const combinedStringified = JSON.stringify(Object.assign(dbcp.public, dbcp.private));
+        const combinedStringified = JSON.stringify(Object.assign(dbcp.public, dbcp.private));
 
-          // set ens cache to speed up initial loading
-          if (cacheDbcp) {
-            ensCache[validEnsAddress] = combinedStringified;
-            window.localStorage['evan-ens-cache'] = JSON.stringify(ensCache);
-          }
-          
-          return combinedStringified;
+        // set ens cache to speed up initial loading
+        if (dbcp.public && dbcp.public.dapp && dbcp.public.dapp.type === 'cached-dapp') {
+          ensCache[validEnsAddress] = combinedStringified;
         } else {
-          if (cacheDbcp) {
-            // if no dbcp was found, set it invalid
-            ensCache[validEnsAddress] = 'invalid';
-          }
-
-          throw new Error(`no valid dbcp on ${ validEnsAddress }`);
+          delete ensCache[validEnsAddress];
         }
-      });
 
-    if (cacheAvailable) {
-      return ensCache[validEnsAddress];
-    } else {
-      return loader;
-    }
+        // save ens cache
+        window.localStorage['evan-ens-cache'] = JSON.stringify(ensCache);
+
+        return combinedStringified;
+      } else {
+        if (ensCache[validEnsAddress]) {
+          // if no dbcp was found, set it invalid
+          ensCache[validEnsAddress] = 'invalid';
+        }
+
+        throw new Error(`no valid dbcp on ${ validEnsAddress }`);
+      }
+    });
+
+  if (cacheAvailable) {
+    return ensCache[validEnsAddress];
+  } else {
+    return loader;
   }
 };
 

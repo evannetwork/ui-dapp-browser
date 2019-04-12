@@ -44,7 +44,6 @@ import { Solc } from './solc';
 import { startWatchers } from './watchers';
 import { updateCoreRuntime, getCoreOptions } from './bcc/bcc';
 
-
 /**
  * is inserted when the application was bundled, used to prevent window usage
  */
@@ -86,11 +85,12 @@ evanGlobals = {
 evanGlobals.System.map['bcc'] = `bcc.${ getDomainName() }!dapp-content`;
 evanGlobals.System.map['bcc-profile'] = `bcc.${ getDomainName() }!dapp-content`;
 evanGlobals.System.map['bcc-bc'] = `bcc.${ getDomainName() }!dapp-content`;
-evanGlobals.System.map['@evan.network/ui-dapp-browser'] = `dapp-browser!dapp-content`;
 evanGlobals.System.map['@evan.network/api-blockchain-core'] = `bcc.${ getDomainName() }!dapp-content`;
 evanGlobals.System.map['@evan.network/dbcp'] = `bcc.${ getDomainName() }!dapp-content`;
 evanGlobals.System.map['smart-contracts'] = `smartcontracts.${ getDomainName() }!dapp-content`;
 evanGlobals.System.map['@evan.network/smart-contracts-core'] = `smartcontracts.${ getDomainName() }!dapp-content`;
+System.map['@evan.network/ui-angular-libs'] = 'angularlibs.evan!dapp-content';
+System.map['@evan.network/ui-angular-core'] = 'angularcore.evan!dapp-content';
 
 /**
  * Starts the whole dapp-browser.
@@ -113,7 +113,7 @@ export async function initializeEvanNetworkStructure(): Promise<void> {
   Promise
     .all<any, any, any>([
       System
-        .import('bcc')
+        .import(`bcc`)
         .then(CoreBundle => utils.raiseProgress(10, CoreBundle)),
       System
         .import('smart-contracts')
@@ -128,14 +128,13 @@ export async function initializeEvanNetworkStructure(): Promise<void> {
 
       try {
         // initialize bcc and make it globally available
-        await updateCoreRuntime(CoreBundle, SmartContracts);
-        evanGlobals.CoreRuntime = CoreBundle.CoreRuntime;
+        CoreRuntime = await updateCoreRuntime(CoreBundle, SmartContracts);
+        evanGlobals.CoreRuntime = CoreRuntime;
 
         // tell everyone, that bcc was loaded and initialized
         utils.setBccReady();
 
         // set variables to export to dapps
-        CoreRuntime = CoreBundle.CoreRuntime;
         definition = CoreRuntime.definition;
         nameResolver = CoreRuntime.nameResolver;
         web3 = CoreRuntime.web3;

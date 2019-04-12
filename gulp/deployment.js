@@ -31,7 +31,7 @@ require('console.table');
 process.env.DBCP_LOGLEVEL = 'debug';
 
 // runtime parameters
-const enableDeploy = true;
+const enableDeploy = process.argv.indexOf('--disable-deploy') === -1;
 
 // node_modules
 const path = require('path');
@@ -66,22 +66,24 @@ while (runFolder.indexOf('ui-dapp-browser', runFolder.length - 'ui-dapp-browser'
 }
 
 // path parameters
-const configPath = path.resolve(process.argv[process.argv.indexOf('--config') + 1]);
 const advancedDeployment = process.argv.indexOf('--advanced') !== -1;
-const dappFolder = path.resolve('..');
-const runtimeFolder = path.resolve('runtime');
-const originFolder = path.resolve('runtime/external');
+const configPath = path.resolve(process.argv[process.argv.indexOf('--config') + 1]);
 const dappDeploymentFolder = path.resolve('deployment');
-const platformFolder = path.resolve('platforms');
+const dappFolder = path.resolve('..');
 const ionicDeploymentFolder = path.resolve('www');
 const licensesFolder = path.resolve('licenses');
+const originFolder = path.resolve('runtime/external');
+const platformFolder = path.resolve('platforms');
+const runtimeFolder = path.resolve('runtime');
 
 // globals
 let config;
 let deploymentAccount;
 let deploymentDomain;
 let initialized;
+let ipfsConfig;
 let ipfsInstance;
+let ipfsUrl;
 let runtime;
 let web3;
 
@@ -237,6 +239,8 @@ async function createRuntime() {
     }
 
     deploymentAccount = Object.keys(config.runtimeConfig.accountMap)[0];
+    ipfsConfig = config.runtimeConfig.ipfs;
+    ipfsUrl = `${ ipfsConfig.protocol }://${ ipfsConfig.host }:${ ipfsConfig.port }`;
 
     ipnsHashes = config.ipnsHashes || { };
     ipnsPrivateKeys = config.ipnsPrivateKeys || { };
@@ -247,15 +251,24 @@ async function createRuntime() {
 
   // initialize dependencies
   const accountId = Object.keys(config.runtimeConfig.accountMap)[0];
-  const web3 = new Web3();
+  web3 = new Web3();
   addWebsocketReconnect(Web3, web3, config.runtimeConfig.web3Provider)
 
   const dfs = new Ipfs({
+    dfsConfig: config.runtimeConfig.ipfs,
+    privateKey: '0x' + config.runtimeConfig.accountMap[accountId],
     accountId: accountId,
-    accountStore: new AccountStore({ accounts: config.runtimeConfig.accountMap, }),
-    remoteNode: new IpfsApi(config.runtimeConfig.ipfs),
     web3: web3,
   });
+
+  const signer = accountId.toLowerCase();
+  const toSignedMessage = web3.utils.soliditySha3(new Date().getTime() + accountId).replace('0x', '');
+  const hexMessage = web3.utils.utf8ToHex(toSignedMessage);
+  const signedMessage = web3.eth.accounts.sign(toSignedMessage, '0x' + config.runtimeConfig.accountMap[accountId]);
+  config.runtimeConfig.ipfs.headers = {
+    authorization: `EvanAuth ${accountId},EvanMessage ${hexMessage},EvanSignedMessage ${signedMessage.signature}`
+  };
+  ipfsInstance = new IpfsApi(config.runtimeConfig.ipfs);
 
   const runtime = await createDefaultRuntime(web3, dfs, {
     accountMap: config.runtimeConfig.accountMap,
@@ -308,7 +321,7 @@ const requestFileFromEVANIpfs = function(hash) {
       resolve();
     }, 20 * 1000);
 
-    request(`https://ipfs.evan.network/ipfs/${hash}`, function (error, response, body) {
+    request(`${ ipfsUrl }/ipfs/${hash}`, function (error, response, body) {
       if (pinTimeout) {
         clearTimeout(pinTimeout);
 
@@ -318,55 +331,10 @@ const requestFileFromEVANIpfs = function(hash) {
   });
 }
 
-const pinToIPFSContractus = function(ipfsHash) {
-  console.log(`ipfs.evan.network: pinning hash "${ipfsHash}"...`)
+const pinToEVANIpfs = function(ipfsHash) {
+  console.log(`${ ipfsConfig.host }: pinning hash "${ipfsHash}"...`);
 
-  return new Promise((resolve, reject) => {
-    const options = {
-      hostname: 'ipfs.evan.network',
-      port: '443',
-      path: `/pins/${ipfsHash}`,
-      headers : {
-        'Authorization': `Basic ${Buffer.from('contractus:c0n7r4c7u5').toString('base64')}`
-      },
-      method : 'POST'
-    }
-    const req = https.request(options, (res) => {
-      res.setEncoding('utf8')
-      res.on('data', (chunk) => {  })
-      res.on('end', async () => {
-        console.log(`ipfs.evan.network: pinned hash  "${ipfsHash}"`)
-        resolve()
-      })
-    })
-
-    req.on('error', async (e) => {
-      console.log(`ipfs.evan.network: failed to pin hash "${ipfsHash}"; ${e.message || e}`)
-      await keyPressToContinue();
-      reject(e)
-    })
-
-    req.on('timeout', async () => {
-      console.log(`ipfs.evan.network: timeout during pinning of hash "${ipfsHash}"`)
-      await keyPressToContinue();
-      resolve()
-    })
-
-    // write data to request body
-    req.write('')
-    req.end()
-  })
-  .then(() => {
-    console.log(`ipfs.evan.network: request hash "${ipfsHash}"...`)
-    return requestFileFromEVANIpfs(ipfsHash)
-      .catch(async () => {
-        console.log(`ipfs.evan.network: failed to request hash from ipfs.evan.network "${ipfsHash}"; ${e.message || e}`)
-        await keyPressToContinue();
-      })
-      .then(() => {
-        console.log(`ipfs.evan.network: requested hash  "${ipfsHash}"`)
-      });
-  });
+  return ipfsInstance.pin.add(ipfsHash);
 }
 
 /**
@@ -376,7 +344,7 @@ const pinToIPFSContractus = function(ipfsHash) {
  */
 async function deployIPFSFolder(folderName, path) {
   return new Promise((resolve, reject) => {
-    runtime.dfs.remoteNode.util.addFromFs(path, { recursive: true}, (err, result) => {
+    ipfsInstance.util.addFromFs(path, { recursive: true}, (err, result) => {
       if (err) { throw err }
       resolve(result[result.length-1].hash || result[result.length-1].Hash);
     })
@@ -406,33 +374,43 @@ async function deployToIpns(dapp, hash, retry) {
     throw new Error(`deploymentDomain ${ deploymentDomain } is not evan, IPNS will not be enrolled!`);
   }
 
-  console.log(`\n\nStart ipns deployment: ${ dapp } : ${ hash }`);
-  await new Promise((resolve, reject) => {
-    exec(`ipfs key gen --type=rsa --size=2048 ${ ipnsPrivateKeys[dapp] }`, {
+  return new Promise((resolve, reject) => {
+    const options = {
+      hostname: '35.178.171.238',
+      port: '8080',
+      path: `/api/smart-agents/ipns-publish/add-or-update?key=${ ipnsPrivateKeys[dapp] }&hash=${ hash }`,
+      headers : ipfsConfig.headers,
+      method : 'GET'
+    };
 
-    }, (err, stdout, stderr) => {
-      resolve(stdout);
+    const req = http.request(options, (res) => {
+      res.setEncoding('utf8')
+      res.on('data', (chunk) => {  })
+      res.on('end', async () => {
+        console.log(`${ ipfsConfig.host }: pinned hash  "${ hash }"`)
+        resolve()
+      })
     })
+
+    req.on('error', async (e) => {
+      console.log(`${ ipfsConfig.host }: failed to pin hash "${ hash }"; ${ e.message || e }`)
+      await keyPressToContinue();
+      reject(e)
+    })
+
+    req.on('timeout', async () => {
+      console.log(`${ ipfsConfig.host }: timeout during pinning of hash "${ hash }"`)
+      await keyPressToContinue();
+      resolve()
+    })
+
+    // write data to request body
+    req.write('')
+    req.end()
   })
 
-  await new Promise((resolve, reject) => {
-    console.log(`Publish to ipns: ${ dapp } : ${ hash }`);
-    return resolve();
-    exec(`ipfs name publish --key=${ ipnsPrivateKeys[dapp] } --lifetime=8760h /ipfs/${ hash }`, {
+  // /api/smart-agents/ipns-publish/add-or-update?key=testnet-evan.network-dapp-browser&hash=
 
-    }, async (err, stdout, stderr) => {
-      console.log('ipfs name publish');
-      console.log(err);
-      console.log(stdout);
-      console.log(stderr);
-
-      if (err) {
-        reject(err);
-      } else {
-        resolve();
-      }
-    })
-  })
 }
 
 keyPressToContinue = async function() {
@@ -447,7 +425,7 @@ keyPressToContinue = async function() {
 
 const clearConsole = function() {
   console.clear();
-  console.log(`\n\nevan.network - deployment (${ deploymentDomain || '---' })\n`);
+  console.log(`\n\nevan.network - deployment (${ deploymentDomain || '---' }) ${ !enableDeploy ? '- (deployment disabled)' : '' }\n`);
 };
 
 /********************************** dapps deployment functions ************************************/
@@ -470,10 +448,15 @@ const replaceConfigurationValues = async function(folderPath) {
     }
   }
 
-  // replace configuration values
-  await new Promise(resolve => gulp
-    .src(replacePaths)
+  const replaceChain = gulp.src(replacePaths);
 
+  const chainId = await web3.eth.net.getId();
+  if (chainId !== 508674158) {
+    replaceChain.pipe(replace(/\<div\ id\=\"evan\-testnet\"\>TESTNET\<\/div\>/g, ''))
+  }
+
+  // replace configuration values
+  await new Promise(resolve => replaceChain
     // replace bcc configurations
     .pipe(replace(/window\.localStorage\[\'evan-ens-address\'\]/g, `window.localStorage['evan-ens-address'] || '${ config.bcConfig.nameResolver.ensAddress }'`))
     .pipe(replace(/window\.localStorage\[\'evan-ens-resolver\'\]/g, `window.localStorage['evan-ens-resolver'] || '${ config.bcConfig.nameResolver.ensResolver }'`))
@@ -482,18 +465,35 @@ const replaceConfigurationValues = async function(folderPath) {
     .pipe(replace(/window\.localStorage\[\'evan-ens-events\'\]/g, `window.localStorage['evan-ens-events'] || ${ JSON.stringify(config.bcConfig.nameResolver.domains.eventhub) }`))
     .pipe(replace(/window\.localStorage\[\'evan-ens-profiles\'\]/g, `window.localStorage['evan-ens-profiles'] || ${ JSON.stringify(config.bcConfig.nameResolver.domains.profile) }`))
     .pipe(replace(/window\.localStorage\[\'evan-ens-mailbox\'\]/g, `window.localStorage['evan-ens-mailbox'] || ${ JSON.stringify(config.bcConfig.nameResolver.domains.mailbox) }`))
+    // insert correct faucet account
+    .pipe(replace(/faucetAccount\:\ \'0x4a6723fC5a926FA150bAeAf04bfD673B056Ba83D\'/g, `faucetAccount: '${ config.dappConfigSwitches.accounts.faucetAccount }'`))
+    // insert correct ensRootOwner
+    .pipe(replace(/0x4a6723fC5a926FA150bAeAf04bfD673B056Ba83D/g, config.bcConfig.ensRootOwner))
+
+    // insert correct payment accounts
+    // paymentAgentAccountId
+    .pipe(replace(/0xAF176885bD81D5f6C76eeD23fadb1eb0e5Fe1b1F/g, config.dappConfigSwitches.accounts.paymentAgentAccount))
+    // paymentChannelManagerAccountId
+    .pipe(replace(/0x0A0D9dddEba35Ca0D235A4086086AC704bbc8C2b/g, config.dappConfigSwitches.accounts.paymentChannelManagerAccount))
 
     // web3 configurations
     .pipe(replace(/wss\:\/\/testcore.evan.network\/ws/g, `${ config.runtimeConfig.web3Provider }`))
 
     // ipfs config
-    .pipe(replace(/\{\ host\:\ \'ipfs\.evan\.network\'\,\ port\:\ \'443\'\,\ protocol\:\ \'https\'\ \}/g, JSON.stringify(config.runtimeConfig.ipfs)))
+    .pipe(replace(/\{\ host\:\ \'ipfs\.test\.evan\.network\'\,\ port\:\ \'443\'\,\ protocol\:\ \'https\'\ \}/g, JSON.stringify(ipfsConfig)))
+    .pipe(replace(/https\:\/\/ipfs\.test\.evan\.network/g, ipfsUrl))
 
     // smart agent configuratiuon
-    .pipe(replace(/https\:\/\/agents\.evan\.network/g, config.dappConfigSwitches.coreSmartAgent))
+    .pipe(replace(/https\:\/\/agents\.test\.evan\.network/g, config.dappConfigSwitches.url.coreSmartAgent))
+
+    // payment agent configuratiuon
+    .pipe(replace(/https\:\/\/payments\.test\.evan\.network/g, config.dappConfigSwitches.url.paymentSmartAgent))
 
     // insert the correct gas price
-    .pipe(replace(/window\.localStorage\[\'evan\-gas\-price\'\]\ \|\|\ \'20000000000\'/g, `window.localStorage['evan-gas-price'] || '${ config.dappConfigSwitches.gasPrice }'`))
+    .pipe(replace(
+      /gasPrice\:\ window\.localStorage\[\'evan\-gas\-price\'\]\ \?\ parseInt\(window\.localStorage\[\'evan\-gas\-price\'\]\,\ 10\)\ \:\ 20000000000/g,
+      `gasPrice: window.localStorage['evan-gas-price'] ? parseInt(window.localStorage['evan-gas-price'], 10) : ${ config.dappConfigSwitches.gasPrice }`
+    ))
 
     // mainnet texts (e.g. for onboarding)
     .pipe(replace(/mainnetTexts\ \=\ false/g, `mainnetTexts = ${ config.dappConfigSwitches.mainnetTexts }`))
@@ -556,7 +556,7 @@ const replaceUmlauts = function() {
 
 const logDbcps = function() {
   clearConsole();
-  console.log(`\n\nContractus - Deployment (${ config.bcConfig.nameResolver.labels.ensRoot })\n`);
+  console.log(`\n\nevan.network - Deployment (${ config.bcConfig.nameResolver.labels.ensRoot })\n`);
   console.log('-------------------------\n\n');
 
   console.table(dbcps.map(dbcp => {
@@ -575,9 +575,9 @@ const logDbcps = function() {
 
   console.log('Open ionic app : \n');
   if (ionicInstallation) {
-    console.log(`https://ipfs.evan.network/ipfs/${ ionicInstallation.dapp.origin }/index.html`);
+    console.log(`${ ipfsUrl }/ipfs/${ ionicInstallation.dapp.origin }/index.html`);
   }
-  console.log(`https://ipfs.evan.network/ipns/QmeaaYgC38Ai993NUKbgvfBw11mrmK9THb6GtR48TmcsGj/index.html`);
+  console.log(`${ ipfsUrl }/ipns/QmeaaYgC38Ai993NUKbgvfBw11mrmK9THb6GtR48TmcsGj/index.html`);
   console.log('\n--------------------------\n');
 }
 
@@ -651,7 +651,7 @@ async function deployDApps(externals, version) {
     for (let i = 0; i < externals.length; i++) {
       statusTable.push({
         name: `${ i + 1 }. ${ externals[i] }`,
-        status: i < currIndex ? 'done' : i > currIndex ? 'pending' : 'deploying' 
+        status: i < currIndex ? 'done' : i > currIndex ? 'pending' : 'deploying'
       });
     }
 
@@ -717,16 +717,8 @@ async function deployDApps(externals, version) {
 
       let descriptionHash = await runtime.nameResolver.getContent(address);
 
-      await pinToIPFSContractus(descriptionHash);
-      await pinToIPFSContractus(dbcp.public.dapp.origin);
-
-      if (dbcp.public.dapp.files) {
-        for (const file of dbcp.public.dapp.files) {
-          console.log(`Pinning: ${dbcp.public.dapp.origin}/${file}`);
-
-          await pinToIPFSContractus(`${dbcp.public.dapp.origin}/${file}`);
-        }
-      }
+      await pinToEVANIpfs(Ipfs.bytes32ToIpfsHash(descriptionHash));
+      await pinToEVANIpfs(dbcp.public.dapp.origin);
 
       if (ipnsPrivateKeys[dbcp.public.name] ) {
         try {
@@ -848,7 +840,7 @@ const prepareIonicAppBuild = async function(platform) {
     .on('end', () => resolve())
   );
 
-  await del.sync(`${ionicDeploymentFolder}/build`, { force: true });
+  await del.sync(`${ ionicDeploymentFolder }/build`, { force: true });
 }
 
 const ionicDeploy = async function (version) {
@@ -856,11 +848,7 @@ const ionicDeploy = async function (version) {
 
   const folderHash = await deployIPFSFolder('www', ionicDeploymentFolder);
 
-  await pinToIPFSContractus(folderHash);
-  for (let file of dappBrowserFiles) {
-    await pinToIPFSContractus(`${ folderHash }/${ file }`);
-  }
-
+  await pinToEVANIpfs(folderHash);
   await deployToIpns('dappbrowser', folderHash);
 
   addDbcpToList({
@@ -878,11 +866,7 @@ const licensesDeploy = async function() {
 
   const folderHash = await deployIPFSFolder('licenses', licensesFolder);
 
-  await pinToIPFSContractus(folderHash);
-  for (let file of [ 'AGPL-3.0-only.txt', 'Apache-2.0.txt' ]) {
-    await pinToIPFSContractus(`${ folderHash }/${ file }`);
-  }
-
+  await pinToEVANIpfs(folderHash);
   await deployToIpns('licenses', folderHash);
 
   addDbcpToList({

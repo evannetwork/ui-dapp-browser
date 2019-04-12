@@ -58,7 +58,6 @@ gulp.task('serve', async function () {
       gulp.watch(
         [
           'src/**/*.scss',
-          '../ui-angular-sass/src/**/*.scss',
         ],
         ['ionic-sass', 'copy']
       );

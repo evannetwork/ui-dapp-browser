@@ -5,11 +5,26 @@
 ### Fixes
 ### Deprecations
 
+## Version 2.1.0
+### Features
+- add `faucetAccount` to configuration
+- add disable deployment console parameter for testing deployment replacing jobs
+- add correct keyprovider init function
+- adjust systemjs configuration to do not map dependency alias, they will be set by the projects itself
+- add css only dapp loading support
+- add testnet banner
+- add new initial loading screen
+
+### Fixes
+- insert missing replacements for different environment deployments: ipfs domains and ensRootOwner
+- ensure font-size scaling to 100%
+- fix package.json dependencies for deployment
+
 
 ## Version 2.0.0
 ### Features
 - add `dapp.getDAppBaseUrl` function to, Takes an dbcp object and calculates the base path, where all the files are deployed, for this DApp using the dbcp origin. When dev mode is enabled, the localhost path will be returned.
-- `startDApp` function gets 4. parameter the dappBaseUrl, where the result of getDAppBaseUrl for the loaded dbcp.json is passed to (https://ipfs.evan.network/ipfs/.../, http://localhost:3000/external/...)
+- `startDApp` function gets 4. parameter the dappBaseUrl, where the result of getDAppBaseUrl for the loaded dbcp.json is passed to (https://ipfs.test.evan.network/ipfs/.../, http://localhost:3000/external/...)
 - add support using multiple chain configurations (ipns and configuration values will be replaced)
 - add deployment web3 reconnect
 - add `System.map('@evan.network/ui-dapp-browser')` so the dapp-browser import can be correctly

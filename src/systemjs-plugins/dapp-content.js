@@ -75,12 +75,12 @@ const importIpfs = function(dbcp, file, fetch) {
   } catch (ex) { }
 
   if (utils.isDevAvailable(dappName) && dappName.indexOf('0x') !== 0) {
-    // load js files
-    if (file.indexOf('.css') === -1) {
-      return 'external/' + dappName + '/' + file;
-    } else {
+    if (file.indexOf('.css') !== -1) {
       addCSS('external/' + dappName, file);
     }
+
+    // load js files
+    return 'external/' + dappName + '/' + file;
   } else {
     if (file.indexOf('.css') === -1) {
       return evanGlobals.restIpfs.api_url('/' + (dbcp.dapp.isIpns ? 'ipns' : 'ipfs') + '/' + dbcp.dapp.origin + '/' + file);
@@ -149,7 +149,7 @@ const loadBCCCore = function (originalFetch) {
  * @return     {any}       result of the ipfs import
  */
 const loadSmartContracts = function(originalFetch) {
-  if (utils.isDevAvailable('bcc')) {
+  if (utils.isDevAvailable('smartcontracts')) {
     return loadPredefinedLib(
       'smartcontracts',
       'smartcontracts/compiled.js',
@@ -250,7 +250,7 @@ const locateDAppContent = function(params, originalFetch) {
         return Promise
           .all(promises)
           .then(results => {
-            importCache[importCacheKey] = results.pop();
+            importCache[importCacheKey] = results.pop() || { };
 
             return importCache[importCacheKey];
           });
@@ -262,17 +262,34 @@ const locateDAppContent = function(params, originalFetch) {
 };
 
 /**
- * Overwrites the fetch function to enable js loading over script tags, that
- * will reduce memory usage
- *
- @param      {any}     params         SystemJS parameters
- @param      {Function}  originalFetch  SystemJS original fetch function
- */
-const fetchDAppContent = function(params, originalFetch) {
-  params.metadata.scriptLoad = true;
+ Overwrites the fetch function to enable js loading over script tags, that will reduce memory usage
 
-  return originalFetch(params);
+ @param      {any}       params         SystemJS parameters
+ @param      {Function}  originalFetch  SystemJS original fetch function
+*/
+const fetchDAppContent = function(params, originalFetch) {
+  if (params.address.endsWith('.css')) {
+    return '';
+  } else {
+    params.metadata.scriptLoad = true;
+
+    return originalFetch(params);
+  }
 }
+
+/**
+ * Use translate to return an fake object when loading only css dapp libraries.
+ *
+ * @param      {params}  params  systemjs translate params
+ */
+const translate = function(params) {
+  if (params.address.endsWith('.css')) {
+    params.metadata.format = 'cjs';
+    return 'module.exports = {}';
+  }
+};
 
 exports.locate = locateDAppContent;
 exports.fetch = fetchDAppContent;
+exports.translate = translate;
+

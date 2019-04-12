@@ -88,7 +88,7 @@ export function getDAppBaseUrl(dbcp: any, address: string): string {
   } catch (ex) { }
 
   if (utils.isDevAvailable(address) && address.indexOf('0x') !== 0) {
-      return window.location.origin + '/external/' + address;
+    return window.location.origin + '/external/' + address;
   } else {
     return evanGlobals.restIpfs
       .api_url('/' + (dbcp.dapp.isIpns ? 'ipns' : 'ipfs') + '/' + dbcp.dapp.origin);
@@ -328,7 +328,7 @@ export async function loadDAppDependencies(dappEns: string, useDefaultDomain?: b
 
   depCategories.forEach(depCategory => depCategory.forEach(dep => depCount++));
 
-  const loadingSteps = (100 - lastPercentage) / depCount;
+  const loadingSteps = (90 - lastPercentage) / depCount;
 
   // preload dapps
   // save zoneJSPromise to restore it, if a module provides it's own promise
@@ -416,8 +416,16 @@ export async function startDApp(dappEns: string, container = document.body, useD
         await new Promise(resolve => setTimeout(resolve, 500));
       }
 
+      // remove all childs
       previousContainerChilds.forEach((childElement: any) => {
-        if (childElement.parentElement === container) {
+        // instead of the testnet banner
+        const isTestnetBanner = childElement.id === 'evan-testnet';
+        // instead of the initial dapp loading screen (will be removed by finishDApploading
+        // function)
+        const isDappLoading = childElement.id === 'evan-initial-loading';
+
+        // instead of the evan-testnet banner
+        if (childElement.parentElement === container && !isTestnetBanner && !isDappLoading) {
           container.removeChild(childElement);
         }
       });

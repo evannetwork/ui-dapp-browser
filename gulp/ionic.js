@@ -205,25 +205,11 @@ gulp.task('lint:ts', function() {
 });
 
 gulp.task('ionic-sass', function () {
-  let includePaths = [
-    '..',
-    '../ui-angular-libs',
-    '../ui-angular-libs/ionic-angular',
-    '../ui-angular-libs/ionic-angular/themes',
-    '../ui-angular-libs/ionic-angular/fonts',
-    '../ui-angular-libs/ionicons/dist/scss',
-  ];
-
-  includePaths = includePaths.concat(includePaths
-    .map(includePath => includePath.replace('../ui-angular-libs', '../ui-angular-libs/node_modules'))
-  );
-
   return gulp
     .src(path.resolve(`src/**/*.scss`))
     .pipe(
       sass({
         outputStyle : 'compressed',
-        includePaths : includePaths.map(src => path.resolve(src))
       })
       .on('error', sass.logError)
     )
@@ -232,8 +218,8 @@ gulp.task('ionic-sass', function () {
     .pipe(replace(/(?:,\s?)?url\(\'[^']*\'\) format\(\'(?:truetype|woff2)\'\)(?:,\s?)?/g, ''))
     .pipe(concat(`dapp-root.css`))
     .pipe(cssBase64({ maxWeightResource: 849616, baseDir : 'node_modules/ui-angular-sass' }))
-    .pipe(cssBase64({ maxWeightResource: 849616, baseDir : '../../ui-angular-sass' }))
-    .pipe(cssBase64({ maxWeightResource: 228000, baseDir : '../../ui-angular-libs/node_modules/ionic-angular/fonts' }))
+    .pipe(cssBase64({ maxWeightResource: 849616, baseDir : '../../ui-angular/ui-angular-sass' }))
+    .pipe(cssBase64({ maxWeightResource: 228000, baseDir : '../../ui-angular/ui-angular-libs/node_modules/ionic-angular/fonts' }))
     .pipe(gulp.dest(buildFolder));
 });
 

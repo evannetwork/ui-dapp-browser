@@ -35,7 +35,14 @@ import { AccountStore } from './AccountStore';
 import { KeyProvider, getLatestKeyProvider } from './KeyProvider';
 import * as lightwallet from '../lightwallet';
 
+/**
+ * is inserted when the application was bundled, used to prevent window usage
+ */
+declare let evanGlobals: any;
+
 let internalWeb3;
+const coreRuntimes = { };
+const profileRuntimes = { };
 
 /**
  * returns the coreOptions for creation a new bcc CoreBundle and SmartContracts object.
@@ -80,11 +87,32 @@ async function getCoreOptions(CoreBundle: any, SmartContracts: any, provider?: s
  * @return     {Promise<any>}  CoreRuntime instance
  */
 async function updateCoreRuntime(CoreBundle: any, SmartContracts: any): Promise<any> {
-  const options = await getCoreOptions(CoreBundle, SmartContracts);
+  const runtimeConfig = await getCoreOptions(CoreBundle, SmartContracts);
 
-  CoreBundle.createAndSetCore(options);
+  // dfs
+  let dfs = new CoreBundle.Ipfs({
+    web3: runtimeConfig.web3,
+    dfsConfig: runtimeConfig.dfsConfig,
+    cache: runtimeConfig.ipfsCache,
+    logLog: CoreBundle.logLog,
+    logLogLevel: CoreBundle.logLogLevel
+  });
 
-  return CoreBundle.CoreRuntime;
+  // TODO cleanup after dbcp > 1.0.3 release
+  if (runtimeConfig.ipfsCache) {
+    dfs.cache = runtimeConfig.ipfsCache;
+  }
+
+  const CoreRuntime = await CoreBundle.createDefaultRuntime(
+    runtimeConfig.web3,
+    dfs,
+    runtimeConfig.config,
+  );
+
+  // save it for quick access
+  coreRuntimes[CoreBundle.instanceId] = CoreRuntime;
+
+  return CoreRuntime;
 }
 
 /**
@@ -99,12 +127,13 @@ async function updateCoreRuntime(CoreBundle: any, SmartContracts: any): Promise<
  */
 function getSigner(CoreBundle: any, provider = core.getCurrentProvider(), accountStore = new AccountStore()) {
   let signer;
+  const coreRuntime = coreRuntimes[CoreBundle.instanceId];
   if (provider === 'internal') {
     signer = new CoreBundle.SignerInternal({
       accountStore: accountStore,
-      config: { gasPrice: window.localStorage['evan-gas-price'] || '20000000000' },
-      contractLoader: CoreBundle.CoreRuntime.contractLoader,
-      web3: CoreBundle.CoreRuntime.web3,
+      config: { gasPrice: window.localStorage['evan-gas-price'] ? parseInt(window.localStorage['evan-gas-price'], 10) : 20000000000 },
+      contractLoader: coreRuntime.contractLoader,
+      web3: coreRuntime.web3,
       logLog: CoreBundle.logLog,
       logLogLevel: CoreBundle.logLogLevel
     });
@@ -156,7 +185,7 @@ async function startBCC(
   const coreOptions = await getCoreOptions(CoreBundle, SmartContracts, provider);
 
   // recreate core instance
-  await CoreBundle.createAndSetCore(coreOptions);
+  const coreRuntime = await updateCoreRuntime(CoreBundle, coreOptions);
 
   // create bcc runtime options profile
   const bccProfileOptions: any = {
@@ -175,24 +204,44 @@ async function startBCC(
     bccProfileOptions.executor = new CoreBundle.ExecutorAgent({
       agentUrl: agentExecutor.agentUrl,
       config: {},
-      contractLoader: CoreBundle.CoreRuntime.contractLoader,
+      contractLoader: coreRuntime.contractLoader,
       logLog: CoreBundle.logLog,
       logLogLevel: CoreBundle.logLogLevel,
       signer: bccProfileOptions.signer,
       token: agentExecutor.token,
-      web3: CoreBundle.CoreRuntime.web3,
+      web3: coreRuntime.web3,
     });
   }
 
+  // load private and encryption keys
+  const unlockedVault = await lightwallet.loadUnlockedVault();
+  const privateKey = await lightwallet.getPrivateKey(unlockedVault, activeAccount);
+  coreOptions.config.accountMap = { };
+  coreOptions.config.accountMap[activeAccount] = privateKey;
+
+  // use account store from signer or use a new one
+  bccProfileOptions.accountStore = bccProfileOptions.signer.accountStore ||
+    new AccountStore();
+  bccProfileOptions.accountStore.accounts = coreOptions.config.accountMap;
+
   // initialize bcc for an profile
-  const bccProfile = CoreBundle.createAndSet(bccProfileOptions);
+  const bccProfile = await createDefaultRuntime(
+    CoreBundle,
+    activeAccount,
+    unlockedVault.encryptionKey,
+    privateKey,
+    JSON.parse(JSON.stringify(coreOptions.config)),
+    coreRuntime.web3,
+    coreRuntime.dfs,
+    bccProfileOptions
+  );
+  profileRuntimes[CoreBundle.instanceId] = bccProfile;
 
   if (provider === 'metamask') {
-    CoreBundle.ProfileRuntime.coreInstance.executor.eventHub.eventWeb3 = (<any>window).web3;
+    bccProfile.coreInstance.executor.eventHub.eventWeb3 = (<any>window).web3;
   }
 
-  await CoreBundle.ProfileRuntime.keyProvider.setKeys();
-  await setExchangeKeys(CoreBundle, activeAccount);
+  await bccProfile.keyProvider.setKeys();
 }
 
 /**
@@ -205,6 +254,7 @@ async function startBCC(
  * @return     {ProfileBundle.Profile}  The profile for account.
  */
 async function getProfileForAccount(CoreBundle: any, accountId: string) {
+  const coreRuntime = coreRuntimes[CoreBundle.instanceId];
   const keys = getLatestKeyProvider().keys;
   const keyProvider = new KeyProvider(
     keys ? JSON.parse(JSON.stringify(keys)) : { },
@@ -228,7 +278,7 @@ async function getProfileForAccount(CoreBundle: any, accountId: string) {
   );
 
   const ipldInstance = new CoreBundle.Ipld({
-    'ipfs': CoreBundle.CoreRuntime.dfs,
+    'ipfs': coreRuntime.dfs,
     'keyProvider': keyProvider,
     'cryptoProvider': cryptoProvider,
     defaultCryptoAlgo: 'aes',
@@ -238,13 +288,13 @@ async function getProfileForAccount(CoreBundle: any, accountId: string) {
   });
 
   const sharing = new CoreBundle.Sharing({
-    contractLoader: CoreBundle.CoreRuntime.contractLoader,
+    contractLoader: coreRuntime.contractLoader,
     cryptoProvider: cryptoProvider,
-    description: CoreBundle.CoreRuntime.description,
-    executor: CoreBundle.CoreRuntime.executor,
-    dfs: CoreBundle.CoreRuntime.dfs,
+    description: coreRuntime.description,
+    executor: coreRuntime.executor,
+    dfs: coreRuntime.dfs,
     keyProvider: keyProvider,
-    nameResolver: CoreBundle.CoreRuntime.nameResolver,
+    nameResolver: coreRuntime.nameResolver,
     defaultCryptoAlgo: 'aes',
     logLog: CoreBundle.logLog,
     logLogLevel: CoreBundle.logLogLevel
@@ -252,23 +302,23 @@ async function getProfileForAccount(CoreBundle: any, accountId: string) {
 
   const dataContract = new CoreBundle.DataContract({
     cryptoProvider: cryptoProvider,
-    dfs: CoreBundle.CoreRuntime.dfs,
-    executor: CoreBundle.CoreRuntime.executor,
-    loader: CoreBundle.CoreRuntime.contractLoader,
-    nameResolver: CoreBundle.CoreRuntime.nameResolver,
+    dfs: coreRuntime.dfs,
+    executor: coreRuntime.executor,
+    loader: coreRuntime.contractLoader,
+    nameResolver: coreRuntime.nameResolver,
     sharing: sharing,
-    web3: CoreBundle.CoreRuntime.web3,
-    description: CoreBundle.CoreRuntime.description,
+    web3: coreRuntime.web3,
+    description: coreRuntime.description,
     logLog: CoreBundle.logLog,
     logLogLevel: CoreBundle.logLogLevel
   });
 
   const evanProfile = new CoreBundle.Profile({
     ipld: ipldInstance,
-    nameResolver: CoreBundle.CoreRuntime.nameResolver,
+    nameResolver: coreRuntime.nameResolver,
     defaultCryptoAlgo: 'aes',
-    executor: CoreBundle.CoreRuntime.executor,
-    contractLoader: CoreBundle.CoreRuntime.contractLoader,
+    executor: coreRuntime.executor,
+    contractLoader: coreRuntime.contractLoader,
     accountId: accountId,
     dataContract,
     logLog: CoreBundle.logLog,
@@ -344,15 +394,17 @@ async function isAccountPasswordValid(CoreBundle: any, accountId: string, passwo
  */
 async function createDefaultRuntime(
   CoreBundle: any,
-  accountId: string,
-  encryptionKey: string,
-  privateKey: string,
+  accountId = '0x0000000000000000000000000000000000000000',
+  encryptionKey?: string,
+  privateKey?: string,
   runtimeConfig: any = JSON.parse(JSON.stringify(config)),
   web3?: any,
-  dfs?: any
+  dfs?: any,
+  options?: any,
 ) {
+  const coreRuntime = coreRuntimes[CoreBundle.instanceId];
   // fill web3 per default with the core runtime web3
-  web3 = web3 || CoreBundle.CoreRuntime.web3;
+  web3 = web3 || coreRuntime.web3;
   const soliditySha3 = web3.utils.soliditySha3;
 
   // get accounthash for easy acces within keyConfig
@@ -371,19 +423,79 @@ async function createDefaultRuntime(
   runtimeConfig.accountMap[accountId] = privateKey;
 
   // create the new runtime
-  return await CoreBundle.createDefaultRuntime(
+  const runtime = await CoreBundle.createDefaultRuntime(
     web3,
-    dfs || CoreBundle.CoreRuntime.dfs,
+    dfs || coreRuntime.dfs,
     runtimeConfig,
+    options,
   );
+
+  // TODO: fix temporary payments for agent-executors and disable file pinnging
+  if (core.getCurrentProvider() === 'agent-executor') {
+    delete runtime.dfs.accountId;
+    // runtime.executor.signer.accountStore = runtime.accountStore;
+  }
+
+  // initialize empy profile, when no profile could be load
+  if (!runtime.profile) {
+    runtime.profile = new CoreBundle.Profile({
+      accountId: accountId,
+      contractLoader: runtime.contractLoader,
+      dataContract: runtime.dataContract,
+      defaultCryptoAlgo: 'aes',
+      executor: runtime.executor,
+      ipld: runtime.ipld,
+      log: runtime.log,
+      nameResolver: runtime.nameResolver,
+    });
+  }
+
+  return runtime;
+}
+
+/**
+ * Check if a account is onboarded
+ *
+ * @param      {string}   account  account id to test
+ * @return     {boolean}  True if account onboarded, False otherwise
+ */
+const isAccountOnboarded = async function(account: string): Promise<boolean> {
+  try {
+    const coreRuntime = evanGlobals.CoreRuntime;
+    const ensName = coreRuntime.nameResolver.getDomainName(coreRuntime.nameResolver.config.domains.profile);
+    const address = await coreRuntime.nameResolver.getAddress(ensName);
+    const contract = coreRuntime.nameResolver.contractLoader.loadContract('ProfileIndexInterface', address);
+    const hash = await coreRuntime.nameResolver.executor.executeContractCall(contract, 'getProfile', account, { from: account, });
+
+    if (hash === '0x0000000000000000000000000000000000000000') {
+      return false;
+    } else {
+      return true;
+    }
+  } catch (ex) {
+    return false;
+  }
+}
+
+/**
+ * Returns the first core runtime that was created by the dapp-browser.
+ *
+ * @return     {any}  bcc core runtime (without profile)
+ */
+const getCoreRuntime = function() {
+  return coreRuntimes[Object.keys(coreRuntimes)[0]];
 }
 
 export {
+  coreRuntimes,
   createDefaultRuntime,
   getCoreOptions,
+  getCoreRuntime,
   getProfileForAccount,
   getSigner,
+  isAccountOnboarded,
   isAccountPasswordValid,
+  profileRuntimes,
   setExchangeKeys,
   startBCC,
   updateCoreRuntime,

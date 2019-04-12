@@ -86,17 +86,21 @@ function logout(disabledReload?: boolean) {
  * @return     {string}  The current provider (internal, external, agent-executor).
  */
 function getCurrentProvider() {
+  let provider;
+
   if (agentExecutor) {
-    return 'agent-executor';
+    provider = 'agent-executor';
   } else if (evanGlobals.queryParams.provider) {
-    return evanGlobals.queryParams.provider;
+    provider = evanGlobals.queryParams.provider;
   } else {
     const currentProvider = window.localStorage['evan-provider'];
 
     if (currentProvider && validProviders.indexOf(currentProvider) !== -1) {
-      return currentProvider;
+      provider = currentProvider;
     }
   }
+
+  return provider || 'internal';
 }
 
 /**
@@ -193,7 +197,7 @@ export async function getAgentExecutor() {
   if (typeof agentExecutor === 'undefined') {
     const token = routing.getQueryParameterValue('agent-executor');
     const agentUrl = routing.getQueryParameterValue('agent-executor-url') ||
-      utils.devMode ? 'http://localhost:8080' : 'https://agents.evan.network';
+      /* utils.devMode ? 'http://localhost:8080' :  */ 'https://agents.test.evan.network';
 
     // if an token is specified, load the data from the edge-server
     // TODO: currently the parameters are specified via query parameters => load it via edge-server

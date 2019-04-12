@@ -40,6 +40,7 @@ export function finishDAppLoading()  {
   const initialLoading = document.getElementById('evan-initial-loading');
 
   if (initialLoading) {
+    utils.raiseProgress(10);
     initialLoading.className += ' hidden';
 
     setTimeout(() => {
