@@ -2,6 +2,11 @@
 
 ## Next Version
 ### Features
+### Fixes
+### Deprecations
+
+## Version 2.1.0
+### Features
 - add `faucetAccount` to configuration
 - add disable deployment console parameter for testing deployment replacing jobs
 - add correct keyprovider init function
@@ -14,8 +19,6 @@
 - insert missing replacements for different environment deployments: ipfs domains and ensRootOwner
 - ensure font-size scaling to 100%
 - fix package.json dependencies for deployment
-
-### Deprecations
 
 
 ## Version 2.0.0
