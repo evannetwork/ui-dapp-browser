@@ -97,7 +97,9 @@ export function getWeb3Instance(url: string): any {
 
     // create a new websocket connection, when its the first or the url has changed
     if (!websocketProvider || websocketProvider.connection.url !== url) {
-      websocketProvider = new web3.providers.WebsocketProvider(url);
+      websocketProvider = new web3.providers.WebsocketProvider(url, {
+        protocol: [ ]
+      });
       websocketProvider.on('end', () => reconnect(url));
 
       web3.setProvider(websocketProvider);
