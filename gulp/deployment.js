@@ -366,6 +366,12 @@ async function deployIPFSFolder(folderName, path) {
 }
 
 async function deployToIpns(dapp, hash, retry) {
+  const chainId = await web3.eth.net.getId();
+  if (chainId !== 508674158) {
+    console.log(`ipns publish currently only working for testnet!`);
+    return;
+  }
+
   if (!ipnsPrivateKeys[dapp]) {
     throw new Error(`ipns key for dapp ${ dapp } not registered!`);
   }
