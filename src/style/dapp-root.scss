@@ -59,7 +59,7 @@ iframe.evan-dapp {
 
   width: 100%;
   height: 100%;
-  padding-top: 100px;
+  padding-top: calc(50vh - 180px);
 
   transition: opacity 0.3s ease-in;
 
@@ -72,6 +72,10 @@ iframe.evan-dapp {
 
   .logo {
     position: relative;
+
+    img {
+      width: 150px;
+    }
 
     .loading-bar {
       width: 100%;

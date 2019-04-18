@@ -143,7 +143,7 @@ gulp.task('compile:ts', function () {
     .src([
       'src/app/*.ts',
       'src/app/**/*.ts',
-    ])
+    ], { allowEmpty: true })
     .pipe(plumber({
       errorHandler: function (err) {
         console.error('>>> [tsc] Typescript compilation failed'.bold.green);
@@ -158,7 +158,7 @@ gulp.task('compile:ts', function () {
 // Minify JS bundle
 gulp.task('minify:js', function() {
   return gulp
-    .src('runtime/dist/js/app.min.js')
+    .src('runtime/dist/js/app.min.js', { allowEmpty: true })
     .pipe(uglify())
     .pipe(gulp.dest('runtime/dist/js'));
 });
@@ -182,7 +182,7 @@ gulp.task('copy:assets', function() {
       'src/!*.scss',
       'src/manifest.json',
       'src/libs/cordova.js',
-    ])
+    ], { allowEmpty: true })
     .pipe(gulp.dest('runtime'))
 });
 
