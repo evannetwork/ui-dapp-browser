@@ -3,10 +3,13 @@
 ## Next Version
 ### Features
 ### Fixes
+### Deprecations
+
+## Version 2.1.1
+### Fixes
 - add default protocol to `web3` websocket connection
 - fix css only dapp-content loading
 
-### Deprecations
 
 ## Version 2.1.0
 ### Features
