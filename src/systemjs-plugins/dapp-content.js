@@ -268,7 +268,7 @@ const locateDAppContent = function(params, originalFetch) {
  @param      {Function}  originalFetch  SystemJS original fetch function
 */
 const fetchDAppContent = function(params, originalFetch) {
-  if (params.address.endsWith('.css')) {
+  if (typeof params.address !== 'string' || params.address.endsWith('.css')) {
     return '';
   } else {
     params.metadata.scriptLoad = true;
@@ -283,7 +283,7 @@ const fetchDAppContent = function(params, originalFetch) {
  * @param      {params}  params  systemjs translate params
  */
 const translate = function(params) {
-  if (params.address.endsWith('.css')) {
+  if (typeof params.address !== 'string' || params.address.endsWith('.css')) {
     params.metadata.format = 'cjs';
     return 'module.exports = {}';
   }
