@@ -3,6 +3,8 @@
 ## Next Version
 ### Features
 ### Fixes
+- move missing dependencies from devDeps to deps
+
 ### Deprecations
 
 ## Version 2.1.1

@@ -50,6 +50,8 @@
     "inquirer": "^5.1.0",
     "ipfs-api": "^26.1.2",
     "request": "^2.83.0",
+    "run-sequence": "^2.2.1",
+    "vinyl-fs": "^3.0.3",
     "web3": "1.0.0-beta.37",
     "xhr2": "^0.1.4"
   },
@@ -108,7 +110,6 @@
     "rollup-plugin-commonjs": "^8.2.6",
     "rollup-plugin-node-resolve": "^3.0.0",
     "rollup-plugin-sourcemaps": "^0.4.2",
-    "run-sequence": "^2.2.1",
     "rxjs": "^5.5.5",
     "scriptjs": "^2.5.8",
     "sw-toolbox": "3.6.0",
