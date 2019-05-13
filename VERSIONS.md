@@ -5,6 +5,12 @@
 ### Fixes
 ### Deprecations
 
+
+## Version 2.1.2
+### Fixes
+- move missing dependencies from devDeps to deps
+
+
 ## Version 2.1.1
 ### Fixes
 - add default protocol to `web3` websocket connection

@@ -50,6 +50,8 @@
     "inquirer": "^5.1.0",
     "ipfs-api": "^26.1.2",
     "request": "^2.83.0",
+    "run-sequence": "^2.2.1",
+    "vinyl-fs": "^3.0.3",
     "web3": "1.0.0-beta.37",
     "xhr2": "^0.1.4"
   },
@@ -60,7 +62,7 @@
     "@angular/core": "^5.1.0",
     "@compodoc/compodoc": "^1.0.5",
     "@compodoc/gulp-compodoc": "0.0.8",
-    "@evan.network/api-blockchain-core": "^2.1.0",
+    "@evan.network/api-blockchain-core": "^2.3.0",
     "@evan.network/dbcp": "^1.5.2",
     "@evan.network/ui-angular-sass": "^2.1.0",
     "@ionic-native/camera": "^4.7.0",
@@ -108,7 +110,6 @@
     "rollup-plugin-commonjs": "^8.2.6",
     "rollup-plugin-node-resolve": "^3.0.0",
     "rollup-plugin-sourcemaps": "^0.4.2",
-    "run-sequence": "^2.2.1",
     "rxjs": "^5.5.5",
     "scriptjs": "^2.5.8",
     "sw-toolbox": "3.6.0",
@@ -153,5 +154,5 @@
     "serve": "gulp --cwd . --gulpfile gulp/serve.js serve",
     "serve-build": "gulp --cwd . --gulpfile gulp/serve.js serve --build"
   },
-  "version": "2.1.1"
+  "version": "2.1.2"
 }
