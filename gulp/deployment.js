@@ -239,7 +239,7 @@ async function createRuntime() {
     }
 
     deploymentAccount = Object.keys(config.runtimeConfig.accountMap)[0];
-    ipfsConfig = config.runtimeConfig.ipfs;
+    ipfsConfig = JSON.parse(JSON.stringify(config.runtimeConfig.ipfs));
     ipfsUrl = `${ ipfsConfig.protocol }://${ ipfsConfig.host }:${ ipfsConfig.port }`;
 
     ipnsHashes = config.ipnsHashes || { };
@@ -385,7 +385,7 @@ async function deployToIpns(dapp, hash, retry) {
       hostname: '35.178.171.238',
       port: '8080',
       path: `/api/smart-agents/ipns-publish/add-or-update?key=${ ipnsPrivateKeys[dapp] }&hash=${ hash }`,
-      headers : ipfsConfig.headers,
+      headers : config.runtimeConfig.ipfs.headers,
       method : 'GET'
     };
 

@@ -3,6 +3,8 @@
 ## Next Version
 ### Features
 ### Fixes
+- fix dapp deployment ipfsConfig replacement
+
 ### Deprecations
 
 
