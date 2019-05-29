@@ -389,23 +389,25 @@ async function deployToIpns(dapp, hash, retry) {
       method : 'GET'
     };
 
+    runtime.logger.log(JSON.stringify(config.runtimeConfig.ipfs.headers))
+
     const req = http.request(options, (res) => {
       res.setEncoding('utf8')
       res.on('data', (chunk) => {  })
       res.on('end', async () => {
-        console.log(`${ ipfsConfig.host }: pinned hash  "${ hash }"`)
+        runtime.logger.log(`${ ipfsConfig.host }: pinned hash  "${ hash }"`)
         resolve()
       })
     })
 
     req.on('error', async (e) => {
-      console.log(`${ ipfsConfig.host }: failed to pin hash "${ hash }"; ${ e.message || e }`)
+      runtime.logger.log(`${ ipfsConfig.host }: failed to pin hash "${ hash }"; ${ e.message || e }`)
       await keyPressToContinue();
       reject(e)
     })
 
     req.on('timeout', async () => {
-      console.log(`${ ipfsConfig.host }: timeout during pinning of hash "${ hash }"`)
+      runtime.logger.log(`${ ipfsConfig.host }: timeout during pinning of hash "${ hash }"`)
       await keyPressToContinue();
       resolve()
     })
