@@ -3,9 +3,12 @@
 ## Next Version
 ### Features
 ### Fixes
-- fix dapp deployment ipfsConfig replacement
-
 ### Deprecations
+
+
+## Version 2.1.3
+### Fixes
+- fix dapp deployment ipfsConfig replacement
 
 
 ## Version 2.1.2
