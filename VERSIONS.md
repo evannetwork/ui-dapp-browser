@@ -2,6 +2,8 @@
 
 ## Next Version
 ### Features
+- load dev domain from localStorage `evan-dev-dapps-domain` or from `queryParams.dev-domain`
+
 ### Fixes
 ### Deprecations
 

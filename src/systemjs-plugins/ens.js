@@ -125,20 +125,24 @@ const fetchEns = function(params) {
   // parse ens address from requested url source
   const ensAddress = params.address.split('/').pop();
   const rootDomain = ensAddress.split('.').pop();
+  // check if dev domain is enabled, check for localStorage params or check for quer params
+  const devDomain = window.localStorage['evan-dev-dapps-domain'] ||
+    evanGlobals.queryParams['dev-domain'];
+  // enable devMode automatically, when queryparams for dev domain is enabled
+  const devMode = !!evanGlobals.queryParams['dev-domain'] ||
+    window.localStorage['evan-developer-mode'] === 'true';
 
   // if the dapps dev domain is enabled, try to load the dapp from this url
-  if (window.localStorage['evan-developer-mode'] === 'true' &&
-      window.localStorage['evan-dev-dapps-domain'] &&
-      ensAddress.indexOf('Qm') !== 0) {
+  if (devMode && devDomain && ensAddress.indexOf('Qm') !== 0) {
     // replace the root domain at the end of the ens address with the dev domain
     const ensDevAddress = ensAddress.slice(
       0,
       ensAddress.lastIndexOf('.' + rootDomain)
-    ) + '.' + window.localStorage['evan-dev-dapps-domain']
+    ) + '.' + devDomain
 
     // try to load from dev domain, if is 
     return Promise.resolve()
-      .then(() => getDefinitionFromEns(ensDevAddress, window.localStorage['evan-dev-dapps-domain']))
+      .then(() => getDefinitionFromEns(ensDevAddress, devDomain))
       .catch(() => getDefinitionFromEns(ensAddress, rootDomain));
   } else {
     return getDefinitionFromEns(ensAddress, rootDomain);
