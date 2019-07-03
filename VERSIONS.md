@@ -7,6 +7,11 @@
 
 ### Deprecations
 
+## Version 2.2.1
+### Fixes
+- allow minus symbols for ens names
+
+
 ## Version 2.2.0
 ### Fixes
 - load dev domain from localStorage `evan-dev-dapps-domain` or from `queryParams.dev-domain`
