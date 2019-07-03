@@ -44,11 +44,11 @@ try {
  */
 const getDefinitionFromEns = function(ensAddress, domain) {
   // remove domain from the end of the ensAddress to get the dapp name
-  let dappName = ensAddress.replace(/\-/g, '').split('.');
+  let dappName = ensAddress.split('.');
   dappName = dappName.slice(0, dappName.length - 1).join('.');
 
   // get correct ens address and check if a cached ens is availabled
-  const validEnsAddress = ensAddress.replace(/-/g, '');
+  const validEnsAddress = ensAddress;
   const cacheAvailable = ensCache[validEnsAddress] && ensCache[validEnsAddress] !== 'invalid';
 
   // loading chain used to reload the ens data after 3 seconds, when cached

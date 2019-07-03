@@ -85,7 +85,7 @@ export async function setUpDevMode(): Promise<void> {
  */
 export function isDevAvailable(name): boolean {
   if (evanGlobals.devMode) {
-    return evanGlobals.devMode.indexOf(name.replace(/\-/g, '')) !== -1;
+    return evanGlobals.devMode.indexOf(name) !== -1;
   }
 
   return false;
@@ -219,7 +219,7 @@ export async function onDeviceReady(): Promise<any> {
  * @return     {string}  dappname including sub ens paths
  */
 export function getDAppName(ensAddress: string) {
-  let dappName = ensAddress.replace(/\-/g, '');
+  let dappName = ensAddress;
 
   try {
     dappName = /^(.*)\.[^.]+$/.exec(dappName)[1];
