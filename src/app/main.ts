@@ -89,8 +89,10 @@ evanGlobals.System.map['@evan.network/api-blockchain-core'] = `bcc.${ getDomainN
 evanGlobals.System.map['@evan.network/dbcp'] = `bcc.${ getDomainName() }!dapp-content`;
 evanGlobals.System.map['smart-contracts'] = `smartcontracts.${ getDomainName() }!dapp-content`;
 evanGlobals.System.map['@evan.network/smart-contracts-core'] = `smartcontracts.${ getDomainName() }!dapp-content`;
-System.map['@evan.network/ui-angular-libs'] = 'angularlibs.evan!dapp-content';
-System.map['@evan.network/ui-angular-core'] = 'angularcore.evan!dapp-content';
+evanGlobals.System.map['@evan.network/ui-angular-libs'] = 'angularlibs.evan!dapp-content';
+evanGlobals.System.map['angular-libs'] = 'angularlibs.evan!dapp-content';
+evanGlobals.System.map['@evan.network/ui-angular-core'] = 'angularcore.evan!dapp-content';
+evanGlobals.System.map['angular-core'] = 'angularcore.evan!dapp-content';
 
 /**
  * Starts the whole dapp-browser.

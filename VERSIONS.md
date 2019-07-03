@@ -7,6 +7,11 @@
 
 ### Deprecations
 
+## Version 2.2.2
+### Fixes
+- allow old ens names to be replaced with minus characters (angular-core, angular-libs, smart-contracts)
+
+
 ## Version 2.2.1
 ### Fixes
 - allow minus symbols for ens names

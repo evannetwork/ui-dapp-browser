@@ -154,5 +154,5 @@
     "serve": "gulp --cwd . --gulpfile gulp/serve.js serve",
     "serve-build": "gulp --cwd . --gulpfile gulp/serve.js serve --build"
   },
-  "version": "2.2.1"
+  "version": "2.2.2"
 }
