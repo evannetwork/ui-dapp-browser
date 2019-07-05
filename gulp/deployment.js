@@ -250,9 +250,10 @@ async function createRuntime() {
   }
 
   // initialize dependencies
-  const accountId = Object.keys(config.runtimeConfig.accountMap)[0];
-  web3 = new Web3();
-  addWebsocketReconnect(Web3, web3, config.runtimeConfig.web3Provider)
+  const provider = new Web3.providers.WebsocketProvider(
+    config.runtimeConfig.web3Provider,
+    { clientConfig: { keepalive: true, keepaliveInterval: 5000 } });
+  web3 = new Web3(provider, null, { transactionConfirmationBlocks: 1 });
 
   const dfs = new Ipfs({
     dfsConfig: config.runtimeConfig.ipfs,

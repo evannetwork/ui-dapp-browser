@@ -52,7 +52,7 @@
     "request": "^2.83.0",
     "run-sequence": "^2.2.1",
     "vinyl-fs": "^3.0.3",
-    "web3": "1.0.0-beta.37",
+    "web3": "1.0.0-beta.55",
     "xhr2": "^0.1.4"
   },
   "description": "evan dapp root project for loading sub dapps, that can also be compiled as a mobile application",
