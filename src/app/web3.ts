@@ -46,36 +46,6 @@ let web3;
  * @return     {any}  The web 3 constructor.
  */
 export function getWeb3Constructor(): any {
-  const providers = [];
-
-  // overwrite send function to handle reconnect
-  //   => don't use this.connection!, only use websockerProvider.connection
-  //      to prevent working on old, eventually dead, connections
-  evanGlobals.CoreBundle.Web3.providers.WebsocketProvider.prototype.send = function (payload, callback) {
-    let _this = this;
-
-    // if the connection is already connecting, wait 100ms and try again
-    if (websocketProvider.connection.readyState === websocketProvider.connection.CONNECTING) {
-      setTimeout(function () {
-        _this.send(payload, callback);
-      }, 100);
-      return;
-    }
-
-    // if the connection is lost, try to reconnect to the url
-    if (websocketProvider.connection.readyState !== websocketProvider.connection.OPEN) {
-      reconnect(websocketProvider.connection.url, () => {
-        _this.send(payload, callback);
-      });
-
-      return;
-    }
-
-    // send the request
-    websocketProvider.connection.send(JSON.stringify(payload));
-    websocketProvider._addResponseCallback(payload, callback);
-  };
-
   return evanGlobals.CoreBundle.Web3;
 }
 
@@ -88,21 +58,11 @@ export function getWeb3Constructor(): any {
  */
 export function getWeb3Instance(url: string): any {
   try {
-    web3 = web3 || new (<any>getWeb3Constructor());
-
-    // check if an websockerProvider exists and if the url has changed => reset old one
-    if (websocketProvider && websocketProvider.connection.url !== url) {
-      websocketProvider.reset();
-    }
-
-    // create a new websocket connection, when its the first or the url has changed
-    if (!websocketProvider || websocketProvider.connection.url !== url) {
-      websocketProvider = new web3.providers.WebsocketProvider(url, {
-        protocol: [ ]
-      });
-      websocketProvider.on('end', () => reconnect(url));
-
-      web3.setProvider(websocketProvider);
+    if (!web3) {
+      const provider = new evanGlobals.CoreBundle.Web3.providers.WebsocketProvider(
+        url,
+        { clientConfig: { keepalive: true, keepaliveInterval: 5000 } });
+      web3 = new evanGlobals.CoreBundle.Web3(provider, null, { transactionConfirmationBlocks: 1 });
     }
   } catch (ex) {
     console.error(ex);
@@ -110,46 +70,4 @@ export function getWeb3Instance(url: string): any {
   }
 
   return web3;
-}
-
-/**
- * Reconnect the current websocket connection
- *
- * @param      {url}       url       url to connect to the websocket
- * @param      {Function}  callback  optional callback that is called when the
- *                                   reconnect is done
- */
-function reconnect(url: string, callback?: Function) {
-  if (!reconnecting) {
-    utils.devLog('Lost connection to Websocket, reconnecting in 1000ms');
-
-    reconnecting = [ ];
-
-    setTimeout(() => {
-      // stop last provider
-      websocketProvider._timeout();
-      websocketProvider.reset();
-      websocketProvider.removeAllListeners();
-
-      // create new provider
-      websocketProvider = new web3.providers.WebsocketProvider(url);
-      websocketProvider.on('end', () => reconnect(url));
-
-      // remove the old provider from requestManager to prevent errors on reconnect
-      delete web3._requestManager.provider;
-      web3.setProvider(websocketProvider);
-
-      // run reconnecting callbacks
-      for (let i = 0; i < reconnecting.length; i++) {
-        reconnecting[i]();
-      }
-
-      reconnecting = undefined;
-    }, 1000);
-  }
-
-  // add callback to the reconnecting array to call them after reconnect
-  if (typeof callback === 'function') {
-    reconnecting.push(callback);
-  }
 }
