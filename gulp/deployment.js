@@ -137,98 +137,6 @@ const versionMap = [
 ];
 
 /********************************** bcc runtime ************************************************/
- /**
-   * add reconnect to websocker provider and use it as web3 provider
-   *
-   * @param      {object}  Web3         Web3 module
-   * @param      {object}  web3         web3 instance (without provider)
-   * @param      {string}  providerUrl  websocker provider url
-   */
-function addWebsocketReconnect(Web3, web3, providerUrl) {
-  let websocketProvider;
-  let reconnecting;
-
-  /**
-   * Reconnect the current websocket connection
-   *
-   * @param      {url}       url       url to connect to the websocket
-   * @param      {Function}  callback  optional callback that is called when the
-   *                                   reconnect is done
-   */
-  let reconnect = (url, callback) => {
-    if (!reconnecting) {
-      console.log('Lost connection to Websocket, reconnecting in 1000ms');
-
-      reconnecting = [ ];
-
-      setTimeout(() => {
-        // stop last provider
-        websocketProvider._timeout();
-        websocketProvider.reset();
-        websocketProvider.removeAllListeners();
-
-        // create new provider
-        websocketProvider = new web3.providers.WebsocketProvider(url);
-        websocketProvider.on('end', () => reconnect(url));
-
-        // remove the old provider from requestManager to prevent errors on reconnect
-        delete web3._requestManager.provider;
-        web3.setProvider(websocketProvider);
-        // run reconnecting callbacks
-        for (let i = 0; i < reconnecting.length; i++) {
-          reconnecting[i]();
-        }
-
-        reconnecting = undefined;
-      }, 1000);
-    }
-
-    // add callback to the reconnecting array to call them after reconnect
-    if (typeof callback === 'function') {
-      reconnecting.push(callback);
-    }
-  }
-
-  // connect to web3
-  Web3.providers.WebsocketProvider.prototype.send = function(payload, callback) {
-    let _this = this;
-
-    // if the connection is already connecting, wait 100ms and try again
-    if (websocketProvider.connection.readyState === websocketProvider.connection.CONNECTING) {
-      setTimeout(function () {
-        _this.send(payload, callback);
-      }, 100);
-      return;
-    }
-
-    // if the connection is lost, try to reconnect to the url
-    if (websocketProvider.connection.readyState !== websocketProvider.connection.OPEN) {
-      reconnect(websocketProvider.connection.url, () => {
-        _this.send(payload, callback);
-      });
-
-      return;
-    }
-
-    // send the request
-    websocketProvider.connection.send(JSON.stringify(payload));
-    websocketProvider._addResponseCallback(payload, callback);
-  };
-
-  // check if an websockerProvider exists and if the url has changed => reset old one
-  if (websocketProvider && websocketProvider.connection.url !== providerUrl) {
-    websocketProvider.reset();
-  }
-
-  // create a new websocket connection, when its the first or the url has changed
-  if (!websocketProvider || websocketProvider.connection.url !== providerUrl) {
-    websocketProvider = new web3.providers.WebsocketProvider(providerUrl);
-    websocketProvider.on('end', () => reconnect(providerUrl));
-
-    web3.setProvider(websocketProvider);
-  }
-}
-
 async function createRuntime() {
   // deployment configuration and accounts
   try {
@@ -250,6 +158,7 @@ async function createRuntime() {
   }
 
   // initialize dependencies
+  const accountId = Object.keys(config.runtimeConfig.accountMap)[0];
   const provider = new Web3.providers.WebsocketProvider(
     config.runtimeConfig.web3Provider,
     { clientConfig: { keepalive: true, keepaliveInterval: 5000 } });

@@ -27,6 +27,7 @@
 
 import * as core from '../core';
 import * as lightwallet from '../lightwallet';
+import { config } from '../config';
 import { getWeb3Instance } from '../web3';
 
 /**
@@ -65,7 +66,10 @@ export class KeyProvider {
     this.origin = new evanGlobals.CoreBundle.KeyProvider({});
     this.origin.keys = keys || {};
     this.accountId = accountId;
-    this.web3 = getWeb3Instance();
+
+    config.web3Provider = window.localStorage['evan-web3-provider'] ||
+      'wss://testcore.evan.network/ws';
+    this.web3 = getWeb3Instance(config.web3Provider);
   }
 
   /**
