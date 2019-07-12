@@ -61,7 +61,16 @@ export function getWeb3Instance(url: string): any {
     if (!web3) {
       const provider = new evanGlobals.CoreBundle.Web3.providers.WebsocketProvider(
         url,
-        { clientConfig: { keepalive: true, keepaliveInterval: 5000 } });
+        {
+          clientConfig: {
+            keepalive: true,
+            keepaliveInterval: 5000,
+            useNativeKeepalive: true,
+          },
+          protocol: [ ],
+        }
+      );
+
       web3 = new evanGlobals.CoreBundle.Web3(provider, null, { transactionConfirmationBlocks: 1 });
     }
   } catch (ex) {
