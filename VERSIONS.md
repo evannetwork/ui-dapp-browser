@@ -5,6 +5,8 @@
 
 ### Fixes
 - update for `web3` version `1.0.0-beta.55` support
+- rename testnet to testcore
+- fix deployment sub ens address set
 
 ### Deprecations
 

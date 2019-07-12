@@ -620,8 +620,13 @@ async function deployDApps(externals, version) {
           runtime.nameResolver.ensContract, 'owner', runtime.nameResolver.namehash(checkAddress));
         if (owner === '0x0000000000000000000000000000000000000000') {
           try {
-            await runtime.nameResolver.claimPermanentAddress(checkAddress, deploymentAccount);
+            if (splitEns.length -1 === i) {
+              await runtime.nameResolver.claimPermanentAddress(checkAddress, deploymentAccount);
+            } else {
+              await runtime.nameResolver.setAddress(checkAddress, '0x0000000000000000000000000000000000000000', deploymentAccount);
+            }
           } catch (ex) {
+            console.log(ex);
             // claim permanent address is only needed for root addresses
             await runtime.nameResolver.setAddress(checkAddress, '0x0000000000000000000000000000000000000000', deploymentAccount);
           }
