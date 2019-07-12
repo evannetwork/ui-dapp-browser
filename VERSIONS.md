@@ -7,6 +7,14 @@
 
 ### Deprecations
 
+
+## Version 2.2.3
+### Fixes
+- update for `web3` version `1.0.0-beta.55` support
+- rename testnet to testcore
+- fix deployment sub ens address set
+
+
 ## Version 2.2.2
 ### Fixes
 - allow old ens names to be replaced with minus characters (angular-core, angular-libs, smart-contracts)

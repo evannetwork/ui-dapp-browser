@@ -27,7 +27,8 @@
 
 import * as core from '../core';
 import * as lightwallet from '../lightwallet';
-import { getWeb3Constructor } from '../web3';
+import { config } from '../config';
+import { getWeb3Instance } from '../web3';
 
 /**
  * is inserted when the application was bundled, used to prevent window usage
@@ -55,7 +56,7 @@ export class KeyProvider {
   origin: any;
   keys: any;
   profile: any;
-  Web3: any;
+  web3: any;
 
   /**
    * @param _keys     keys to set
@@ -65,7 +66,10 @@ export class KeyProvider {
     this.origin = new evanGlobals.CoreBundle.KeyProvider({});
     this.origin.keys = keys || {};
     this.accountId = accountId;
-    this.Web3 = getWeb3Constructor();
+
+    config.web3Provider = window.localStorage['evan-web3-provider'] ||
+      'wss://testcore.evan.network/ws';
+    this.web3 = getWeb3Instance(config.web3Provider);
   }
 
   /**
@@ -84,7 +88,7 @@ export class KeyProvider {
    * runs setKeysForAccount with the current logged in account.
    */
   async setKeys() {
-    this.origin.currentAccountHash = this.Web3.utils.soliditySha3(this.accountId || core.activeAccount());
+    this.origin.currentAccountHash = this.web3.utils.soliditySha3(this.accountId || core.activeAccount());
     this.origin.currentAccount = this.accountId || core.activeAccount();
 
     if (!this.origin.keys[this.origin.currentAccountHash]) {
@@ -102,7 +106,7 @@ export class KeyProvider {
    * @param      {string}   encryptionKey  encryption key for the account
    */
   setKeysForAccount(accountHash: string, encryptionKey: string) {
-    const soliditySha3 = this.Web3.utils.soliditySha3;
+    const soliditySha3 = this.web3.utils.soliditySha3;
 
     if (accountHash.length === 42) {
       accountHash = soliditySha3(accountHash);
