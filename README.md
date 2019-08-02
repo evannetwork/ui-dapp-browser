@@ -86,14 +86,13 @@ tsconfig.json
 ## ENS Deployment
 Have a look at the [deployment description](https://evannetwork.github.io/dev/deployment).
 
-## Ionic App generation
+## Mobile App generation
 DApp-browser Files from the runtime folder will be copied into the www folder using cordova-prepare. After this, cordova dependencies will be injected into this folder and the correct cordova load options will be added to the html files.
 
 ### Android deployment
-Be sure to have the correct cordova and ionic versions installed:
+Be sure to have the correct cordova version and it's dependencies installed:
 
 - cordova: 6.5.0
-- ionic: 3.20.0
 - gradle: 5.3
 - Android Studio
   - SDK 28, 27, 26, 25
@@ -103,93 +102,29 @@ To create the application for Android, run the following commands:
 
 1. Add the android platform
 ```sh
-ionic cordova platform add android 
+cordova platform add android 
 ```
 
-2. open `platforms/android/build.gradle`
-
-- Replace in the `buildscript` and `allprojects`
-
-```
-maven { url "https://maven.google.com" }
-jcenter { url "http://jcenter.bintray.com/" }
+2. copy everything from `platforms-changes` to the platforms folder
+```sh
+cp -r platforms-changes/* platforms
 ```
 
-with 
-
-```
-jcenter()
-maven {
-    url "https://maven.google.com"
-}
-
-- Replace in the `buildscript.dependencies` section
-
-```
-classpath 'com.android.tools.build:gradle:3.0.0'
+3. prepare deployment folder for specific environment and build apk
+```sh
+npm run cordova-prepare-android --config ~/projects/evan.network/dev-environment/config/bcc/testnet.js
+cordova build android
 ```
 
-with 
-
-
-```
-classpath 'com.android.tools.build:gradle:3.0.0'
-classpath 'com.google.gms:google-services:4.1.0'
-```
-
-- Add the following snippet to the end of the file:
-
-** ionic Manifest merger failed : Attribute meta-data#android.support.VERSION@value value=(25.4.0) from [com.android.support:appcompat-v7:25.4.0] AndroidManifest.xml:28:13-35 **
-
-```
-configurations.all {
-    resolutionStrategy.eachDependency { DependencyResolveDetails details ->
-        def requested = details.requested
-        if (requested.group == 'com.android.support') {
-            if (!requested.name.startsWith("multidex")) {
-                details.useVersion '26.1.0'
-            }
-        }
-    }
-}
-```
-
-3. open `platforms/android/project.properties`
-`
-** Could not get unknown property 'ANDROID_SUPPORT_V4_VERSION' **
-
-- Replace
-
-```
-com.android.support:support-v4:$ANDROID_SUPPORT_V4_VERSION
-```
-
-with
-
-```
-com.android.support:support-v4:24.1.1+
-```
-
-4. open `platforms/android/CordovaLib/build.gradle`
-
-- insert everything from part 1
-
-5. run the following script
-
-```
-./platforms/android/cordova/build
-```
-
-6. The APK is located within the directory `platforms/android/build/outputs/apk/debug`
-
+3. The APK is located within the directory `platforms/android/build/outputs/apk/debug`
 
 ### IOS deployment
 **You need to do this on an Apple Mac!**
 Before you start building the application, you need to update the Versionnumber of the config.xml file.
 To create the application on IOS, run the following commands:
 ```sh
-cordova-prepare-ios
-cordova-run-ios
+npm run cordova-prepare-ios --config ~/projects/evan.network/dev-environment/config/bcc/testnet.js
+cordova build ios
 ```
 "Cordova-run-ios" wil result within an error. But now, you can start XCode and do the following things:
 - npm run cordova-prepare-ios / npm run cordova-prepare-android

@@ -204,7 +204,7 @@ gulp.task('lint:ts', function() {
     );
 });
 
-gulp.task('ionic-sass', function () {
+gulp.task('sass', function () {
   return gulp
     .src(path.resolve(`src/**/*.scss`))
     .pipe(
@@ -219,7 +219,6 @@ gulp.task('ionic-sass', function () {
     .pipe(concat(`dapp-root.css`))
     .pipe(cssBase64({ maxWeightResource: 849616, baseDir : 'node_modules/ui-angular-sass' }))
     .pipe(cssBase64({ maxWeightResource: 849616, baseDir : '../../ui-angular/ui-angular-sass' }))
-    .pipe(cssBase64({ maxWeightResource: 228000, baseDir : '../../ui-angular/ui-angular-libs/node_modules/ionic-angular/fonts' }))
     .pipe(gulp.dest(buildFolder));
 });
 
@@ -233,7 +232,7 @@ gulp.task('copy', function(callback) {
 });
 
 gulp.task('build', function(callback) {
-  runSequence('scripts', 'ionic-sass', 'copy', callback);
+  runSequence('scripts', 'sass', 'copy', callback);
 });
 
 gulp.task('default', function(callback) {

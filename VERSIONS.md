@@ -3,8 +3,10 @@
 ## Next Version
 ### Features
 - update versions of `ts-node`, `typescript`, `web3`
+- remove ionic libraries and update `cordova-plugin-ionic-webview`
 
 ### Fixes
+- clearer build files and clearer android deployment
 
 ### Deprecations
 
