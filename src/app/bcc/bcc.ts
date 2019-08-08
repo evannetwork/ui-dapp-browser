@@ -430,6 +430,15 @@ async function createDefaultRuntime(
     options,
   );
 
+  if (privateKey) {
+    let correctPrivateKey = privateKey;
+    if (!privateKey.startsWith('0x')) {
+      correctPrivateKey = `0x${ privateKey }`;
+    }
+
+    await runtime.dfs.setAccountAndPrivateKey(accountId, correctPrivateKey);
+  }
+
   // TODO: fix temporary payments for agent-executors and disable file pinnging
   if (core.getCurrentProvider() === 'agent-executor') {
     delete runtime.dfs.accountId;
