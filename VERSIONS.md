@@ -7,6 +7,7 @@
 
 ### Fixes
 - clearer build files and clearer android deployment
+- add `setAccountAndPrivateKey` to `bccHelper` `createDefaultRuntime` to correctly track ipfs payment
 
 ### Deprecations
 
