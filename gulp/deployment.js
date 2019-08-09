@@ -292,7 +292,7 @@ async function deployToIpns(dapp, hash, retry) {
 
   return new Promise((resolve, reject) => {
     const options = {
-      hostname: '35.178.171.238',
+      hostname: '35.177.41.96',
       port: '8080',
       path: `/api/smart-agents/ipns-publish/add-or-update?key=${ ipnsPrivateKeys[dapp] }&hash=${ hash }`,
       headers : config.runtimeConfig.ipfs.headers,
