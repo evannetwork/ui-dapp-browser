@@ -42,7 +42,7 @@ gulp.task('serve', async function () {
   process.chdir(path.resolve('..'));
 
   if (enableBuild) {
-    require(path.resolve('./gulp/ionic.js'));
+    require(path.resolve('./gulp/build.js'));
 
     await new Promise((resolve, reject) => runSequence('build', () => {
       gulp.watch(
@@ -59,7 +59,7 @@ gulp.task('serve', async function () {
         [
           'src/**/*.scss',
         ],
-        ['ionic-sass', 'copy']
+        ['sass', 'copy']
       );
 
       gulp.watch(

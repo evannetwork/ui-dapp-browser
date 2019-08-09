@@ -2,10 +2,18 @@
 
 ## Next Version
 ### Features
+### Fixes
+### Deprecations
+
+
+## Version 2.3.0
+### Features
+- update versions of `ts-node`, `typescript`, `web3`
+- remove ionic libraries and update `cordova-plugin-ionic-webview`
 
 ### Fixes
-
-### Deprecations
+- clearer build files and clearer android deployment
+- add `setAccountAndPrivateKey` to `bccHelper` `createDefaultRuntime` to correctly track ipfs payment
 
 
 ## Version 2.2.3

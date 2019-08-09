@@ -70,7 +70,7 @@ const advancedDeployment = process.argv.indexOf('--advanced') !== -1;
 const configPath = path.resolve(process.argv[process.argv.indexOf('--config') + 1]);
 const dappDeploymentFolder = path.resolve('deployment');
 const dappFolder = path.resolve('..');
-const ionicDeploymentFolder = path.resolve('www');
+const mobileDeploymentFolder = path.resolve('www');
 const licensesFolder = path.resolve('licenses');
 const originFolder = path.resolve('runtime/external');
 const platformFolder = path.resolve('platforms');
@@ -488,13 +488,6 @@ const logDbcps = function() {
     }
   }));
   console.log('--------------------------\n');
-
-  const ionicInstallation = getDbcpFromList('Ionic DApp');
-
-  console.log('Open ionic app : \n');
-  if (ionicInstallation) {
-    console.log(`${ ipfsUrl }/ipfs/${ ionicInstallation.dapp.origin }/index.html`);
-  }
   console.log(`${ ipfsUrl }/ipns/QmeaaYgC38Ai993NUKbgvfBw11mrmK9THb6GtR48TmcsGj/index.html`);
   console.log('\n--------------------------\n');
 }
@@ -699,10 +692,10 @@ const loadDbcps = async function(externals) {
   return await Promise.all(promises);
 }
 
-/********************************** ionic functions ***********************************************/
-prepareIonicDeploy = async function () {
+/****************************** mobile app functions **********************************************/
+prepareMobileDeploy = async function () {
   console.log('    ...prepare dapp-browser deployment');
-  await del.sync(`${ionicDeploymentFolder}`, { force: true });
+  await del.sync(`${mobileDeploymentFolder}`, { force: true });
 
   await new Promise(resolve => gulp
     .src([
@@ -714,62 +707,62 @@ prepareIonicDeploy = async function () {
       'cordova.js'
     ]
     .map(file => `${ runtimeFolder }/${ file }`))
-    .pipe(gulp.dest(ionicDeploymentFolder))
+    .pipe(gulp.dest(mobileDeploymentFolder))
     .on('end', () => resolve())
   );
 
   // copy dbcp description
   await new Promise(resolve => gulp
     .src([ `${ dappFolder }/dbcp.json` ])
-    .pipe(gulp.dest(ionicDeploymentFolder))
+    .pipe(gulp.dest(mobileDeploymentFolder))
     .on('end', () => resolve())
   );
 
   await new Promise(resolve => gulp
     .src(dappBrowserFiles.map(file => `${runtimeFolder}/${file}`))
-    .pipe(gulp.dest(`${ ionicDeploymentFolder }/build`))
+    .pipe(gulp.dest(`${ mobileDeploymentFolder }/build`))
     .on('end', () => resolve())
   );
 
   // insert correct inps values for the current configuration
-  await replaceConfigurationValues(ionicDeploymentFolder);
+  await replaceConfigurationValues(mobileDeploymentFolder);
 };
 
-const prepareIonicAppBuild = async function(platform) {
+const preparMobileAppBuild = async function(platform) {
   const dapps = loadDApps();
 
   await initializeDBCPs(dapps);
-  await prepareIonicDeploy();
+  await prepareMobileDeploy();
 
   console.log('copy platform cordova assets...');
   await new Promise((resolve, reject) => gulp
     .src([
       `${platformFolder}/${ platform }/platform_www/**/*`,
     ])
-    .pipe(gulp.dest(ionicDeploymentFolder))
+    .pipe(gulp.dest(mobileDeploymentFolder))
     .on('end', () => resolve())
   );
 
   console.log('enable cordova loading...');
   await new Promise((resolve, reject) => gulp
     .src([
-      `${ionicDeploymentFolder}/index.html`,
+      `${mobileDeploymentFolder}/index.html`,
     ])
     .pipe(replace(
       /<!-- insertcordovahere -->/g,
       '<script src="cordova.js"></script>'
     ))
-    .pipe(gulp.dest(ionicDeploymentFolder))
+    .pipe(gulp.dest(mobileDeploymentFolder))
     .on('end', () => resolve())
   );
 
-  await del.sync(`${ ionicDeploymentFolder }/build`, { force: true });
+  await del.sync(`${ mobileDeploymentFolder }/build`, { force: true });
 }
 
-const ionicDeploy = async function (version) {
+const mobileAppDeploy = async function (version) {
   console.log('    ...deploying dapp-browser');
 
-  const folderHash = await deployIPFSFolder('www', ionicDeploymentFolder);
+  const folderHash = await deployIPFSFolder('www', mobileDeploymentFolder);
 
   await pinToEVANIpfs(folderHash);
   await deployToIpns('dappbrowser', folderHash);
@@ -1054,22 +1047,22 @@ const deploymentMenu = async function() {
             process.exit();
           }
 
-          // ionic dapp deployment
-          const ionicDAppIndex = results.dapps.indexOf('dapp-browser._evan');
-          if (ionicDAppIndex !== -1) {
+          // mobile dapp deployment
+          const mobileDAppIndex = results.dapps.indexOf('dapp-browser._evan');
+          if (mobileDAppIndex !== -1) {
             // remove dapp-browser._evan as normal dapp, would break the deployment process
-            results.dapps.splice(ionicDAppIndex, 1);
+            results.dapps.splice(mobileDAppIndex, 1);
 
-            await prepareIonicDeploy();
+            await prepareMobileDeploy();
 
             if (results.uglify) {
-              await uglify('dapp-browser._evan', ionicDeploymentFolder);
+              await uglify('dapp-browser._evan', mobileDeploymentFolder);
             }
 
             await replaceUmlauts();
 
             if (enableDeploy) {
-              await ionicDeploy(results.version);
+              await mobileAppDeploy(results.version);
             }
           }
 
@@ -1077,7 +1070,7 @@ const deploymentMenu = async function() {
           const licensesIndex = results.dapps.indexOf('licenses._evan');
           if (licensesIndex !== -1) {
             // remove licenses._evan as normal dapp, would break the deployment process
-            results.dapps.splice(ionicDAppIndex, 1);
+            results.dapps.splice(mobileDAppIndex, 1);
 
             await licensesDeploy();
           }
@@ -1110,10 +1103,10 @@ const deploymentMenu = async function() {
 
 gulp.task('deploy', deploymentMenu);
 
-gulp.task('prepare-ionic-android', async function() {
-  await prepareIonicAppBuild('android');
+gulp.task('cordova-prepare-android', async function() {
+  await preparMobileAppBuild('android');
 });
 
-gulp.task('prepare-ionic-ios', async function() {
-  await prepareIonicAppBuild('ios');
+gulp.task('cordova-prepare-ios', async function() {
+  await preparMobileAppBuild('ios');
 });
