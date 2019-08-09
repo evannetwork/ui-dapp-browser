@@ -43,7 +43,8 @@ export class IDBStore {
     this._dbp = new Promise((resolve, reject) => {
       const openreq = indexedDB.open(dbName, 1);
       openreq.onerror = () => {
-        reject(openreq.error);
+        // reject(openreq.error);
+        resolve();
       };
       openreq.onsuccess = () => {
         try {
@@ -54,7 +55,7 @@ export class IDBStore {
       };
 
       openreq.onblocked = function(event) {
-        console.log('IndexDB blocked: ')
+        console.log('IndexDB blocked!')
 
         resolve();
       };
@@ -133,7 +134,6 @@ export async function set(key: IDBValidKey, value: any, store = getDefaultStore(
     const result = await store._withIDBStore('readwrite', idbStore => {
       idbStore.put(value, key);
     });
-
     return result;
   } catch (ex) {
     if (isQuotaExceeded(ex)) {

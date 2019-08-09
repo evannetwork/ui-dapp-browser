@@ -393,6 +393,8 @@ const replaceConfigurationValues = async function(folderPath) {
     .pipe(replace(/0xAF176885bD81D5f6C76eeD23fadb1eb0e5Fe1b1F/g, config.dappConfigSwitches.accounts.paymentAgentAccount))
     // paymentChannelManagerAccountId
     .pipe(replace(/0x0A0D9dddEba35Ca0D235A4086086AC704bbc8C2b/g, config.dappConfigSwitches.accounts.paymentChannelManagerAccount))
+    .pipe(replace(/pk_test_kpO3T5fXA7aaftg9D0OO0w3S/g, config.dappConfigSwitches.paymentStripeKey))
+
 
     // web3 configurations
     .pipe(replace(/wss\:\/\/testcore.evan.network\/ws/g, `${ config.runtimeConfig.web3Provider }`))

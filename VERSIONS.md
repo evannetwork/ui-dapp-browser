@@ -2,7 +2,11 @@
 
 ## Next Version
 ### Features
+- add deployment replace for `stripe api key`
+
 ### Fixes
+- fix error handling in `indexedDb` to fix private firefox
+
 ### Deprecations
 
 
