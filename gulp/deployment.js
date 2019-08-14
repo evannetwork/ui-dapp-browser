@@ -813,7 +813,7 @@ const uglifyJS = async function(folder) {
         },
         noSource: true,
         mangle: {
-          reserved: [ 'DAGNode', 'Block' ]
+          reserved: [ 'DAGNode', 'Block', 'BigNumber', ]
         }
       }))
       .pipe(replace('isMultiaddr=function(', 'isMultiaddr=function(){return true;},function('))

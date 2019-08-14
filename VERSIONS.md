@@ -3,9 +3,11 @@
 ## Next Version
 ### Features
 - add deployment replace for `stripe api key`
+- add `browserName`, `isPrivateMode`, `getBrowserName`, `getIsPrivateMode`
 
 ### Fixes
 - fix error handling in `indexedDb` to fix private firefox
+- add `BigNumber` to minify `mangles`, so BigNumber internal checks will work correctly
 
 ### Deprecations
 
