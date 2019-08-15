@@ -4,6 +4,7 @@
 ### Features
 - add deployment replace for `stripe api key`
 - add `browserName`, `isPrivateMode`, `getBrowserName`, `getIsPrivateMode`
+- add `serveo.net` and `.ngrok.io` host for enabled dev mode loading
 
 ### Fixes
 - fix error handling in `indexedDb` to fix private firefox

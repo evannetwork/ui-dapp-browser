@@ -67,14 +67,17 @@ let percentagesSet = [ ];
 
 /**
  * Checks if we are running in devMode, if true, load dev-dapps from local file server, if false do nothing
- *
- * @return     {<type>}  { description_of_the_return_value }
  */
 export async function setUpDevMode(): Promise<void> {
   const host = window.location.host;
+  const correctHost = [
+    host.indexOf('localhost') !== -1,
+    host.indexOf('127.0.0.1') !== -1,
+    host.endsWith('.ngrok.io'),
+    host.endsWith('.serveo.net'),
+  ].filter(check => check).length !== 0;
 
-  if ((host.indexOf('localhost') !== -1 || host.indexOf('127.0.0.1') !== -1) &&
-      window.location.href.indexOf('dev.html') !== -1) {
+  if (correctHost && window.location.href.indexOf('dev.html') !== -1) {
     evanGlobals.devMode = await evanGlobals.System.import(`${ window.location.origin }/dev-dapps!json`);
 
     if (evanGlobals.devMode.externals) {
