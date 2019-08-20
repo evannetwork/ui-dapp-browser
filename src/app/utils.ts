@@ -287,13 +287,18 @@ export function getDomainName(...subLabels): string {
 }
 
 /**
- * Return the name of the current browser (Opera, Firefox, Safari, Chrome, IE, Edge, Blink)
+ * Return the name of the current browser (Opera, Firefox, Safari, Chrome, IE, Edge, Blink, Cordova)
  */
 export function getBrowserName() {
   /* tslint:disable */
   // Return cached result if avalible, else get result then cache it.
   if (browserName) {
     return browserName;
+  }
+
+  // if we are running in cordova mobile browser, return cordova as browser name
+  if ((<any>window).cordova) {
+    return 'Cordova';
   }
 
   // Opera 8.0+
