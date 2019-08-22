@@ -310,7 +310,9 @@ export function getBrowserName() {
 
   // Safari 3.0+ "[object HTMLElementConstructor]"
   const isSafari = /constructor/i.test((<any>window).HTMLElement) ||
-    (function (p) { return p.toString() === "[object SafariRemoteNotification]"; })(!window['safari'] || (<any>window).safari.pushNotification);
+    (function (p) { return p.toString() === "[object SafariRemoteNotification]"; })(!window['safari'] || (<any>window).safari.pushNotification) ||
+    (!!navigator.userAgent.match(/Version\/[\d\.]+.*Safari/)) ||
+    (/iPad|iPhone|iPod/.test(navigator.userAgent) && !(<any>window).MSStream);
 
   // Internet Explorer 6-11
   const isIE = /*@cc_on!@*/false || !!(<any>document).documentMode;
