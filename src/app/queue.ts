@@ -65,7 +65,7 @@ async function createIndexDB(accountId: string): Promise<any> {
         const openRequest = indexedDB.open('EvanNetworkQueue', 1);
 
         openRequest.onerror = () => {
-          reject(openRequest.error)
+          resolve();
         };
         openRequest.onsuccess = (event) => {
           try {
@@ -115,10 +115,12 @@ export function getStorageName(): string {
  * @return     {any}  The object store.
  */
 export function getObjectStore(option?: any) {
-  const transaction = queueDB.transaction(['evan-queue'], option);
-  const objectStore = transaction.objectStore('evan-queue');
+  if (queueDB) {
+    const transaction = queueDB.transaction(['evan-queue'], option);
+    const objectStore = transaction.objectStore('evan-queue');
 
-  return objectStore;
+    return objectStore;
+  }
 }
 
 /**
@@ -134,15 +136,19 @@ export async function updateQueue(): Promise<Array<any>> {
 
     entries = <any>await new Promise((resolve, reject) => {
       const objectStore = getObjectStore('readonly');
-      const request = objectStore.get(accountId);
+      if (objectStore) {
+        const request = objectStore.get(accountId);
 
-      request.onsuccess = function(event) {
-        resolve(request.result && request.result.entries ? request.result.entries : [ ]);
-      };
+        request.onsuccess = function(event) {
+          resolve(request.result && request.result.entries ? request.result.entries : [ ]);
+        };
 
-      request.onerror = function(event) {
-        reject(request.error);
-      };
+        request.onerror = function(event) {
+          reject(request.error);
+        };
+      } else {
+        resolve([ ]);
+      }
     });
 
     return entries;
@@ -165,22 +171,26 @@ export async function storeQueue(queueEntries): Promise<any> {
       const objectStore = getObjectStore('readwrite');
       let request;
 
-      if (queueEntries.length === 0) {
-        request = objectStore.delete(accountId);
+      if (objectStore) {
+        if (queueEntries.length === 0) {
+          request = objectStore.delete(accountId);
+        } else {
+          request = objectStore.put({
+            accountId: accountId,
+            entries: queueEntries || [ ]
+          });
+        }
+
+        request.onsuccess = function(event) {
+          resolve(request.result);
+        };
+
+        request.onerror = function(event) {
+          reject(request.error);
+        };
       } else {
-        request = objectStore.put({
-          accountId: accountId,
-          entries: queueEntries || [ ]
-        });
+        resolve();
       }
-
-      request.onsuccess = function(event) {
-        resolve(request.result);
-      };
-
-      request.onerror = function(event) {
-        reject(request.error);
-      };
     });
   }
 }

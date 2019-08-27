@@ -60,9 +60,14 @@ npm run doc
 npm run serve
 ```
 
-- runs the build command and watch for file changes
+- runs the build command, watch for file changes and starts a local file serve with the runtime folder
 ```sh
 npm run serve-build
+```
+
+- expose local development server to others for testing
+```sh
+ssh -R evan:80:localhost:3000 serveo.net
 ```
 
 ## Usage

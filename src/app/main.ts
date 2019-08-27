@@ -102,7 +102,11 @@ export async function initializeEvanNetworkStructure(): Promise<void> {
   utils.activateColorTheme(utils.getColorTheme());
 
   // check if we are running in dev mode, load dev mode available modules
-  await utils.setUpDevMode();
+  await Promise.all([
+    utils.setUpDevMode(),
+    utils.getBrowserName(),
+    utils.getIsPrivateMode(),
+  ]);
 
   // set initial loadin step
   utils.raiseProgress(5);

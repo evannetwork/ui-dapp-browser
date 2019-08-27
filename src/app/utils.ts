@@ -36,6 +36,16 @@ declare let evanGlobals: any;
  */
 export let devMode: Array<any>;
 
+/**
+ * Active browsers name. (Only set, after getBrowserName was runned before)
+ */
+export let browserName: string;
+
+/**
+ * Is the current browser is running in private mode? (Only set, after getIsPrivateMode was runned before)
+ */
+export let isPrivateMode: boolean;
+
 // import configuration
 import { config } from './config';
 
@@ -57,14 +67,17 @@ let percentagesSet = [ ];
 
 /**
  * Checks if we are running in devMode, if true, load dev-dapps from local file server, if false do nothing
- *
- * @return     {<type>}  { description_of_the_return_value }
  */
 export async function setUpDevMode(): Promise<void> {
   const host = window.location.host;
+  const correctHost = [
+    host.indexOf('localhost') !== -1,
+    host.indexOf('127.0.0.1') !== -1,
+    host.endsWith('.ngrok.io'),
+    host.endsWith('.serveo.net'),
+  ].filter(check => check).length !== 0;
 
-  if ((host.indexOf('localhost') !== -1 || host.indexOf('127.0.0.1') !== -1) &&
-      window.location.href.indexOf('dev.html') !== -1) {
+  if (correctHost && window.location.href.indexOf('dev.html') !== -1) {
     evanGlobals.devMode = await evanGlobals.System.import(`${ window.location.origin }/dev-dapps!json`);
 
     if (evanGlobals.devMode.externals) {
@@ -271,4 +284,120 @@ export function getDomainName(...subLabels): string {
   } else {
     return domainConfig;
   }
+}
+
+/**
+ * Return the name of the current browser (Opera, Firefox, Safari, Chrome, IE, Edge, Blink, Cordova)
+ */
+export function getBrowserName() {
+  /* tslint:disable */
+  // Return cached result if avalible, else get result then cache it.
+  if (browserName) {
+    return browserName;
+  }
+
+  // if we are running in cordova mobile browser, return cordova as browser name
+  if ((<any>window).cordova) {
+    return 'Cordova';
+  }
+
+  // Opera 8.0+
+  const isOpera = (!!(<any>window).opr && !!(<any>window).opr.addons) ||
+    !!(<any>window).opera || navigator.userAgent.indexOf(' OPR/') >= 0;
+
+  // Firefox 1.0+
+  const isFirefox = typeof (<any>window).InstallTrigger !== 'undefined';
+
+  // Safari 3.0+ "[object HTMLElementConstructor]"
+  const isSafari = /constructor/i.test((<any>window).HTMLElement) ||
+    (function (p) { return p.toString() === "[object SafariRemoteNotification]"; })(!window['safari'] || (<any>window).safari.pushNotification) ||
+    (!!navigator.userAgent.match(/Version\/[\d\.]+.*Safari/)) ||
+    (/iPad|iPhone|iPod/.test(navigator.userAgent) && !(<any>window).MSStream);
+
+  // Internet Explorer 6-11
+  const isIE = /*@cc_on!@*/false || !!(<any>document).documentMode;
+
+  // Edge 20+
+  const isEdge = !isIE && !!(<any>window).StyleMedia;
+
+  // Chrome 1+
+  const isChrome = !!(<any>window).chrome;
+
+  // Blink engine detection
+  const isBlink = (isChrome || isOpera) && !!(<any>window).CSS;
+  /* tslint:enable */
+
+  return browserName =
+    isOpera ? 'Opera' :
+    isFirefox ? 'Firefox' :
+    isSafari ? 'Safari' :
+    isChrome ? 'Chrome' :
+    isIE ? 'IE' :
+    isEdge ? 'Edge' :
+    isBlink ? 'Blink' :
+    'Don\'t know';
+};
+
+/**
+ * Lightweight script to detect whether the browser is running in Private mode.
+ */
+export async function getIsPrivateMode() {
+  isPrivateMode = await new Promise((resolve) => {
+    const yes = () => resolve(true); // is in private mode
+    const not = () => resolve(false); // not in private mode
+    const testLocalStorage = () => {
+      try {
+        if (localStorage.length) {
+          not();
+        } else {
+          localStorage.x = 1;
+          localStorage.removeItem('x');
+          not();
+        }
+      } catch (e) {
+        // Safari only enables cookie in private mode
+        // if cookie is disabled, then all client side storage is disabled
+        // if all client side storage is disabled, then there is no point
+        // in using private mode
+        navigator.cookieEnabled ? yes() : not();
+      }
+    };
+    // Chrome & Opera
+    const fs = (<any>window).webkitRequestFileSystem || (<any>window).RequestFileSystem;
+    if (fs) {
+      return void fs((<any>window).TEMPORARY, 100, not, yes);
+    }
+    // Firefox
+    if ('MozAppearance' in document.documentElement.style) {
+      if (indexedDB === null) {
+        return yes();
+      }
+      const db = indexedDB.open('test');
+      db.onerror = yes;
+      db.onsuccess = not;
+      return void 0;
+    }
+    // Safari
+    const isSafari = navigator.userAgent.match(/Version\/([0-9\._]+).*Safari/);
+    if (isSafari) {
+      const version = parseInt(isSafari[1], 10);
+      if (version < 11) {
+        return testLocalStorage();
+      }
+      try {
+        (<any>window).openDatabase(null, null, null, null);
+        return not();
+      } catch (_) {
+        return yes();
+      }
+    }
+    // IE10+ & Edge InPrivate
+    if (!window.indexedDB && ((<any>window).PointerEvent || (<any>window).MSPointerEvent)) {
+      return yes();
+    }
+    // default navigation mode
+    return not();
+  });
+
+  return isPrivateMode;
 }

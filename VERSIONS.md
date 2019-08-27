@@ -2,8 +2,21 @@
 
 ## Next Version
 ### Features
+
 ### Fixes
+
 ### Deprecations
+
+
+## Version 2.4.0
+### Features
+- add deployment replace for `stripe api key`
+- add `browserName`, `isPrivateMode`, `getBrowserName`, `getIsPrivateMode`
+- add `serveo.net` and `.ngrok.io` host for enabled dev mode loading
+
+### Fixes
+- fix error handling in `indexedDb` to fix private firefox
+- add `BigNumber` to minify `mangles`, so BigNumber internal checks will work correctly
 
 
 ## Version 2.3.0
