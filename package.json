@@ -137,6 +137,7 @@
     "cordova-run-android": "cordova build android",
     "cordova-run-ios": "cordova build ios",
     "deploy": "gulp --gulpfile gulp/deployment.js deploy --config",
+    "deploy-repl": "gulp --gulpfile gulp/deployment.js deploy-repl --config",
     "doc": "gulp --gulpfile gulp/documentation.js",
     "postinstall": "npm rebuild node-sass",
     "serve": "gulp --cwd . --gulpfile gulp/serve.js serve",

@@ -91,6 +91,34 @@ tsconfig.json
 ## ENS Deployment
 Have a look at the [deployment description](https://evannetwork.github.io/dev/deployment).
 
+## REPL Deployment
+You can also start a repl for handling manual deployment steps. Just start the following script, with the same configuration that was passed below within the [ENS deployment description](https://evannetwork.github.io/dev/deployment).
+
+```sh
+npm run deploy-repl --config ...
+```
+
+Available params:
+  - `advancedDeployment`
+  - `configPath`
+  - `dappDeploymentFolder`
+  - `dappFolder`
+  - `licensesFolder`
+  - `mobileDeploymentFolder`
+  - `originFolder`
+  - `platformFolder`
+  - `runtimeFolder`
+  - `bcc`
+  - `config`
+  - `deploymentAccount`
+  - `deploymentDomain`
+  - `initialized`
+  - `ipfsConfig`
+  - `ipfsInstance`
+  - `ipfsUrl`
+  - `runtime`
+  - `web3`
+
 ## Mobile App generation
 DApp-browser Files from the runtime folder will be copied into the www folder using cordova-prepare. After this, cordova dependencies will be injected into this folder and the correct cordova load options will be added to the html files.
 
