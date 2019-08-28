@@ -5,6 +5,7 @@
 - add `deploy-repl` command so the usual deployment configuration can be used, to start a repl with deployment configuration
 
 ### Fixes
+- use new `getSmartAgentAuthHeaders` to build `EvanAuth` header for smart-agent requests
 
 ### Deprecations
 
