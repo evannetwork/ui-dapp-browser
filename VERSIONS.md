@@ -3,6 +3,7 @@
 ## Next Version
 ### Features
 - add `deploy-repl` command so the usual deployment configuration can be used, to start a repl with deployment configuration
+- use new favicon
 
 ### Fixes
 
