@@ -54,9 +54,10 @@ const { inspect, } = require('util');
 const {
   AccountStore,
   createDefaultRuntime,
+  ExecutorWallet,
   Ipfs,
+  utils,
   Wallet,
-  ExecutorWallet
 } = require('@evan.network/api-blockchain-core');
 
 // search for root ui-dapp-browser path
@@ -172,20 +173,17 @@ async function createRuntime() {
     web3: web3,
   });
 
-  const signer = accountId.toLowerCase();
-  const toSignedMessage = web3.utils.soliditySha3(new Date().getTime() + accountId).replace('0x', '');
-  const hexMessage = web3.utils.utf8ToHex(toSignedMessage);
-  const signedMessage = web3.eth.accounts.sign(toSignedMessage, '0x' + config.runtimeConfig.accountMap[accountId]);
-  config.runtimeConfig.ipfs.headers = {
-    authorization: `EvanAuth ${accountId},EvanMessage ${hexMessage},EvanSignedMessage ${signedMessage.signature}`
-  };
-  ipfsInstance = new IpfsApi(config.runtimeConfig.ipfs);
-
   const runtime = await createDefaultRuntime(web3, dfs, {
     accountMap: config.runtimeConfig.accountMap,
     keyConfig: config.runtimeConfig.keyConfig,
     nameResolver: config.bcConfig.nameResolver,
   });
+
+  // set auth headers
+  config.runtimeConfig.ipfs.headers = { authorization: utils.getSmartAgentAuthHeaders(runtime) };
+
+  // create new ipfs instance
+  ipfsInstance = new IpfsApi(config.runtimeConfig.ipfs);
 
   // replace executor with wallet if required
   if (config.runtimeConfig.walletAddress) {
