@@ -180,7 +180,9 @@ async function createRuntime() {
   });
 
   // set auth headers
-  config.runtimeConfig.ipfs.headers = { authorization: utils.getSmartAgentAuthHeaders(runtime) };
+  config.runtimeConfig.ipfs.headers = {
+    authorization: await utils.getSmartAgentAuthHeaders(runtime)
+  };
 
   // create new ipfs instance
   ipfsInstance = new IpfsApi(config.runtimeConfig.ipfs);
@@ -243,7 +245,7 @@ const requestFileFromEVANIpfs = function(hash) {
 const pinToEVANIpfs = function(ipfsHash) {
   console.log(`${ ipfsConfig.host }: pinning hash "${ipfsHash}"...`);
 
-  return ipfsInstance.pin.add(ipfsHash);
+  return runtime.dfs.pinFileHash({ hash: ipfsHash });
 }
 
 /**
@@ -253,7 +255,7 @@ const pinToEVANIpfs = function(ipfsHash) {
  */
 async function deployIPFSFolder(folderName, path) {
   return new Promise((resolve, reject) => {
-    ipfsInstance.util.addFromFs(path, { recursive: true}, (err, result) => {
+    ipfsInstance.util.addFromFs(path, { recursive: true }, (err, result) => {
       if (err) { throw err }
       resolve(result[result.length-1].hash || result[result.length-1].Hash);
     })
