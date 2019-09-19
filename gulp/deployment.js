@@ -34,28 +34,30 @@ process.env.DBCP_LOGLEVEL = 'debug';
 const enableDeploy = process.argv.indexOf('--disable-deploy') === -1;
 
 // node_modules
-const path = require('path');
+const cleanCss = require('gulp-clean-css');
+const del = require('del');
 const exec = require('child_process').exec;
 const fs = require('fs');
-const replace = require('gulp-replace');
-const del = require('del');
-const minify = require('gulp-minify');
-const cleanCss = require('gulp-clean-css');
-const request = require('request');
+const gulp = require('gulp');
 const http = require('http');
 const https = require('https');
 const inquirer = require('inquirer');
 const IpfsApi = require('ipfs-api');
+const minify = require('gulp-minify');
+const path = require('path');
+const replace = require('gulp-replace');
+const request = require('request');
 const Web3 = require('web3');
-const gulp = require('gulp');
+const { inspect, } = require('util');
 
 // blockchain-core / DBCP stuff
 const {
   AccountStore,
   createDefaultRuntime,
+  ExecutorWallet,
   Ipfs,
+  utils,
   Wallet,
-  ExecutorWallet
 } = require('@evan.network/api-blockchain-core');
 
 // search for root ui-dapp-browser path
@@ -171,23 +173,22 @@ async function createRuntime() {
     web3: web3,
   });
 
-  const signer = accountId.toLowerCase();
-  const toSignedMessage = web3.utils.soliditySha3(new Date().getTime() + accountId).replace('0x', '');
-  const hexMessage = web3.utils.utf8ToHex(toSignedMessage);
-  const signedMessage = web3.eth.accounts.sign(toSignedMessage, '0x' + config.runtimeConfig.accountMap[accountId]);
-  config.runtimeConfig.ipfs.headers = {
-    authorization: `EvanAuth ${accountId},EvanMessage ${hexMessage},EvanSignedMessage ${signedMessage.signature}`
-  };
-  ipfsInstance = new IpfsApi(config.runtimeConfig.ipfs);
-
   const runtime = await createDefaultRuntime(web3, dfs, {
     accountMap: config.runtimeConfig.accountMap,
+    keyConfig: config.runtimeConfig.keyConfig,
     nameResolver: config.bcConfig.nameResolver,
   });
 
+  // set auth headers
+  config.runtimeConfig.ipfs.headers = {
+    authorization: await utils.getSmartAgentAuthHeaders(runtime)
+  };
+
+  // create new ipfs instance
+  ipfsInstance = new IpfsApi(config.runtimeConfig.ipfs);
+
   // replace executor with wallet if required
   if (config.runtimeConfig.walletAddress) {
-
     const walletAddress = config.runtimeConfig.walletAddress
     const wallet = new Wallet(Object.assign({}, runtime))
     wallet.load(walletAddress)
@@ -244,7 +245,7 @@ const requestFileFromEVANIpfs = function(hash) {
 const pinToEVANIpfs = function(ipfsHash) {
   console.log(`${ ipfsConfig.host }: pinning hash "${ipfsHash}"...`);
 
-  return ipfsInstance.pin.add(ipfsHash);
+  return runtime.dfs.pinFileHash({ hash: ipfsHash });
 }
 
 /**
@@ -254,7 +255,7 @@ const pinToEVANIpfs = function(ipfsHash) {
  */
 async function deployIPFSFolder(folderName, path) {
   return new Promise((resolve, reject) => {
-    ipfsInstance.util.addFromFs(path, { recursive: true}, (err, result) => {
+    ipfsInstance.util.addFromFs(path, { recursive: true }, (err, result) => {
       if (err) { throw err }
       resolve(result[result.length-1].hash || result[result.length-1].Hash);
     })
@@ -370,7 +371,7 @@ const replaceConfigurationValues = async function(folderPath) {
 
   const chainId = await web3.eth.net.getId();
   if (chainId !== 508674158) {
-    replaceChain.pipe(replace(/\<div\ id\=\"evan\-testnet\"\>TESTNET\<\/div\>/g, ''))
+    replaceChain.pipe(replace(/\<div\ id\=\"evan\-testnet\"\>TESTCORE\<\/div\>/g, ''))
   }
 
   // replace configuration values
@@ -1103,7 +1104,60 @@ const deploymentMenu = async function() {
   }
 };
 
+/**
+ * Create a runtime with the given configuration and starts a repl console for this runtime.
+ */
+const deploymentRepl = async function() {
+  runtime = await createRuntime();
+
+  ;(() => {
+    const repl = require('repl');
+    const r = repl.start({
+      writer: (output) => {
+        if (output && output.then) {
+          output
+            .then((output) => { console.log(inspect(output, { colors: true })) })
+            .catch((error) => {
+              console.error('AN ERROR OCCURRED:')
+              console.error(inspect(error, { colors: true }))
+            })
+          return 'resolving promise...'
+        } else {
+          return inspect(output, { colors: true });
+        }
+      }
+    });
+    r.on('exit', () => { console.log('detached repl'); });
+    Object.assign(
+      r.context,
+      {
+        advancedDeployment,
+        configPath,
+        dappDeploymentFolder,
+        dappFolder,
+        licensesFolder,
+        mobileDeploymentFolder,
+        originFolder,
+        platformFolder,
+        runtimeFolder,
+        // globals
+        bcc: runtime,
+        config,
+        deploymentAccount,
+        deploymentDomain,
+        initialized,
+        ipfsConfig,
+        ipfsInstance,
+        ipfsUrl,
+        runtime,
+        web3,
+      }
+    );
+  })();
+}
+
 gulp.task('deploy', deploymentMenu);
+gulp.task('deploy-repl', deploymentRepl);
 
 gulp.task('cordova-prepare-android', async function() {
   await preparMobileAppBuild('android');

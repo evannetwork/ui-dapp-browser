@@ -321,7 +321,7 @@ function currentBrowser() {
       return 'opera';
   } else if (typeof window['InstallTrigger'] !== 'undefined') {
     return 'firefox';
-  } else if (/constructor/i.test(window['HTMLElement']) ||
+  } else if (/constructor/i.test(<any>window['HTMLElement']) ||
     (function (p) { return p.toString() === '[object SafariRemoteNotification]'; })
     (!window['safari'] || (typeof window['safari'] !== 'undefined' && window['safari'].pushNotification))) {
       return 'safari';

@@ -8,6 +8,15 @@
 ### Deprecations
 
 
+## Version 2.5.0
+### Features
+- add `deploy-repl` command so the usual deployment configuration can be used, to start a repl with deployment configuration
+- use new favicon
+
+### Fixes
+- use new `getSmartAgentAuthHeaders` to build `EvanAuth` header for smart-agent requests
+
+
 ## Version 2.4.0
 ### Features
 - add deployment replace for `stripe api key`

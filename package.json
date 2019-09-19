@@ -26,6 +26,7 @@
   "dependencies": {
     "console.table": "^0.9.1",
     "del": "^2.2.2",
+    "express": "^4.16.2",
     "gulp": "^3.9.1",
     "gulp-babel": "^7.0.1",
     "gulp-clean-css": "^3.9.0",
@@ -86,7 +87,6 @@
     "cordova-plugin-swift-support": "^3.1.1",
     "cordova-plugin-whitelist": "^1.3.3",
     "core-js": "^2.4.1",
-    "express": "^4.16.2",
     "ionic-plugin-keyboard": "^2.2.1",
     "lite-server": "^2.3.0",
     "node-sass": "^4.5.2",
@@ -137,10 +137,11 @@
     "cordova-run-android": "cordova build android",
     "cordova-run-ios": "cordova build ios",
     "deploy": "gulp --gulpfile gulp/deployment.js deploy --config",
+    "deploy-repl": "gulp --gulpfile gulp/deployment.js deploy-repl --config",
     "doc": "gulp --gulpfile gulp/documentation.js",
     "postinstall": "npm rebuild node-sass",
     "serve": "gulp --cwd . --gulpfile gulp/serve.js serve",
     "serve-build": "gulp --cwd . --gulpfile gulp/serve.js serve --build"
   },
-  "version": "2.4.0"
+  "version": "2.5.0"
 }

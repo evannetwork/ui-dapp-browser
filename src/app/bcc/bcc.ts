@@ -141,7 +141,7 @@ function getSigner(CoreBundle: any, provider = core.getCurrentProvider(), accoun
     signer = new CoreBundle.SignerExternal({
       logLog: CoreBundle.logLog,
       logLogLevel: CoreBundle.logLogLevel
-    })
+    });
   }
 
   return signer;
