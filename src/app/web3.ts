@@ -67,11 +67,28 @@ export function getWeb3Instance(url: string): any {
             keepaliveInterval: 5000,
             useNativeKeepalive: true,
           },
-          protocol: [ ],
+          protocol: []
         }
       );
 
+      provider.reconnect = () => {
+        provider.reconnecting = true;
+        setTimeout(() => {
+            provider.removeAllSocketListeners();
+
+            let connection = [];
+
+            connection = new provider.connection.constructor(provider.host, []);
+
+            provider.connection = connection;
+            provider.registerEventListeners();
+        }, provider.reconnectDelay);
+      };
+
       web3 = new evanGlobals.CoreBundle.Web3(provider, null, { transactionConfirmationBlocks: 1 });
+      setInterval(() => {
+        web3.eth.getBlockNumber();
+      }, 5000)
     }
   } catch (ex) {
     console.error(ex);
