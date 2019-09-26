@@ -118,7 +118,8 @@ gulp.task('bundle:js', ['bundle:vendor'], function() {
     .then(() => {
       return gulp
         .src(['src/build/app.min.js'])
-        .pipe(insert.prepend('let evanGlobals; let process = { env: { } }; '))
+        .pipe(insert.prepend('(function() { let evanGlobals={}; let process = { env: { } }; '))
+        .pipe(insert.append('})()'))
         .pipe(babel({
           plugins: babelPlugins
         }))
