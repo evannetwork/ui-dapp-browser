@@ -5,6 +5,7 @@
 
 ### Fixes
 - fix `Stream` errors in `Chrome` v77
+- remove custom agpl appendix
 
 ### Deprecations
 
