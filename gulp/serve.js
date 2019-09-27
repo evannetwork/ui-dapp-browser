@@ -100,6 +100,6 @@ gulp.task('serve', async function () {
   });
 
   app.listen(3000, function () {
-    console.log('\nServer running on 3000...');
+    console.log('\nServer running on http://localhost:3000 ...');
   });
 });
