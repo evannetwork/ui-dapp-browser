@@ -79,9 +79,9 @@ const babelPlugins = [
 gulp.task('bundle:vendor', function() {
   return gulp.src([
     'src/libs/core-js.client.shim.min.js',
-    'src/libs/system.src.js',
     'src/libs/navigo.js',
     'src/libs/polyfills.js',
+    'src/libs/system.src.js',
     'systemjs.config.js',
   ])
   .pipe(babel({

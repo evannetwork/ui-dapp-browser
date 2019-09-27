@@ -4,6 +4,7 @@
 ### Features
 
 ### Fixes
+- fix `Stream` errors in `Chrome` v77
 
 ### Deprecations
 
