@@ -15,14 +15,6 @@
   write to the Free Software Foundation, Inc., 51 Franklin Street,
   Fifth Floor, Boston, MA, 02110-1301 USA, or download the license from
   the following URL: https://evan.network/license/
-
-  You can be released from the requirements of the GNU Affero General Public
-  License by purchasing a commercial license.
-  Buying such a license is mandatory as soon as you use this software or parts
-  of it on other blockchains than evan.network.
-
-  For more information, please contact evan GmbH at this address:
-  https://evan.network/license/
 */
 
 import * as bccHelper from './bcc/bcc';
@@ -73,14 +65,12 @@ let nameResolver;
 delete window['System'];
 
 // prefill bcc for systemjs plugin usage
-evanGlobals = {
-  core: core,
-  ipfsCatPromise: ipfs.ipfsCatPromise,
-  lightwallet: lightwallet,
-  restIpfs: ipfs.restIpfs,
-  System : System,
-  queryParams: routing.getQueryParameters()
-};
+evanGlobals.core = core;
+evanGlobals.ipfsCatPromise = ipfs.ipfsCatPromise;
+evanGlobals.lightwallet = lightwallet;
+evanGlobals.restIpfs = ipfs.restIpfs;
+evanGlobals.System = System;
+evanGlobals.queryParams = routing.getQueryParameters();
 
 evanGlobals.System.map['bcc'] = `bcc.${ getDomainName() }!dapp-content`;
 evanGlobals.System.map['bcc-profile'] = `bcc.${ getDomainName() }!dapp-content`;
