@@ -2,6 +2,8 @@
 
 ## Next Version
 ### Features
+- allow to load the dapp-browser without starting url watcher
+- fix iframe include and add evan parameter to iframe window
 
 ### Fixes
 - fix `Stream` errors in `Chrome` v77

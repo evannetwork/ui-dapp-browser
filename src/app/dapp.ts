@@ -451,7 +451,7 @@ export async function startDApp(dappEns: string, container = document.body, useD
       iframe.className += ' evan-dapp';
 
       // open the iframe using the dappBaseUrl
-      iframe.setAttribute('src', `${ dappBaseUrl }#/${ dappEns }`);
+      iframe.setAttribute('src', `${ dappBaseUrl }/${ entrypoint }`);
 
       // remove the loading screen
       loading.finishDAppLoading();
@@ -461,6 +461,11 @@ export async function startDApp(dappEns: string, container = document.body, useD
 
       // remove other elements from the container when they are still existing
       removePreviousContainerChilds();
+
+      // apply our context to the iframe
+      (<any>iframe.contentWindow).evan = {
+        System: evanGlobals.System
+      };
     } else {
       throw new Error('Invalid entry point defined!');
     }

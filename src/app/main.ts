@@ -87,7 +87,7 @@ evanGlobals.System.map['angular-core'] = 'angularcore.evan!dapp-content';
 /**
  * Starts the whole dapp-browser.
  */
-export async function initializeEvanNetworkStructure(): Promise<void> {
+export async function initializeEvanNetworkStructure(enableRouting = true): Promise<void> {
   // activate color themes
   utils.activateColorTheme(utils.getColorTheme());
 
@@ -157,14 +157,16 @@ export async function initializeEvanNetworkStructure(): Promise<void> {
           }
         }
 
-        // initialize dynamic routing and apply eventually clicked notification initial route
-        routing.initialize(initialRoute);
+        if (enableRouting) {
+          // initialize dynamic routing and apply eventually clicked notification initial route
+          routing.initialize(initialRoute);
 
-        // add account watcher
-        core.watchAccountChange();
+          // add account watcher
+          core.watchAccountChange();
 
-        // watch for specific frontend events (low eve, ...)
-        startWatchers();
+          // watch for specific frontend events (low eve, ...)
+          startWatchers();
+        }
 
         if (utils.devMode) {
           window['evanGlobals'] = evanGlobals;
