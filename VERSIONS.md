@@ -8,6 +8,12 @@
 ### Deprecations
 
 
+## Version 2.5.1
+### Fixes
+- fix `Stream` errors in `Chrome` v77
+- remove custom agpl appendix
+
+
 ## Version 2.5.0
 ### Features
 - add `deploy-repl` command so the usual deployment configuration can be used, to start a repl with deployment configuration
