@@ -4,10 +4,14 @@
 ### Features
 
 ### Fixes
-- fix `Stream` errors in `Chrome` v77
-- remove custom agpl appendix
 
 ### Deprecations
+
+
+## Version 2.5.1
+### Fixes
+- fix `Stream` errors in `Chrome` v77
+- remove custom agpl appendix
 
 
 ## Version 2.5.0
