@@ -106,82 +106,76 @@ export async function initializeEvanNetworkStructure(enableRouting = true): Prom
   // const preloadAngular = dapp.preloadAngularLibs();
 
   // load smart-contracts and blockchain-core minimal setup for accessing ens from ipfs
-  Promise
-    .all<any, any, any>([
-      System
-        .import(`bcc`)
-        .then(CoreBundle => utils.raiseProgress(10, CoreBundle)),
-      System
-        .import('smart-contracts')
-        .then(SmartContracts => utils.raiseProgress(10, SmartContracts)),
-      // check if an executor agent should be used for the application runtime
-      core.getAgentExecutor()
-    ])
-    .then(async ([ CoreBundle, SmartContracts ]) => {
-      // make it global available without loading it twice
-      evanGlobals.CoreBundle = CoreBundle;
-      evanGlobals.SmartContracts = SmartContracts;
+  try {
+    const [ CoreBundle, SmartContracts ] = await Promise
+      .all<any, any, any>([
+        System
+          .import(`bcc`)
+          .then(loaded => utils.raiseProgress(10, loaded)),
+        System
+          .import('smart-contracts')
+          .then(loaded => utils.raiseProgress(10, loaded)),
+        // check if an executor agent should be used for the application runtime
+        core.getAgentExecutor()
+      ]);
 
-      try {
-        // initialize bcc and make it globally available
-        CoreRuntime = await updateCoreRuntime(CoreBundle, SmartContracts);
-        evanGlobals.CoreRuntime = CoreRuntime;
+    // make it global available without loading it twice
+    evanGlobals.CoreBundle = CoreBundle;
+    evanGlobals.SmartContracts = SmartContracts;
 
-        // tell everyone, that bcc was loaded and initialized
-        utils.setBccReady();
+    // initialize bcc and make it globally available
+    CoreRuntime = await updateCoreRuntime(CoreBundle, SmartContracts);
+    evanGlobals.CoreRuntime = CoreRuntime;
 
-        // set variables to export to dapps
-        definition = CoreRuntime.definition;
-        nameResolver = CoreRuntime.nameResolver;
-        web3 = CoreRuntime.web3;
+    // tell everyone, that bcc was loaded and initialized
+    utils.setBccReady();
 
-        // wait for device ready event so we can load notifications
-        // await preloadAngular;
-        await utils.onDeviceReady();
+    // set variables to export to dapps
+    definition = CoreRuntime.definition;
+    nameResolver = CoreRuntime.nameResolver;
+    web3 = CoreRuntime.web3;
 
-        // initialize queue
-        queue.updateQueue();
+    // wait for device ready event so we can load notifications
+    // await preloadAngular;
+    await utils.onDeviceReady();
 
-        // use initial route to handle initially clicked notifications
-        let initialRoute;
-        if ((<any>window).cordova) {
-          // initialize notifications and try to load notifications that the user has clicked, while
-          // the app was closed
-          const initialNotification = await notifications.initialize();
+    // initialize queue
+    queue.updateQueue();
 
-          // if an initialNotification could be loaded, get the url from the notification that
-          // should be opened
-          if (initialNotification) {
-            initialNotification.evanNotificationOpened = true;
-            initialRoute = await notifications.getDAppUrlFromNotification(initialNotification);
-          }
-        }
+    // use initial route to handle initially clicked notifications
+    let initialRoute;
+    if ((<any>window).cordova) {
+      // initialize notifications and try to load notifications that the user has clicked, while
+      // the app was closed
+      const initialNotification = await notifications.initialize();
 
-        if (enableRouting) {
-          // initialize dynamic routing and apply eventually clicked notification initial route
-          routing.initialize(initialRoute);
-
-          // add account watcher
-          core.watchAccountChange();
-
-          // watch for specific frontend events (low eve, ...)
-          startWatchers();
-        }
-
-        if (utils.devMode) {
-          window['evanGlobals'] = evanGlobals;
-        }
-      } catch (ex) {
-        console.error(ex);
-
-        utils.showError();
+      // if an initialNotification could be loaded, get the url from the notification that
+      // should be opened
+      if (initialNotification) {
+        initialNotification.evanNotificationOpened = true;
+        initialRoute = await notifications.getDAppUrlFromNotification(initialNotification);
       }
-    })
-    .catch(ex => {
-      console.error(ex);
+    }
 
-      utils.showError();
-    });
+    if (enableRouting) {
+      // initialize dynamic routing and apply eventually clicked notification initial route
+      routing.initialize(initialRoute);
+
+      // add account watcher
+      core.watchAccountChange();
+
+      // watch for specific frontend events (low eve, ...)
+      startWatchers();
+    }
+
+    if (utils.devMode) {
+      window['evanGlobals'] = evanGlobals;
+    }
+  } catch (ex) {
+    console.error(ex);
+
+    utils.showError();
+  }
 }
 
 System.originalImport = System.import;
