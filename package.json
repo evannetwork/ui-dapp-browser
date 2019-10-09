@@ -61,7 +61,7 @@
     "@compodoc/gulp-compodoc": "0.0.8",
     "@evan.network/api-blockchain-core": "^2.3.0",
     "@evan.network/dbcp": "^1.5.2",
-    "@evan.network/ui-angular-sass": "^2.1.0",
+    "@evan.network/ui-angular-sass": "^2.1.1",
     "@types/node": "^6.0.92",
     "@types/systemjs": "^0.20.6",
     "angular-in-memory-web-api": "^0.3.2",
@@ -143,5 +143,5 @@
     "serve": "gulp --cwd . --gulpfile gulp/serve.js serve",
     "serve-build": "gulp --cwd . --gulpfile gulp/serve.js serve --build"
   },
-  "version": "2.5.0"
+  "version": "2.5.1"
 }
