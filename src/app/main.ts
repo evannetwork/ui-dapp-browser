@@ -86,6 +86,10 @@ evanGlobals.System.map['angular-core'] = 'angularcore.evan!dapp-content';
 
 /**
  * Starts the whole dapp-browser.
+ *
+ * @param      {boolean}  enableRouting  dapp-browser watch for url changes and automatically starts
+ *                                       dapps with ens addresses that were passed to the location
+ *                                       hash
  */
 export async function initializeEvanNetworkStructure(enableRouting = true): Promise<void> {
   // activate color themes
@@ -100,10 +104,6 @@ export async function initializeEvanNetworkStructure(enableRouting = true): Prom
 
   // set initial loadin step
   utils.raiseProgress(5);
-
-  // check if angular-libs are already cached as the latest version => load it directly from ipfs
-  // simoultaniously to bcc
-  // const preloadAngular = dapp.preloadAngularLibs();
 
   // load smart-contracts and blockchain-core minimal setup for accessing ens from ipfs
   try {
@@ -136,7 +136,6 @@ export async function initializeEvanNetworkStructure(enableRouting = true): Prom
     web3 = CoreRuntime.web3;
 
     // wait for device ready event so we can load notifications
-    // await preloadAngular;
     await utils.onDeviceReady();
 
     // initialize queue

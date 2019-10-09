@@ -474,7 +474,7 @@ export async function startDApp(dappEns: string, container = document.body, useD
 
         // if user requests evan user context, send it via post message
         if (event.data === 'evan-user-context') {
-          // load user specific data (if the user has already logged in), so it can be passed it into
+          // load user specific data (if the user has already logged in), so it can be passed into
           // the iframe
           const vault = lightwallet.loadVault();
           let privateKey;
