@@ -156,7 +156,7 @@ function activeAccount(): string {
 
         if (accountId && accounts.indexOf(accountId) === -1) {
           if (accounts.length > 0) {
-            setAccountId(accounts[0])
+            setAccountId(accounts[0]);
           } else {
             delete window.localStorage['evan-account'];
           }
