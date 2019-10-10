@@ -146,6 +146,9 @@ async function createRuntime() {
 
     ipnsHashes = config.ipnsHashes || { };
     ipnsPrivateKeys = config.ipnsPrivateKeys || { };
+    config.dappConfigSwitches = config.dappConfigSwitches || { }
+    config.dappConfigSwitches.accounts = config.dappConfigSwitches.accounts || { }
+    config.dappConfigSwitches.url = config.dappConfigSwitches.url || { }
   } catch (ex) {
     console.error(ex);
     throw new Error(`No or invalid config file specified!`);

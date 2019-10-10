@@ -8,6 +8,15 @@
 ### Deprecations
 
 
+## Version 2.6.0
+### Features
+- allow to load the dapp-browser without starting url watcher
+- fix iframe include and add evan parameter to iframe window
+
+### Fixes
+- remove unnecessary dependencies and use correct tslint configuration
+
+
 ## Version 2.5.1
 ### Fixes
 - fix `Stream` errors in `Chrome` v77

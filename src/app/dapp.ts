@@ -17,9 +17,12 @@
   the following URL: https://evan.network/license/
 */
 
+import * as core from './core';
+import * as ipfs  from './ipfs';
+import * as lightwallet from './lightwallet';
+import * as loading  from './loading';
 import * as utils from './utils';
 import { config } from './config';
-import * as loading  from './loading';
 import { watchForEveLow } from './watchers';
 
 
@@ -451,7 +454,7 @@ export async function startDApp(dappEns: string, container = document.body, useD
       iframe.className += ' evan-dapp';
 
       // open the iframe using the dappBaseUrl
-      iframe.setAttribute('src', `${ dappBaseUrl }#/${ dappEns }`);
+      iframe.setAttribute('src', `${ dappBaseUrl }/${ entrypoint }`);
 
       // remove the loading screen
       loading.finishDAppLoading();
@@ -461,6 +464,47 @@ export async function startDApp(dappEns: string, container = document.body, useD
 
       // remove other elements from the container when they are still existing
       removePreviousContainerChilds();
+
+      // bind event listener to the iframe window and wait until it requests current user data
+      const handleUserContext = async (event) => {
+        // if iframe was deleted and event listener is opened, close it
+        if (!iframe || !iframe.contentWindow) {
+          return window.removeEventListener('message', handleUserContext);
+        }
+
+        // if user requests evan user context, send it via post message
+        if (event.data === 'evan-user-context') {
+          // load user specific data (if the user has already logged in), so it can be passed into
+          // the iframe
+          const vault = lightwallet.loadVault();
+          let privateKey;
+          let encryptionKey;
+          if (vault && vault.pwDerivedKey) {
+            privateKey = await lightwallet.getPrivateKey(vault, core.getAccountId());
+            encryptionKey = await lightwallet.getEncryptionKey();
+          }
+
+          // send the data to the contentWindow
+          (<any>iframe.contentWindow).postMessage(
+            {
+              accountId: core.getAccountId(),
+              config,
+              encryptionKey,
+              ipfsConfig: ipfs.ipfsConfig,
+              language: window.localStorage['evan-language'],
+              privateKey,
+              testPassword: window.localStorage['evan-test-password'],
+              type: 'evan-user-context',
+              vault: window.localStorage['evan-vault'],
+            },
+            // ensure to only load iframes from ipfs
+            utils.devMode ? window.location.origin : ipfs.getRestIpfs().api_url(''),
+          );
+
+          window.removeEventListener('message', handleUserContext);
+        }
+      };
+      window.addEventListener('message', handleUserContext);
     } else {
       throw new Error('Invalid entry point defined!');
     }
