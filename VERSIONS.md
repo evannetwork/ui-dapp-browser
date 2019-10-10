@@ -4,6 +4,7 @@
 ### Features
 
 ### Fixes
+- fix account id switching on multiple opened tabs
 
 ### Deprecations
 
