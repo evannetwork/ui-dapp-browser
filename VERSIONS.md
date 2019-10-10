@@ -2,8 +2,11 @@
 
 ## Next Version
 ### Features
+- allow to load the dapp-browser without starting url watcher
+- fix iframe include and add evan parameter to iframe window
 
 ### Fixes
+- remove unnecessary dependencies and use correct tslint configuration
 
 ### Deprecations
 

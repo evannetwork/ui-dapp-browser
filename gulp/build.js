@@ -210,8 +210,6 @@ gulp.task('sass', function () {
     // file is 1,4mb big => to reduce file size, remove noto sans font files
     .pipe(replace(/(?:,\s?)?url\(\'[^']*\'\) format\(\'(?:truetype|woff2)\'\)(?:,\s?)?/g, ''))
     .pipe(concat(`dapp-root.css`))
-    .pipe(cssBase64({ maxWeightResource: 849616, baseDir : 'node_modules/ui-angular-sass' }))
-    .pipe(cssBase64({ maxWeightResource: 849616, baseDir : '../../ui-angular/ui-angular-sass' }))
     .pipe(gulp.dest(buildFolder));
 });
 
