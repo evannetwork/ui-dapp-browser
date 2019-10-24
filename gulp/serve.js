@@ -21,7 +21,6 @@ const { lstatSync, readdirSync } = require('fs');
 const express = require('express');
 const gulp = require('gulp');
 const serveStatic = require('serve-static');
-const runSequence = require('run-sequence');
 const path = require('path');
 
 const isDirectory = source => lstatSync(source).isDirectory()
@@ -34,36 +33,37 @@ gulp.task('serve', async function () {
   process.chdir(path.resolve('..'));
 
   if (enableBuild) {
+    // run build script initially
     require(path.resolve('./gulp/build.js'));
+    await new Promise(resolve => gulp.task('build')(resolve));
 
-    await new Promise((resolve, reject) => runSequence('build', () => {
-      gulp.watch(
-        [
-          'src/**/*.ts',
-          'src/**/*.js',
-          'systemjs.config.js',
-          '!src/build/*.js'
-        ],
-        ['build']
-      );
+    // watch for changes
+    gulp.watch(
+      [
+        'src/**/*.ts',
+        'src/libs/*.js',
+        'src/systemjs-plugins/*.js',
+        'src/*.js',
+        'systemjs.config.js',
+        '!src/build/*.js'
+      ],
+      gulp.series(['build'])
+    );
 
-      gulp.watch(
-        [
-          'src/**/*.scss',
-        ],
-        ['sass', 'copy']
-      );
+    gulp.watch(
+      [
+        'src/**/*.scss',
+      ],
+      gulp.series(['sass', 'copy'])
+    );
 
-      gulp.watch(
-        [
-          'src/**/*.html',
-          '!src/build/*.html'
-        ],
-        ['copy']
-      );
-
-      resolve();
-    }))
+    gulp.watch(
+      [
+        'src/**/*.html',
+        '!src/build/*.html'
+      ],
+      gulp.series(['copy'])
+    );
   }
 
   var app = express();
