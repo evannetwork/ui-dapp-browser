@@ -82,7 +82,7 @@ gulp.task('bundle:vendor', function() {
   .pipe(gulp.dest('src/build'));
 })
 
-gulp.task('bundle:js', gulp.series(['bundle:vendor']), function() {
+gulp.task('bundle:js', gulp.series(['bundle:vendor'], function() {
   var builder = new Builder('.', 'systemjs.config.js');
 
   return builder
@@ -127,7 +127,7 @@ gulp.task('bundle:js', gulp.series(['bundle:vendor']), function() {
     .catch(function(err) {
       console.error('>>> [systemjs-builder] Bundling failed'.bold.green, err);
     })
-});
+}));
 
 // Compile TypeScript to JS
 gulp.task('compile:ts', function () {
