@@ -24,6 +24,7 @@
     }
   },
   "dependencies": {
+    "@evan.network/api-blockchain-core": "^2.3.0",
     "console.table": "^0.9.1",
     "del": "^2.2.2",
     "express": "^4.16.2",
