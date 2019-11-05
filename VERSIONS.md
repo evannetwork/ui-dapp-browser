@@ -6,6 +6,7 @@
 ### Fixes
 - fix account id switching on multiple opened tabs
 - update gulp build scripts to be compatible node 12
+- fix `build` script
 
 ### Deprecations
 
