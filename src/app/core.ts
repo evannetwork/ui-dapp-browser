@@ -27,11 +27,6 @@ import * as utils from './utils';
 declare let evanGlobals: any;
 
 /**
- * save the current account for later usage
- */
-let lastAccount = '';
-
-/**
  * valid login providers
  */
 const validProviders = [
@@ -136,6 +131,8 @@ function setCurrentProvider(provider: string) {
  * @return     {string}  account id of the current user (0x0...)
  */
 function activeAccount(): string {
+  checkAccountChange();
+
   switch (getCurrentProvider()) {
     case 'metamask': {
       if ((<any>window).web3) {
@@ -157,9 +154,9 @@ function activeAccount(): string {
         const accounts = lightwallet.getAccounts(vault);
         const accountId = getAccountId();
 
-        if (accounts.indexOf(accountId) === -1) {
+        if (accountId && accounts.indexOf(accountId) === -1) {
           if (accounts.length > 0) {
-            window.localStorage['evan-account'] = accounts[0];
+            setAccountId(accounts[0]);
           } else {
             delete window.localStorage['evan-account'];
           }
@@ -257,6 +254,7 @@ function getAccountId() {
  * @param      {string}  accountId  account id to set to the localStorage
  */
 function setAccountId(accountId: string) {
+  checkAccountChange();
   window.localStorage['evan-account'] = accountId;
 }
 
@@ -275,30 +273,31 @@ function getExternalAccount() {
 }
 
 /**
+ * save the current account for later usage
+ */
+let lastAccount = '';
+
+/**
  * Watches for account changes and reload the page if nessecary
  */
 function watchAccountChange() {
-  let dialogIsOpen = false;
+  lastAccount = getAccountId() || '';
 
-  setInterval(() => {
-    const currAccount = activeAccount();
-    const urlRoute = routing.getRouteFromUrl();
-    let isOnboarding = urlRoute.indexOf('onboarding') === 0;
+  setInterval(() => checkAccountChange(), 1000);
+}
 
-    if (isOnboarding) {
-      if (urlRoute.indexOf('/onboarding') !== -1 && getCurrentProvider() === 'metamask') {
-        isOnboarding = false;
-      }
-    }
+/**
+ * Check if the current account has changed, so reload!
+ */
+function checkAccountChange() {
+  const currAccount = getAccountId() || '';
+  let isOnboarding = routing.getRouteFromUrl().indexOf('onboarding') !== -1;
 
-    if (!dialogIsOpen && !isOnboarding && lastAccount && currAccount !== lastAccount) {
-      dialogIsOpen = true;
-
-      window.location.reload();
-    }
-
+  if (currAccount && lastAccount && currAccount !== lastAccount) {
+    window.location.reload();
+  } else {
     lastAccount = currAccount;
-  }, 1000);
+  }
 }
 
 /**

@@ -30,7 +30,6 @@ const insert = require('gulp-insert');
 const path = require('path');
 const plumber = require('gulp-plumber');
 const replace = require('gulp-replace');
-const runSequence = require('run-sequence');
 const sass = require('gulp-sass');
 const serveStatic = require('serve-static');
 const sourcemaps = require('gulp-sourcemaps');
@@ -83,7 +82,7 @@ gulp.task('bundle:vendor', function() {
   .pipe(gulp.dest('src/build'));
 })
 
-gulp.task('bundle:js', ['bundle:vendor'], function() {
+gulp.task('bundle:js', gulp.series('bundle:vendor', function() {
   var builder = new Builder('.', 'systemjs.config.js');
 
   return builder
@@ -128,7 +127,7 @@ gulp.task('bundle:js', ['bundle:vendor'], function() {
     .catch(function(err) {
       console.error('>>> [systemjs-builder] Bundling failed'.bold.green, err);
     })
-});
+}));
 
 // Compile TypeScript to JS
 gulp.task('compile:ts', function () {
@@ -184,8 +183,7 @@ gulp.task('clean:dist', function () {
   return del(['runtime/*', '!runtime/external']);
 });
 
-gulp.task('clean', ['clean:dist']);
-
+gulp.task('clean', gulp.series(['clean:dist']));
 
 // Lint Typescript
 gulp.task('lint:ts', function() {
@@ -213,20 +211,8 @@ gulp.task('sass', function () {
     .pipe(gulp.dest(buildFolder));
 });
 
-
-gulp.task('scripts', function(callback) {
-  runSequence(['lint:ts', 'clean:dist'], 'compile:ts', 'bundle:js', 'minify:js', callback);
-});
-
-gulp.task('copy', function(callback) {
-  runSequence('copy:build', 'copy:assets', callback);
-});
-
-gulp.task('build', function(callback) {
-  runSequence('scripts', 'sass', 'copy', callback);
-});
-
-gulp.task('default', function(callback) {
-  runSequence('build', 'serve', callback);
-});
+gulp.task('scripts', gulp.series(['lint:ts', 'clean:dist', 'compile:ts', 'bundle:js', 'minify:js' ]));
+gulp.task('copy', gulp.series([ 'copy:build', 'copy:assets' ]));
+gulp.task('build', gulp.series([ 'scripts', 'sass', 'copy' ]));
+gulp.task('default', gulp.series([ 'build', 'serve' ]));
 

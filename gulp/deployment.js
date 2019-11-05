@@ -814,9 +814,7 @@ const uglifyJS = async function(folder) {
       }))
       .pipe(replace('isMultiaddr=function(', 'isMultiaddr=function(){return true;},function('))
       .pipe(gulp.dest(folder))
-      .on('end', () => {
-        resolve()
-      });
+      .on('end', () => resolve());
   });
 }
 
@@ -1079,7 +1077,6 @@ const deploymentMenu = async function() {
           if (results.uglify) {
             await uglify('DApps', dappDeploymentFolder);
           }
-
           await replaceUmlauts();
 
           if (enableDeploy) {

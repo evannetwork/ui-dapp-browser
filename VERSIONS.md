@@ -8,6 +8,13 @@
 ### Deprecations
 
 
+## Version 2.6.1
+### Fixes
+- fix account id switching on multiple opened tabs
+- update gulp build scripts to be compatible node 12
+- fix `build` script
+
+
 ## Version 2.6.0
 ### Features
 - allow to load the dapp-browser without starting url watcher
