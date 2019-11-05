@@ -122,7 +122,7 @@
     "url": "git@github.com:evannetwork/ui-dapp-browser.git"
   },
   "scripts": {
-    "build": "gulp --gulpfile gulp/build.js build",
+    "build": "gulp build",
     "cordova-prepare-android": "gulp --cwd . --gulpfile gulp/deployment.js cordova-prepare-android --config",
     "cordova-prepare-ios": "gulp --cwd . --gulpfile gulp/deployment.js cordova-prepare-ios --config",
     "cordova-run-android": "cordova build android",
