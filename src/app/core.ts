@@ -53,6 +53,7 @@ function logout(disabledReload?: boolean) {
   delete window.localStorage['evan-terms-of-use'];
   delete window.localStorage['evan-account'];
   delete window.localStorage['evan-provider'];
+  delete window.localStorage['evan-alias'];
 
   // remove decrypted vault from runtime and localStorage
   lightwallet.deleteActiveVault();
