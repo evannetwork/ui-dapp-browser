@@ -703,21 +703,20 @@ prepareMobileDeploy = async function () {
       'logo.png',
       'cache.manifest',
       'cordova.js'
-    ]
-    .map(file => `${ runtimeFolder }/${ file }`))
+    ].map(file => `${ runtimeFolder }/${ file }`), { allowEmpty: true })
     .pipe(gulp.dest(mobileDeploymentFolder))
     .on('end', () => resolve())
   );
 
   // copy dbcp description
   await new Promise(resolve => gulp
-    .src([ `${ dappFolder }/dbcp.json` ])
+    .src([ `${ dappFolder }/dbcp.json` ], { allowEmpty: true })
     .pipe(gulp.dest(mobileDeploymentFolder))
     .on('end', () => resolve())
   );
 
   await new Promise(resolve => gulp
-    .src(dappBrowserFiles.map(file => `${runtimeFolder}/${file}`))
+    .src(dappBrowserFiles.map(file => `${runtimeFolder}/${file}`), { allowEmpty: true })
     .pipe(gulp.dest(`${ mobileDeploymentFolder }/build`))
     .on('end', () => resolve())
   );
