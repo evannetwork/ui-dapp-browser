@@ -4,6 +4,7 @@
 ### Features
 
 ### Fixes
+- fix large font-sizes on mobile ios safari in `horizontal` orientation
 
 ### Deprecations
 
