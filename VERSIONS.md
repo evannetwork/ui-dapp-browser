@@ -8,6 +8,14 @@
 ### Deprecations
 
 
+## Version 2.7.0
+### Features
+- set `dashboard.vue.evan` and `onboarding.vue.evan` as default entrypoints
+
+### Fixes
+- fix large font-sizes on mobile ios safari in `horizontal` orientation
+
+
 ## Version 2.6.1
 ### Fixes
 - fix account id switching on multiple opened tabs
