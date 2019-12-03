@@ -44,14 +44,15 @@ export function goToOnboarding() {
   const activeRoute = hashOrigin.split('?')[0];
   const queryParams = hashOrigin.split('?')[1];
 
-  router.navigate(`/onboarding.${ utils.getDomainName() }?origin=${ activeRoute }${ queryParams ? '&' + queryParams : '' }`);
+  router.navigate(`/onboarding.vue.${ utils.getDomainName() }` +
+    `?origin=${ activeRoute }${ queryParams ? '&' + queryParams : '' }`);
 }
 
 /**
  * Go to dashboard.  (#/dashboard.evan)
  */
 export function goToDashboard() {
-  router.navigate(`/dashboard.${ utils.getDomainName() }`);
+  router.navigate(`/dashboard.vue.${ utils.getDomainName() }`);
 }
 
 /**
@@ -60,7 +61,9 @@ export function goToDashboard() {
  * @return     {boolean}  True if onboarding, False otherwise.
  */
 export function isOnboarding(): boolean {
-  return window.location.hash.indexOf(`/onboarding.${ utils.getDomainName() }`) !== -1;
+  return [ `/onboarding.${ utils.getDomainName() }`, `/onboarding.vue.${ utils.getDomainName() }` ]
+    .filter(onboardingUrl => window.location.hash.indexOf(onboardingUrl) !== -1)
+    .length !== 0;
 }
 
 /**
@@ -98,7 +101,7 @@ export async function getDefaultDAppENS(): Promise<string> {
     } catch (ex) { }
   }
 
-  return `dashboard.${ utils.getDomainName() }`;
+  return `dashboard.vue.${ utils.getDomainName() }`;
 }
 
 /**
