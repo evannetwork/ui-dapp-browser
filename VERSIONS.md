@@ -2,6 +2,7 @@
 
 ## Next Version
 ### Features
+- set `dashboard.vue.evan` and `onboarding.vue.evan` as default entrypoints
 
 ### Fixes
 - fix large font-sizes on mobile ios safari in `horizontal` orientation
