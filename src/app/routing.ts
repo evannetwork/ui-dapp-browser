@@ -90,15 +90,17 @@ export async function getDefaultDAppENS(): Promise<string> {
   const host = window.location.host;
 
   if (!host.startsWith('ipfs') && !host.startsWith('localhost')) {
-    const hostDApp = host.replace('evan.network', 'evan');
+    if (host !== 'dashboard.evan.network' && host !== 'dashboard.test.evan.network') {
+      const hostDApp = host.replace('evan.network', 'evan');
 
-    try {
-      const definition = await evanGlobals.System.import(`${hostDApp}!ens`);
+      try {
+        const definition = await evanGlobals.System.import(`${hostDApp}!ens`);
 
-      if (definition && definition.dapp && definition.dapp.origin) {
-        return hostDApp;
-      }
-    } catch (ex) { }
+        if (definition && definition.dapp && definition.dapp.origin) {
+          return hostDApp;
+        }
+      } catch (ex) { }
+    }
   }
 
   return `dashboard.vue.${ utils.getDomainName() }`;
