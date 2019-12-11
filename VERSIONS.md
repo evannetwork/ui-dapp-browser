@@ -4,6 +4,7 @@
 ### Features
 
 ### Fixes
+- add `hidden` class to `initial-loading` only when it was not added before
 
 ### Deprecations
 

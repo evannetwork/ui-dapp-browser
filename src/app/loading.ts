@@ -31,7 +31,7 @@ export let isFirstLoad = true;
 export function finishDAppLoading()  {
   const initialLoading = document.getElementById('evan-initial-loading');
 
-  if (initialLoading) {
+  if (initialLoading && initialLoading.className.indexOf('hidden') === -1) {
     utils.raiseProgress(10);
     initialLoading.className += ' hidden';
 
