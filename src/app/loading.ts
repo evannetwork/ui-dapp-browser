@@ -33,7 +33,7 @@ export function finishDAppLoading()  {
 
   if (initialLoading && initialLoading.className.indexOf('hidden') === -1) {
     utils.raiseProgress(10);
-    initialLoading.className += ' hidden';
+    initialLoading.classList.add('hidden');
 
     setTimeout(() => {
       // don't remove it, when another function call was started before
