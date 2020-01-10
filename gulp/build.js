@@ -17,24 +17,19 @@
   the following URL: https://evan.network/license/
 */
 
-const { lstatSync, readdirSync } = require('fs');
 const babel = require('gulp-babel');
 const Builder = require('systemjs-builder');
 const concat = require('gulp-concat');
-const cssBase64 = require('gulp-css-base64');
 const del = require('del');
-const express = require('express');
 const gulp = require('gulp');
-const gulpWatch = require('gulp-debounced-watch');
 const insert = require('gulp-insert');
 const path = require('path');
 const plumber = require('gulp-plumber');
 const replace = require('gulp-replace');
 const sass = require('gulp-sass');
-const serveStatic = require('serve-static');
 const sourcemaps = require('gulp-sourcemaps');
 const tsc = require('gulp-typescript');
-const tscConfig = require('./../tsconfig.json');
+const tscConfig = require('../tsconfig.json');
 const tslint = require('gulp-tslint');
 const uglify = require('gulp-uglify');
 
