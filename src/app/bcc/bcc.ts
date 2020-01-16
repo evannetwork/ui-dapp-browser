@@ -253,6 +253,10 @@ async function getProfileForAccount(CoreBundle: any, accountId: string) {
     accountId,
   );
 
+  if(config.useIdentity) {
+    accountId = await coreRuntime.verifications.getIdentityForAccount(accountId, true);
+  }
+
   const cryptoProvider = new CoreBundle.CryptoProvider({
     unencrypted: new CoreBundle.Unencrypted(),
     aes: new CoreBundle.Aes(),
@@ -342,6 +346,15 @@ async function isAccountPasswordValid(CoreBundle: any, accountId: string, passwo
     accountId,
     lightwallet.getEncryptionKeyFromPassword(encryptionSalt, password)
   );
+  if(config.useIdentity) {
+    const coreRuntime = coreRuntimes[CoreBundle.instanceId];
+    accountId = await coreRuntime.verifications.getIdentityForAccount(accountId, true);
+    profile.ipld.keyProvider.setKeysForAccount(
+      accountId,
+      lightwallet.getEncryptionKeyFromPassword(encryptionSalt, password)
+    );
+  }
+
 
   let targetPrivateKey;
   try {
@@ -469,7 +482,13 @@ const isAccountOnboarded = async function(account: string): Promise<boolean> {
     const hash = await coreRuntime.nameResolver.executor.executeContractCall(contract, 'getProfile', account, { from: account, });
 
     if (hash === '0x0000000000000000000000000000000000000000') {
-      return false;
+      const identity = await coreRuntime.verifications.getIdentityForAccount(account, true);
+      const identityProfile = await coreRuntime.nameResolver.executor.executeContractCall(contract, 'getProfile', identity, { from: account, });
+      if (identityProfile === '0x0000000000000000000000000000000000000000') {
+        return false;
+      } else {
+        return true;
+      }
     } else {
       return true;
     }
