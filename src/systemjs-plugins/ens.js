@@ -104,6 +104,9 @@ const getDefinitionFromEns = function(ensAddress, domain) {
 
         throw new Error(`no valid dbcp on ${ validEnsAddress }`);
       }
+    })
+    .catch((ex) => {
+      throw new Error(`no valid dbcp on ${ validEnsAddress }`);
     });
 
   if (cacheAvailable) {
