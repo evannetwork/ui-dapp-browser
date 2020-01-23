@@ -5,6 +5,7 @@
 
 ### Fixes
 - add `hidden` class to `initial-loading` only when it was not added before
+- fix weird browser refresh in onboarding
 
 ### Deprecations
 
