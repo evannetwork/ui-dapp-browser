@@ -40,6 +40,11 @@ const validProviders = [
 let agentExecutor;
 
 /**
+ * save the current account for later usage
+ */
+let lastAccount = '';
+
+/**
  * Logout the current user. Removes the active account, provider and terms of use acceptance.
  *
  * @param      {boolean}  disabledReload  disable window reload
@@ -132,8 +137,6 @@ function setCurrentProvider(provider: string) {
  * @return     {string}  account id of the current user (0x0...)
  */
 function activeAccount(): string {
-  checkAccountChange();
-
   switch (getCurrentProvider()) {
     case 'metamask': {
       if ((<any>window).web3) {
@@ -255,7 +258,7 @@ function getAccountId() {
  * @param      {string}  accountId  account id to set to the localStorage
  */
 function setAccountId(accountId: string) {
-  checkAccountChange();
+  lastAccount = accountId;
   window.localStorage['evan-account'] = accountId;
 }
 
@@ -274,31 +277,18 @@ function getExternalAccount() {
 }
 
 /**
- * save the current account for later usage
- */
-let lastAccount = '';
-
-/**
  * Watches for account changes and reload the page if nessecary
  */
 function watchAccountChange() {
-  lastAccount = getAccountId() || '';
+  lastAccount = getAccountId();
 
-  setInterval(() => checkAccountChange(), 1000);
-}
-
-/**
- * Check if the current account has changed, so reload!
- */
-function checkAccountChange() {
-  const currAccount = getAccountId() || '';
-  let isOnboarding = routing.getRouteFromUrl().indexOf('onboarding') !== -1;
-
-  if (currAccount && lastAccount && currAccount !== lastAccount) {
-    window.location.reload();
-  } else {
-    lastAccount = currAccount;
-  }
+  window.addEventListener('storage', (event: StorageEvent) => {
+    if (event.key === 'evan-account') {
+      if (lastAccount !== getAccountId()) {
+        window.location.reload();
+      }
+    }
+  });
 }
 
 /**
