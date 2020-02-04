@@ -55,6 +55,7 @@ const config = {
       adminFactory: ['admin', 'factory', 'ensRoot'],
       businessCenter: ['businessCenterRoot'],
       containerFactory: ['container', 'factory', 'ensRoot'],
+      didRegistry: ['dids', 'ensRoot'],
       eventhub: process.env.ENS_EVENTS || ['eventhub', 'ensRoot'],
       factory: ['factory', 'businessCenterRoot'],
       indexFactory: ['index', 'factory', 'ensRoot'],
