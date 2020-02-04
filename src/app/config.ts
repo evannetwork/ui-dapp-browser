@@ -43,6 +43,7 @@ const config = {
       admin: 'admin',
       businessCenterRoot: process.env.BC_ROOT || 'testbc.evan',
       container: 'container',
+      dids: 'dids',
       ensRoot: process.env.ENS_ROOT || 'evan',
       eventhub: 'eventhub',
       factory: 'factory',
