@@ -435,7 +435,7 @@ async function createDefaultRuntime(
     options,
   );
 
-  if(runtimeConfig.useIdentity && runtime.activeIdentity === runtime.activeAccount) {
+  if (runtimeConfig.useIdentity && runtime.activeIdentity === runtime.activeAccount) {
     runtime.activeIdentity = '0x0000000000000000000000000000000000000000'
   }
 
