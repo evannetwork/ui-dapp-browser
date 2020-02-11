@@ -371,6 +371,9 @@ const replaceConfigurationValues = async function(folderPath) {
 
   // replace configuration values
   await new Promise(resolve => replaceChain
+    // replace dapp-browser build version
+    .pipe(replace(/<!-- insertbuildversionhere -->/g, `<script>window.dappBrowserBuild = '${Date.now()}'</script>`))
+
     // replace bcc configurations
     .pipe(replace(/window\.localStorage\[\'evan-ens-address\'\]/g, `window.localStorage['evan-ens-address'] || '${ config.bcConfig.nameResolver.ensAddress }'`))
     .pipe(replace(/window\.localStorage\[\'evan-ens-resolver\'\]/g, `window.localStorage['evan-ens-resolver'] || '${ config.bcConfig.nameResolver.ensResolver }'`))

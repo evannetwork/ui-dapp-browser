@@ -170,13 +170,17 @@ export async function initializeEvanNetworkStructure(enableRouting = true): Prom
     // initialize queue
     queue.updateQueue();
 
-
     if (enableRouting) {
       // add account watcher
       core.watchAccountChange();
 
       // watch for specific frontend events (low eve, ...)
       startWatchers();
+    }
+
+    // update build number to enable ens cache
+    if ((window as any).dappBrowserBuild) {
+      window.localStorage['evan-dapp-browser-build'] = (window as any).dappBrowserBuild || '';
     }
 
     if (utils.devMode) {

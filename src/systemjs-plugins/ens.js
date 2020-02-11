@@ -48,7 +48,9 @@ const getDefinitionFromEns = function(ensAddress, domain) {
     .replace(`angular-core`, `angularcore`)
     .replace(`angular-libs`, `angularlibs`)
     .replace(`smart-contracts`, `smartcontracts`);
-  const cacheAvailable = ensCache[validEnsAddress] && ensCache[validEnsAddress] !== 'invalid';
+  // disable ens cahche, when dapp-browser was redeployed
+  const cacheAvailable = window.dappBrowserBuild === window.localStorage['evan-dapp-browser-build']
+    && ensCache[validEnsAddress] && ensCache[validEnsAddress] !== 'invalid';
 
   // loading chain used to reload the ens data after 3 seconds, when cached
   let loader = Promise.resolve();
@@ -87,8 +89,7 @@ const getDefinitionFromEns = function(ensAddress, domain) {
         const combinedStringified = JSON.stringify(Object.assign(dbcp.public, dbcp.private));
 
         // set ens cache to speed up initial loading
-        // && dbcp.public.dapp.type === 'cached-dapp') {
-        if (dbcp.public && dbcp.public.dapp) {
+        if (dbcp.public && dbcp.public.dapp && dbcp.public.dapp.type === 'cached-dapp') {
           ensCache[validEnsAddress] = combinedStringified;
         } else {
           delete ensCache[validEnsAddress];
