@@ -69,9 +69,10 @@ const getDefinitionFromEns = function(ensAddress, domain) {
     if (validEnsAddress.indexOf('Qm') === 0) {
       loader = loader.then(() => ipfsCatPromise(validEnsAddress));
     } else {
-      loader = loader
-        .then(utils.bccReady)
-        .then(() => evanGlobals.CoreRuntime.description.getDescription(validEnsAddress));
+      loader = loader.then(async () => {
+        await utils.bccReady;
+        return evanGlobals.CoreRuntime.description.getDescription(validEnsAddress);
+      });
     }
   }
 
@@ -86,7 +87,8 @@ const getDefinitionFromEns = function(ensAddress, domain) {
         const combinedStringified = JSON.stringify(Object.assign(dbcp.public, dbcp.private));
 
         // set ens cache to speed up initial loading
-        if (dbcp.public && dbcp.public.dapp && dbcp.public.dapp.type === 'cached-dapp') {
+        // && dbcp.public.dapp.type === 'cached-dapp') {
+        if (dbcp.public && dbcp.public.dapp) {
           ensCache[validEnsAddress] = combinedStringified;
         } else {
           delete ensCache[validEnsAddress];
