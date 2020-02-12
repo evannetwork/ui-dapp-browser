@@ -40,7 +40,7 @@ export function finishDAppLoading()  {
       if (initialLoading.parentElement) {
         initialLoading.parentElement.removeChild(initialLoading);
       }
-    }, 500);
+    }, 200);
   }
 
   if (isFirstLoad) {

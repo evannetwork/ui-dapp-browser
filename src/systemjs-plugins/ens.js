@@ -48,7 +48,7 @@ const getDefinitionFromEns = function(ensAddress, domain) {
     .replace(`angular-core`, `angularcore`)
     .replace(`angular-libs`, `angularlibs`)
     .replace(`smart-contracts`, `smartcontracts`);
-  // disable ens cahche, when dapp-browser was redeployed
+  // disable ens cache, when dapp-browser was redeployed
   const cacheAvailable = window.dappBrowserBuild === window.localStorage['evan-dapp-browser-build']
     && ensCache[validEnsAddress] && ensCache[validEnsAddress] !== 'invalid';
 
