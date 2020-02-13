@@ -438,6 +438,7 @@ export async function startDApp(dappEns: string, container = document.body, useD
     if (entrypoint.endsWith('.js')) {
       // load the DApp and start it
       const dappModule = await evanGlobals.System.import(`${dappEns}!dapp-content`);
+      await utils.bccReady;
       await dappModule.startDApp(container, ensDefinition.name, dappEns, dappBaseUrl);
 
       // remove other elements from the container when they are still existing

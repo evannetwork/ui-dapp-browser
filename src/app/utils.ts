@@ -149,6 +149,9 @@ export function showError() {
  */
 export async function raiseProgress(percentage: number, returnObj?: any) {
   lastPercentage += percentage;
+  if (lastPercentage > 100) {
+    lastPercentage = 100;
+  }
 
   // wait for last animation to be finished
   await this.waitForLoadingAnimation;

@@ -2,6 +2,7 @@
 
 ## Next Version
 ### Features
+- start routing directly on dapp-browser load, so cached ens addresses can be directly resolved from ipfs, without waiting for bcc
 
 ### Fixes
 - add `hidden` class to `initial-loading` only when it was not added before
