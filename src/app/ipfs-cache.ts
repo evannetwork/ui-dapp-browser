@@ -62,6 +62,16 @@ export class IPFSCache {
   }
 
   /**
+   * adds a ipfs value into the idb store cache
+   *
+   * @param      {string}  hash    ipfs hash to store the data for
+   * @param      {any}     data    data to store for the ipfs hash
+   */
+  async add(hash: string, data: any) {
+    return this.set(hash, data);
+  }
+
+  /**
    * Runs an transaction for within the IDB store
    *
    * @param      {IDBTransactionMode}  type      The type

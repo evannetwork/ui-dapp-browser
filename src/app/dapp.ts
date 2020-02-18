@@ -108,10 +108,7 @@ function getVersionDBCPHashFromDAppVersion(requiredVersion: string, childENS: st
   if (childDefinition && childDefinition) {
     const originalVersion = requiredVersion;
     const childVersions = childDefinition.versions || { };
-    childVersions[childDefinition.version] = childENS
-      .replace(`angular-core`, `angularcore`)
-      .replace(`angular-libs`, `angularlibs`)
-      .replace(`smart-contracts`, `smartcontracts`);
+    childVersions[childDefinition.version] = childENS;
 
     const versionKeys = Object.keys(childVersions);
     const splittedVersion = getSplittedVersion(requiredVersion);
