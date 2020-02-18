@@ -48,7 +48,9 @@ const getDefinitionFromEns = function(ensAddress, domain) {
     .replace(`angular-core`, `angularcore`)
     .replace(`angular-libs`, `angularlibs`)
     .replace(`smart-contracts`, `smartcontracts`);
-  const cacheAvailable = ensCache[validEnsAddress] && ensCache[validEnsAddress] !== 'invalid';
+  // disable ens cache, when dapp-browser was redeployed
+  const cacheAvailable = window.dappBrowserBuild === window.localStorage['evan-dapp-browser-build']
+    && ensCache[validEnsAddress] && ensCache[validEnsAddress] !== 'invalid';
 
   // loading chain used to reload the ens data after 3 seconds, when cached
   let loader = Promise.resolve();
@@ -69,9 +71,10 @@ const getDefinitionFromEns = function(ensAddress, domain) {
     if (validEnsAddress.indexOf('Qm') === 0) {
       loader = loader.then(() => ipfsCatPromise(validEnsAddress));
     } else {
-      loader = loader
-        .then(utils.bccReady)
-        .then(() => evanGlobals.CoreRuntime.description.getDescription(validEnsAddress));
+      loader = loader.then(async () => {
+        await utils.bccReady;
+        return evanGlobals.CoreRuntime.description.getDescription(validEnsAddress);
+      });
     }
   }
 
@@ -104,6 +107,9 @@ const getDefinitionFromEns = function(ensAddress, domain) {
 
         throw new Error(`no valid dbcp on ${ validEnsAddress }`);
       }
+    })
+    .catch((ex) => {
+      throw new Error(`no valid dbcp on ${ validEnsAddress }`);
     });
 
   if (cacheAvailable) {

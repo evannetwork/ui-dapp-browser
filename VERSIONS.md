@@ -1,9 +1,22 @@
 # dapp-browser
 
+
 ## Next Version
 ### Features
 
 ### Fixes
+
+### Deprecations
+
+
+## Version 2.8.0
+### Features
+- start routing directly on dapp-browser load, so cached ens addresses can be directly resolved from ipfs, without waiting for bcc
+- enable `cached-dapp` dbcp type to get better initial loading speed 
+
+### Fixes
+- add `hidden` class to `initial-loading` only when it was not added before
+- fix weird browser refresh in onboarding
 
 ### Deprecations
 

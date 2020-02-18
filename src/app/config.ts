@@ -28,6 +28,7 @@ const process = {
     ENS_EVENTS: window.localStorage['evan-ens-events'],
     ENS_PROFILES: window.localStorage['evan-ens-profiles'],
     ENS_MAILBOX: window.localStorage['evan-ens-mailbox'],
+    USE_IDENTITY: window.localStorage['evan-use-identity'],
   },
 };
 const config = {
@@ -42,6 +43,7 @@ const config = {
       admin: 'admin',
       businessCenterRoot: process.env.BC_ROOT || 'testbc.evan',
       container: 'container',
+      dids: 'dids',
       ensRoot: process.env.ENS_ROOT || 'evan',
       eventhub: 'eventhub',
       factory: 'factory',
@@ -54,6 +56,7 @@ const config = {
       adminFactory: ['admin', 'factory', 'ensRoot'],
       businessCenter: ['businessCenterRoot'],
       containerFactory: ['container', 'factory', 'ensRoot'],
+      didRegistry: ['dids', 'ensRoot'],
       eventhub: process.env.ENS_EVENTS || ['eventhub', 'ensRoot'],
       factory: ['factory', 'businessCenterRoot'],
       indexFactory: ['index', 'factory', 'ensRoot'],
@@ -68,6 +71,7 @@ const config = {
       accountId: '0x063fB42cCe4CA5448D69b4418cb89E663E71A139',
     },
   },
+  useIdentity: process.env.USE_IDENTITY || false,
   alwaysAutoGasLimit: 1.1,
   ensRootOwner: '0x4a6723fC5a926FA150bAeAf04bfD673B056Ba83D',
   faucetAccount: '0x4a6723fC5a926FA150bAeAf04bfD673B056Ba83D',

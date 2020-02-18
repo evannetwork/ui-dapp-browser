@@ -54,7 +54,7 @@ export let bccReady = new Promise((resolve, reject) => {
  */
 const percentageThreshold = 100 / 9;
 let lastPercentage = 0;
-let waitForLoadingAnimation;
+let waitForLoadingAnimation = Promise.resolve();
 let percentagesSet = [ ];
 
 /**
@@ -148,10 +148,13 @@ export function showError() {
  * @return     {string}  additional returnObject
  */
 export async function raiseProgress(percentage: number, returnObj?: any) {
-  lastPercentage += percentage;
-
   // wait for last animation to be finished
   await this.waitForLoadingAnimation;
+
+  lastPercentage += percentage;
+  if (lastPercentage > 100) {
+    lastPercentage = 100;
+  }
 
   // set the percentage only, if it wasn't set before
   if (!percentagesSet[lastPercentage]) {

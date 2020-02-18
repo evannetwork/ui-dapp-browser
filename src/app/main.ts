@@ -107,6 +107,35 @@ export async function initializeEvanNetworkStructure(enableRouting = true): Prom
 
   // load smart-contracts and blockchain-core minimal setup for accessing ens from ipfs
   try {
+    // setup initial "mocked" CoreRuntime, to directly start the routing while creating the bcc
+    // runtime
+    evanGlobals.CoreRuntime = {
+      web3: {
+        utils: {
+          toChecksumAddress: (address: string) => address,
+        }
+      }
+    };
+
+    // use initial route to handle initially clicked notifications
+    let initialRoute;
+    if ((<any>window).cordova) {
+      // initialize notifications and try to load notifications that the user has clicked, while
+      // the app was closed
+      const initialNotification = await notifications.initialize();
+
+      // if an initialNotification could be loaded, get the url from the notification that
+      // should be opened
+      if (initialNotification) {
+        initialNotification.evanNotificationOpened = true;
+        initialRoute = await notifications.getDAppUrlFromNotification(initialNotification);
+      }
+    }
+    // initialize dynamic routing and apply eventually clicked notification initial route
+    if (enableRouting) {
+      routing.initialize(initialRoute);
+    }
+
     const [ CoreBundle, SmartContracts ] = await Promise
       .all<any, any, any>([
         System
@@ -141,30 +170,17 @@ export async function initializeEvanNetworkStructure(enableRouting = true): Prom
     // initialize queue
     queue.updateQueue();
 
-    // use initial route to handle initially clicked notifications
-    let initialRoute;
-    if ((<any>window).cordova) {
-      // initialize notifications and try to load notifications that the user has clicked, while
-      // the app was closed
-      const initialNotification = await notifications.initialize();
-
-      // if an initialNotification could be loaded, get the url from the notification that
-      // should be opened
-      if (initialNotification) {
-        initialNotification.evanNotificationOpened = true;
-        initialRoute = await notifications.getDAppUrlFromNotification(initialNotification);
-      }
-    }
-
     if (enableRouting) {
-      // initialize dynamic routing and apply eventually clicked notification initial route
-      routing.initialize(initialRoute);
-
       // add account watcher
       core.watchAccountChange();
 
       // watch for specific frontend events (low eve, ...)
       startWatchers();
+    }
+
+    // update build number to enable ens cache
+    if ((window as any).dappBrowserBuild) {
+      window.localStorage['evan-dapp-browser-build'] = (window as any).dappBrowserBuild || '';
     }
 
     if (utils.devMode) {
