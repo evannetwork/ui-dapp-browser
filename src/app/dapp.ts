@@ -17,13 +17,10 @@
   the following URL: https://evan.network/license/
 */
 
-import * as core from './core';
 import * as ipfs  from './ipfs';
-import * as lightwallet from './lightwallet';
 import * as loading  from './loading';
 import * as utils from './utils';
 import { config } from './config';
-import { watchForEveLow } from './watchers';
 
 
 /**
@@ -305,7 +302,7 @@ export async function getDAppDependencies(originName: string, ensDefinition: any
  * @return     {Promise<any>}  ens definition from the DApp
  */
 export async function loadDAppDependencies(dappEns: string, useDefaultDomain?: boolean): Promise<any> {
-  utils.devLog(`Loading dapp: ${ dappEns }`, 'trace');
+  utils.devLog(`Loading dapp: ${ dappEns }`);
 
   window['evanDApploadTime'] = Date.now();
 
@@ -320,7 +317,7 @@ export async function loadDAppDependencies(dappEns: string, useDefaultDomain?: b
   const depCategories = await getDAppDependencies(dappEns, ensDefinition);
 
   // get loading status of the specific dapp
-  const lastPercentage = utils.getLoadingProgress();
+  const lastPercentage = loading.lastPercentage;
   // 1 (dapp to start) + count of dapp libs
   let depCount = 1;
 
@@ -350,13 +347,13 @@ export async function loadDAppDependencies(dappEns: string, useDefaultDomain?: b
           loadedDeps[dep.location] = true;
         }
 
-        utils.raiseProgress(loadingSteps);
+        loading.raiseProgress(loadingSteps);
       }));
     }
   }
   window['Promise'] = zoneJSPromise;
 
-  utils.raiseProgress(loadingSteps);
+  loading.raiseProgress(loadingSteps);
   return ensDefinition;
 }
 
@@ -438,17 +435,13 @@ export async function startDApp(dappEns: string, container = document.body, useD
     if (entrypoint.endsWith('.js')) {
       // load the DApp and start it
       const dappModule = await evanGlobals.System.import(`${dappEns}!dapp-content`);
-      await utils.bccReady;
       await dappModule.startDApp(container, ensDefinition.name, dappEns, dappBaseUrl);
 
       // remove other elements from the container when they are still existing
       removePreviousContainerChilds();
 
       // check warnings, after first DApp was opened
-      if (firstDApp) {
-        firstDApp = false;
-        setTimeout(() => watchForEveLow(), 3000);
-      }
+      firstDApp = false;
     // html entrypoint => create iframe
     } else if (entrypoint.endsWith('.html')) {
       const iframe = document.createElement('iframe');
@@ -465,47 +458,6 @@ export async function startDApp(dappEns: string, container = document.body, useD
 
       // remove other elements from the container when they are still existing
       removePreviousContainerChilds();
-
-      // bind event listener to the iframe window and wait until it requests current user data
-      const handleUserContext = async (event) => {
-        // if iframe was deleted and event listener is opened, close it
-        if (!iframe || !iframe.contentWindow) {
-          return window.removeEventListener('message', handleUserContext);
-        }
-
-        // if user requests evan user context, send it via post message
-        if (event.data === 'evan-user-context') {
-          // load user specific data (if the user has already logged in), so it can be passed into
-          // the iframe
-          const vault = lightwallet.loadVault();
-          let privateKey;
-          let encryptionKey;
-          if (vault && vault.pwDerivedKey) {
-            privateKey = await lightwallet.getPrivateKey(vault, core.getAccountId());
-            encryptionKey = await lightwallet.getEncryptionKey();
-          }
-
-          // send the data to the contentWindow
-          (<any>iframe.contentWindow).postMessage(
-            {
-              accountId: core.getAccountId(),
-              config,
-              encryptionKey,
-              ipfsConfig: ipfs.ipfsConfig,
-              language: window.localStorage['evan-language'],
-              privateKey,
-              testPassword: window.localStorage['evan-test-password'],
-              type: 'evan-user-context',
-              vault: window.localStorage['evan-vault'],
-            },
-            // ensure to only load iframes from ipfs
-            utils.devMode ? window.location.origin : ipfs.getRestIpfs().api_url(''),
-          );
-
-          window.removeEventListener('message', handleUserContext);
-        }
-      };
-      window.addEventListener('message', handleUserContext);
     } else {
       throw new Error('Invalid entry point defined!');
     }

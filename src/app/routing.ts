@@ -18,7 +18,6 @@
 */
 
 import { startDApp, } from './dapp';
-import * as core from './core';
 import * as utils from './utils';
 
 /**
@@ -137,7 +136,7 @@ export async function onRouteChange(): Promise<void> {
 
       await startDApp(activeRootENS);
     } catch (ex) {
-      console.log(`Error while onRouteChange and startDApp (${ activeRootENS })`);
+      utils.devLog(`Error while onRouteChange and startDApp (${ activeRootENS })`);
       console.error(ex);
     }
   }
@@ -150,7 +149,7 @@ export async function onRouteChange(): Promise<void> {
  *                                     (eg. dashboard.evan => my-initial-route.evan)
  * @return     {void}    resolved when routing was created
  */
-export async function initialize(initialRoute: string): Promise<void> {
+export async function initialize(initialRoute?: string): Promise<void> {
   // load history from cache
   if (window.performance.navigation.type === 1 && !window.sessionStorage['evan-route-reloaded']) {
     history = [ ];
@@ -178,13 +177,6 @@ export async function initialize(initialRoute: string): Promise<void> {
   // create Navigo with angular # routing
   router = new Navigo(null, true, '#');
   defaultDAppENS = await getDefaultDAppENS();
-
-  // reset account, when the page was reloaded during profile creation
-  if (window.localStorage['evan-profile-creation']) {
-    delete window.localStorage['evan-profile-creation'];
-
-    core.logout(true);
-  }
 
   // load current url for the first time
   await onRouteChange();

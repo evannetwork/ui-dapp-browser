@@ -27,6 +27,7 @@
     "@evan.network/api-blockchain-core": "^2.3.0",
     "console.table": "^0.9.1",
     "del": "^2.2.2",
+    "dexie": "^2.0.4",
     "express": "^4.16.2",
     "gulp": "^4.0.0",
     "gulp-babel": "^7.0.1",

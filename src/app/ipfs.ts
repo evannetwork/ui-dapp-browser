@@ -18,6 +18,7 @@
 */
 
 import * as browserIpfs from '../libs/browser-ipfs.js';
+import { getIpfsCache } from './ipfs-cache';
 import * as utils from './utils';
 
 /**
@@ -68,7 +69,12 @@ export function getRestIpfs(): any {
  * @param      {string}        ipfsHash  ipfs hash to load
  * @return     {Promise<any>}  ipfs address content
  */
-export function ipfsCatPromise(ipfsHash: string): Promise<any> {
+export async function ipfsCatPromise(ipfsHash: string): Promise<any> {
+  const cached = await getIpfsCache().get(ipfsHash);
+  if (cached) {
+    return cached;
+  }
+
   return new Promise((resolve, reject) => {
     try {
       restIpfs.cat(ipfsHash, (error, result) => {
@@ -79,3 +85,5 @@ export function ipfsCatPromise(ipfsHash: string): Promise<any> {
     }
   });
 };
+
+export { getIpfsCache }

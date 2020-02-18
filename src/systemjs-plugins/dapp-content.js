@@ -109,55 +109,6 @@ const loadPredefinedLib = function(ensAddress, fileOrigin, originalFetch) {
 }
 
 /**
- * Load the bcc. Includes devChecks to load local dev files, or from ipns
- * if devMode but no bcc dev files are available or from a inserted ipfs hash,
- * when it was deployed.
- *
- * @param      {Function}  originalFetch  SystemJS original import
- * @return     {any}  result of the ipfs import
- */
-const loadBCCCore = function (originalFetch) {
-  if (utils.isDevAvailable('bcc')) {
-    return loadPredefinedLib(
-      'bcc',
-      'bcc/bcc.js',
-      originalFetch
-    );
-  } else {
-    return loadPredefinedLib(
-      'bcc',
-      'Qme9gmKpueriR7qMH5SNW3De3b9AFBkUGvFMS8ve1SuYBy/bcc.js',
-      originalFetch
-    );
-  }
-}
-
-/**
- * Load the smart-contracts. Includes devChecks to load local dev files, or from
- * ipns if devMode but no smart-contracts dev files are available or from a
- * inserted ipfs hash, when it was deployed.
- *
- * @param      {Function}  originalFetch  SystemJS original import
- * @return     {any}       result of the ipfs import
- */
-const loadSmartContracts = function(originalFetch) {
-  if (utils.isDevAvailable('smartcontracts')) {
-    return loadPredefinedLib(
-      'smartcontracts',
-      'smartcontracts/compiled.js',
-      originalFetch
-    );
-  } else {
-    return loadPredefinedLib(
-      'smartcontracts',
-      'QmRMz7yzMqjbEqXNdcmqk2WMFcXtpY41Nt9CqsLwMgkF43/compiled.js',
-      originalFetch
-    );
-  }
-}
-
-
-/**
  * Handle data handling for requested files params.
  *
  * @param      {any}           params         SystemJS parameters
@@ -187,18 +138,6 @@ const locateDAppContent = function(params, originalFetch) {
     dbcpAddressToLoad; 
   if (importCache[importCacheKey]) {
     return importCache[importCacheKey];
-  }
-
-  if (ensAddress.startsWith('bcc')) {
-    return loadBCCCore({
-      params: params,
-      originalFetch: originalFetch
-    });
-  } else if (ensAddress.startsWith('smartcontracts')) {
-    return loadSmartContracts({
-      params: params,
-      originalFetch: originalFetch
-    });
   }
 
   // load dbcp configuration from ens address

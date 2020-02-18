@@ -41,21 +41,8 @@ export let isPrivateMode: boolean;
 // import configuration
 import { config } from './config';
 
-/**
- * add a bcc ready promise, so some functionallities can wait for finishing bcc has loaded
- */
-export let setBccReady;
-export let bccReady = new Promise((resolve, reject) => {
-  setBccReady = resolve;
-});
-
-/**
- * Initial loading cache values
- */
-const percentageThreshold = 100 / 9;
-let lastPercentage = 0;
-let waitForLoadingAnimation = Promise.resolve();
-let percentagesSet = [ ];
+export const environment = window.location.href.indexOf('https://dashboard.evan.network') ? 'core' :
+  'testcore'; 
 
 /**
  * Checks if we are running in devMode, if true, load dev-dapps from local file server, if false do nothing
@@ -139,76 +126,6 @@ export function showError() {
 }
 
 /**
- * Takes the latest progress percentage and raise it with the incoming value.
- *
- * @param      {number}  percentage  percentage to add
- * @param      {any}     returnObj   additional return object for raising
- *                                   loading progress and returning object
- *                                   instantly
- * @return     {string}  additional returnObject
- */
-export async function raiseProgress(percentage: number, returnObj?: any) {
-  // wait for last animation to be finished
-  await this.waitForLoadingAnimation;
-
-  lastPercentage += percentage;
-  if (lastPercentage > 100) {
-    lastPercentage = 100;
-  }
-
-  // set the percentage only, if it wasn't set before
-  if (!percentagesSet[lastPercentage]) {
-    percentagesSet[lastPercentage] = true;
-    const loadingProgress = document.getElementById(`loading-progress`);
-    if (loadingProgress) {
-      loadingProgress.style.transform = `scaleX(${ lastPercentage / 100 })`;
-    }
-
-    // wait until animation is finished
-    this.waitForLoadingAnimation = new Promise(resolve => setTimeout(resolve, 100));
-  }
-
-  return returnObj;
-}
-
-/**
- * Returns the current loading progress.
- *
- * @return     {number}  The loading progress.
- */
-export function getLoadingProgress(): number {
-  return lastPercentage;
-}
-
-/**
- * Log a message according to localStorage settings to the log
- *
- * @param      {stromg}  message  message to log
- * @param      {string}  level    level to log (log / verbose)
- */
-export function devLog(message: string, level?: string) {
-  if (evanGlobals.CoreRuntime && evanGlobals.CoreRuntime.description && evanGlobals.CoreRuntime.description.log) {
-    evanGlobals.CoreRuntime.description.log(message, level);
-  }
-
-  message = null;
-}
-
-/**
- * Log a message according to localStorage settings to the log
- *
- * @param      {stromg}  message  message to log
- * @param      {string}  level    level to log (log / verbose)
- */
-export function log(message: string, level?: string) {
-  if (evanGlobals.CoreRuntime && evanGlobals.CoreRuntime.description && evanGlobals.CoreRuntime.description.log) {
-    evanGlobals.CoreRuntime.description.log(message, level);
-  }
-
-  message = null;
-}
-
-/**
  * Adds an deviceready event handler and wait for the result to resolve the promise. If we are on a
  * desktop device, dont wait for deviceready, it will be never called.
  *
@@ -234,34 +151,6 @@ export function getDAppName(ensAddress: string) {
   } catch (ex) { }
 
   return dappName;
-}
-
-/**
- * Gets the color theme.
- *
- * @return     {string}  the current color theme
- */
-export function getColorTheme() {
-  return window.localStorage['evan-color-theme'] || '';
-}
-
-/**
- * Adds the current color theme class to the body.
- *
- * @param      {string}  colorTheme  the color theme name (e.g. light)
- */
-export function activateColorTheme(colorTheme: string) {
-  // remove previous evan themes
-  const splitClassName = document.body.className.split(' ');
-  splitClassName.forEach((className) => {
-    if (className.indexOf('evan') !== -1) {
-      document.body.className = document.body.className.replace(className, '');
-    }
-  });
-
-  if (colorTheme) {
-    document.body.className += ` evan-${ colorTheme }`;
-  }
 }
 
 /**
@@ -395,4 +284,41 @@ export async function getIsPrivateMode() {
   });
 
   return isPrivateMode;
+}
+
+/**
+ * Return the name of the current used browser =>
+ * https://stackoverflow.com/questions/9847580/how-to-detect-safari-chrome-ie-firefox-and-opera-browser
+ *
+ * @return     {string}  opera / firefox / safari / ie / edge / chrome
+ */
+export function currentBrowser() {
+  if ((!!window['opr'] && !!window['opr'].addons) || !!window['opera'] ||
+    navigator.userAgent.indexOf(' OPR/') >= 0) {
+      return 'opera';
+  } else if (typeof window['InstallTrigger'] !== 'undefined') {
+    return 'firefox';
+  } else if (/constructor/i.test(<any>window['HTMLElement']) ||
+    (function (p) { return p.toString() === '[object SafariRemoteNotification]'; })
+    (!window['safari'] || (typeof window['safari'] !== 'undefined' && window['safari'].pushNotification))) {
+      return 'safari';
+  } else if (/*@cc_on!@*/false || !!document['documentMode']) {
+    return 'ie';
+  } else if (!!window['StyleMedia']) {
+    return 'edge';
+  } else if (!!window['chrome'] && !!window['chrome'].webstore) {
+    return 'chrome';
+  }
+}
+
+/**
+ * Logs a message, when dev-logs are enabled
+ *
+ * @param      {string}  message  message that should be logged
+ * @param      {string}  type     log type
+ */
+export function devLog(message: string, type = 'log') {
+  if (window.localStorage['evan-dev-log'] || window.localStorage['bc-dev-logs'] === 'debug') {
+    console[type](`[dapp-browser] ${message}`);
+  }
 }

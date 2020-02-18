@@ -17,24 +17,13 @@
   the following URL: https://evan.network/license/
 */
 
-import * as bccHelper from './bcc/bcc';
-import * as core from './core';
 import * as dapp from './dapp';
 import * as ipfs from './ipfs';
-import * as lightwallet from './lightwallet';
 import * as loading from './loading';
-import * as notifications from './notifications';
-import * as queue from './queue';
 import * as routing from './routing';
-import * as solc from './solc';
 import * as utils from './utils';
-import * as web3Helper from './web3';
-import { AccountStore } from './bcc/AccountStore';
 import { config } from './config';
-import { KeyProvider, getLatestKeyProvider } from './bcc/KeyProvider';
-import { Solc } from './solc';
-import { startWatchers } from './watchers';
-import { updateCoreRuntime, getCoreOptions } from './bcc/bcc';
+
 
 /**
  * is inserted when the application was bundled, used to prevent window usage
@@ -58,16 +47,11 @@ window['evanloadTime'] = Date.now();
 const System = window['System'];
 const getDomainName = utils.getDomainName;
 let web3;
-let CoreRuntime;
-let definition;
-let nameResolver;
 
 delete window['System'];
 
 // prefill bcc for systemjs plugin usage
-evanGlobals.core = core;
 evanGlobals.ipfsCatPromise = ipfs.ipfsCatPromise;
-evanGlobals.lightwallet = lightwallet;
 evanGlobals.restIpfs = ipfs.restIpfs;
 evanGlobals.System = System;
 evanGlobals.queryParams = routing.getQueryParameters();
@@ -92,9 +76,6 @@ evanGlobals.System.map['angular-core'] = 'angularcore.evan!dapp-content';
  *                                       hash
  */
 export async function initializeEvanNetworkStructure(enableRouting = true): Promise<void> {
-  // activate color themes
-  utils.activateColorTheme(utils.getColorTheme());
-
   // check if we are running in dev mode, load dev mode available modules
   await Promise.all([
     utils.setUpDevMode(),
@@ -103,80 +84,18 @@ export async function initializeEvanNetworkStructure(enableRouting = true): Prom
   ]);
 
   // set initial loadin step
-  utils.raiseProgress(5);
+  loading.raiseProgress(5);
 
   // load smart-contracts and blockchain-core minimal setup for accessing ens from ipfs
   try {
-    // setup initial "mocked" CoreRuntime, to directly start the routing while creating the bcc
-    // runtime
-    evanGlobals.CoreRuntime = {
-      web3: {
-        utils: {
-          toChecksumAddress: (address: string) => address,
-        }
-      }
-    };
-
     // use initial route to handle initially clicked notifications
-    let initialRoute;
-    if ((<any>window).cordova) {
-      // initialize notifications and try to load notifications that the user has clicked, while
-      // the app was closed
-      const initialNotification = await notifications.initialize();
-
-      // if an initialNotification could be loaded, get the url from the notification that
-      // should be opened
-      if (initialNotification) {
-        initialNotification.evanNotificationOpened = true;
-        initialRoute = await notifications.getDAppUrlFromNotification(initialNotification);
-      }
-    }
     // initialize dynamic routing and apply eventually clicked notification initial route
     if (enableRouting) {
-      routing.initialize(initialRoute);
+      routing.initialize();
     }
-
-    const [ CoreBundle, SmartContracts ] = await Promise
-      .all<any, any, any>([
-        System
-          .import(`bcc`)
-          .then(loaded => utils.raiseProgress(10, loaded)),
-        System
-          .import('smart-contracts')
-          .then(loaded => utils.raiseProgress(10, loaded)),
-        // check if an executor agent should be used for the application runtime
-        core.getAgentExecutor()
-      ]);
-
-    // make it global available without loading it twice
-    evanGlobals.CoreBundle = CoreBundle;
-    evanGlobals.SmartContracts = SmartContracts;
-
-    // initialize bcc and make it globally available
-    CoreRuntime = await updateCoreRuntime(CoreBundle, SmartContracts);
-    evanGlobals.CoreRuntime = CoreRuntime;
-
-    // tell everyone, that bcc was loaded and initialized
-    utils.setBccReady();
-
-    // set variables to export to dapps
-    definition = CoreRuntime.definition;
-    nameResolver = CoreRuntime.nameResolver;
-    web3 = CoreRuntime.web3;
 
     // wait for device ready event so we can load notifications
     await utils.onDeviceReady();
-
-    // initialize queue
-    queue.updateQueue();
-
-    if (enableRouting) {
-      // add account watcher
-      core.watchAccountChange();
-
-      // watch for specific frontend events (low eve, ...)
-      startWatchers();
-    }
 
     // update build number to enable ens cache
     if ((window as any).dappBrowserBuild) {
@@ -201,8 +120,6 @@ System.originalImport = System.import;
  * @return     {Promise<any>}  SystemJS result
  */
 System.import = function(pathToLoad: string): Promise<any> {
-  utils.devLog(`SystemJS import: ${ pathToLoad }`, 'verbose');
-
   // if an export function with the following pattern (#***!dapp-content) was specified, replace the
   // export function for the System.import
   let exportFunction: any = pathToLoad.match(/#(.*)!/g);
@@ -224,29 +141,13 @@ System.import = function(pathToLoad: string): Promise<any> {
 };
 
 export {
-  AccountStore,
-  bccHelper,
   config,
-  core,
-  CoreRuntime,
   dapp,
-  definition,
   evanGlobals,
-  getCoreOptions,
   getDomainName,
-  getLatestKeyProvider,
   ipfs,
-  KeyProvider,
-  lightwallet,
   loading,
-  nameResolver,
-  notifications,
-  queue,
   routing,
-  solc,
-  Solc,
   System,
   utils,
-  web3,
-  web3Helper,
 }

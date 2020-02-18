@@ -16,6 +16,7 @@
   Fifth Floor, Boston, MA, 02110-1301 USA, or download the license from
   the following URL: https://evan.network/license/
 */
+
 // libraries that should be cached
 let cachableDBCPs = [ ];
 const utils = require('../app/utils');
@@ -36,18 +37,11 @@ try {
  */
 const getDefinitionFromEns = function(ensAddress, domain) {
   // remove domain from the end of the ensAddress to get the dapp name
-  let dappName = ensAddress
-    .replace(`angular-core`, `angularcore`)
-    .replace(`angular-libs`, `angularlibs`)
-    .replace(`smart-contracts`, `smartcontracts`)
-    .split('.');
+  let dappName = ensAddress.split('.');
   dappName = dappName.slice(0, dappName.length - 1).join('.');
 
   // get correct ens address and check if a cached ens is availabled
-  const validEnsAddress = ensAddress
-    .replace(`angular-core`, `angularcore`)
-    .replace(`angular-libs`, `angularlibs`)
-    .replace(`smart-contracts`, `smartcontracts`);
+  const validEnsAddress = ensAddress;
   // disable ens cache, when dapp-browser was redeployed
   const cacheAvailable = window.dappBrowserBuild === window.localStorage['evan-dapp-browser-build']
     && ensCache[validEnsAddress] && ensCache[validEnsAddress] !== 'invalid';
@@ -72,45 +66,43 @@ const getDefinitionFromEns = function(ensAddress, domain) {
       loader = loader.then(() => ipfsCatPromise(validEnsAddress));
     } else {
       loader = loader.then(async () => {
-        await utils.bccReady;
         return evanGlobals.CoreRuntime.description.getDescription(validEnsAddress);
       });
+      // use api to load dbcp json from ens
+      loader = loader
+        .then(dbcp => {
+          if (dbcp) {
+            try {
+              dbcp = JSON.parse(dbcp);
+            } catch(ex) { }
+
+            const combinedStringified = JSON.stringify(Object.assign(dbcp.public, dbcp.private));
+
+            // set ens cache to speed up initial loading
+            if (dbcp.public && dbcp.public.dapp && dbcp.public.dapp.type === 'cached-dapp') {
+              ensCache[validEnsAddress] = combinedStringified;
+            } else {
+              delete ensCache[validEnsAddress];
+            }
+
+            // save ens cache
+            window.localStorage['evan-ens-cache'] = JSON.stringify(ensCache);
+
+            return combinedStringified;
+          } else {
+            if (ensCache[validEnsAddress]) {
+              // if no dbcp was found, set it invalid
+              ensCache[validEnsAddress] = 'invalid';
+            }
+
+            throw new Error(`no valid dbcp on ${ validEnsAddress }`);
+          }
+        })
+        .catch((ex) => {
+          throw new Error(`no valid dbcp on ${ validEnsAddress }`);
+        });
     }
   }
-
-  // use api to load dbcp json from ens
-   loader = loader
-    .then(dbcp => {
-      if (dbcp) {
-        try {
-          dbcp = JSON.parse(dbcp);
-        } catch(ex) { }
-
-        const combinedStringified = JSON.stringify(Object.assign(dbcp.public, dbcp.private));
-
-        // set ens cache to speed up initial loading
-        if (dbcp.public && dbcp.public.dapp && dbcp.public.dapp.type === 'cached-dapp') {
-          ensCache[validEnsAddress] = combinedStringified;
-        } else {
-          delete ensCache[validEnsAddress];
-        }
-
-        // save ens cache
-        window.localStorage['evan-ens-cache'] = JSON.stringify(ensCache);
-
-        return combinedStringified;
-      } else {
-        if (ensCache[validEnsAddress]) {
-          // if no dbcp was found, set it invalid
-          ensCache[validEnsAddress] = 'invalid';
-        }
-
-        throw new Error(`no valid dbcp on ${ validEnsAddress }`);
-      }
-    })
-    .catch((ex) => {
-      throw new Error(`no valid dbcp on ${ validEnsAddress }`);
-    });
 
   if (cacheAvailable) {
     return ensCache[validEnsAddress];

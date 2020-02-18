@@ -25,6 +25,47 @@ import * as utils from './utils';
 export let isFirstLoad = true;
 
 /**
+ * Initial loading cache values
+ */
+const percentageThreshold = 100 / 9;
+export let lastPercentage = 0;
+let waitForLoadingAnimation = Promise.resolve();
+let percentagesSet = [ ];
+
+/**
+ * Takes the latest progress percentage and raise it with the incoming value.
+ *
+ * @param      {number}  percentage  percentage to add
+ * @param      {any}     returnObj   additional return object for raising
+ *                                   loading progress and returning object
+ *                                   instantly
+ * @return     {string}  additional returnObject
+ */
+export async function raiseProgress(percentage: number, returnObj?: any) {
+  // wait for last animation to be finished
+  await waitForLoadingAnimation;
+
+  lastPercentage += percentage;
+  if (lastPercentage > 100) {
+    lastPercentage = 100;
+  }
+
+  // set the percentage only, if it wasn't set before
+  if (!percentagesSet[lastPercentage]) {
+    percentagesSet[lastPercentage] = true;
+    const loadingProgress = document.getElementById(`loading-progress`);
+    if (loadingProgress) {
+      loadingProgress.style.transform = `scaleX(${ lastPercentage / 100 })`;
+    }
+
+    // wait until animation is finished
+    waitForLoadingAnimation = new Promise(resolve => setTimeout(resolve, 100));
+  }
+
+  return returnObj;
+}
+
+/**
  * Hides the initial loading that is embedded to the root dapp html page. => It
  * will disappear smooth and will be removed when animation is over
  */
@@ -32,7 +73,7 @@ export function finishDAppLoading()  {
   const initialLoading = document.getElementById('evan-initial-loading');
 
   if (initialLoading && initialLoading.className.indexOf('hidden') === -1) {
-    utils.raiseProgress(10);
+    raiseProgress(10);
     initialLoading.classList.add('hidden');
 
     setTimeout(() => {
