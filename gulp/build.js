@@ -64,7 +64,10 @@ const babelPlugins = [
 
 gulp.task('bundle:vendor', function() {
   return gulp.src([
+    'src/libs/bs58.bundle.js',
+    'src/libs/buffer.polyfill.js',
     'src/libs/core-js.client.shim.min.js',
+    'src/libs/js-sha3.min.js',
     'src/libs/navigo.js',
     'src/libs/polyfills.js',
     'src/libs/system.src.js',
@@ -89,7 +92,8 @@ gulp.task('bundle:js', gulp.series('bundle:vendor', function() {
         'src/systemjs-plugins/dapp-content.js',
         'src/systemjs-plugins/json.js',
         'src/systemjs-plugins/text.js',
-        'node_modules/systemjs-plugin-css/css.js'
+        'src/systemjs-plugins/text.js',
+        'node_modules/systemjs-plugin-css/css.js',
       ].join(' + '),
       'src/build/app.min.js',
       {

@@ -42,7 +42,7 @@ export let isPrivateMode: boolean;
 import { config } from './config';
 
 export const environment = window.location.href.indexOf('https://dashboard.evan.network') ? 'core' :
-  'testcore'; 
+  'testcore';
 
 /**
  * Checks if we are running in devMode, if true, load dev-dapps from local file server, if false do nothing

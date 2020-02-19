@@ -20,6 +20,7 @@
 // libraries that should be cached
 let cachableDBCPs = [ ];
 const utils = require('../app/utils');
+const { resolveContent } = require('../app/ens');
 const ipfsCatPromise = require('../app/ipfs').ipfsCatPromise;
 let ensCache = { };
 
@@ -58,16 +59,14 @@ const getDefinitionFromEns = function(ensAddress, domain) {
     // load json and resolve it as stringified
     loader = loader.then(() => evanGlobals.System
       .import('external/' + dappName + '/dbcp.json!json')
-      .then(dbcp => JSON.stringify(dbcp))
+      .then(dbcp => JSON.stringify(Object.assign(dbcp.public, dbcp.private)))
     );
   } else {
     // trigger the loader
     if (validEnsAddress.indexOf('Qm') === 0) {
       loader = loader.then(() => ipfsCatPromise(validEnsAddress));
     } else {
-      loader = loader.then(async () => {
-        return evanGlobals.CoreRuntime.description.getDescription(validEnsAddress);
-      });
+      loader = loader.then(() => resolveContent(validEnsAddress));
       // use api to load dbcp json from ens
       loader = loader
         .then(dbcp => {
@@ -99,7 +98,7 @@ const getDefinitionFromEns = function(ensAddress, domain) {
           }
         })
         .catch((ex) => {
-          throw new Error(`no valid dbcp on ${ validEnsAddress }`);
+          throw new Error(`no valid dbcp on ${ validEnsAddress } (${ex.message})`);
         });
     }
   }

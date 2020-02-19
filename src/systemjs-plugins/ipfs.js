@@ -47,7 +47,9 @@ const fetchIpfs = function(params, originalFetch) {
     .replace(/\/dev.html|\/index.html/g, '');
 
   // get the correct ipfs route without the window location
-  let ipfsRoute = params.address.replace(relativeWindowLocation, '');
+  let ipfsRoute = params.address
+    .replace(relativeWindowLocation, '')
+    .replace(/\//g, '');
 
   // check for dev load
   if (evanGlobals.devMode) {
