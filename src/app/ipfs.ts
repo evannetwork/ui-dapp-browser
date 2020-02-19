@@ -70,6 +70,7 @@ export function getRestIpfs(): any {
  * @return     {Promise<any>}  ipfs address content
  */
 export async function ipfsCatPromise(ipfsHash: string): Promise<any> {
+  const ipfsCache = getIpfsCache();
   const cached = await getIpfsCache().get(ipfsHash);
   if (cached) {
     return cached;
@@ -77,8 +78,13 @@ export async function ipfsCatPromise(ipfsHash: string): Promise<any> {
 
   return new Promise((resolve, reject) => {
     try {
-      restIpfs.cat(ipfsHash, (error, result) => {
-        error ? reject(error) : resolve(result);
+      restIpfs.cat(ipfsHash, async (error, result) => {
+        if (error) {
+          reject(error);
+        } else {
+          await ipfsCache.add(ipfsHash, result);
+          resolve(result);
+        }
       });
     } catch (ex) {
       reject(ex);

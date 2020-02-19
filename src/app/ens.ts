@@ -21,17 +21,23 @@ import { config } from './config';
 import { ipfsCatPromise } from './ipfs';
 import { devLog } from './utils';
 
+const bs58 = (window as any).bs58;
+const Buffer = (window as any).buffer.Buffer;
+const keccak256 = (window as any).keccak256;
+let ensCache = { };
+
 /**
  * is inserted when the application was bundled, used to prevent window usage
  */
 declare let evanGlobals: any;
 
-const bs58 = (window as any).bs58;
-const Buffer = (window as any).buffer.Buffer;
-const keccak256 = (window as any).keccak256;
+// check if any ens entries were loaded before
+try {
+  ensCache = JSON.parse(window.localStorage['evan-ens-cache']);
+} catch (ex) { }
 
 async function postToEthClient(requestString): Promise<any> {
-  const [ ,,protocol, host, defaultPort ] = config.web3Provider
+  const [ , , protocol, host, defaultPort ] = config.web3Provider
     .match(/^((http[s]?|ftp|ws[s]):\/)?\/?([^:\/\s]+)((\/\w+)*\/)([\w\-\.]+[^#?\s]+)(.*)?(#[\w\-]+)?/);
   const port = defaultPort || (protocol === 'https' || protocol === 'wss') ? 443 : 8080;
 
@@ -88,32 +94,66 @@ function bytes32ToIpfsHash(str: string): string {
  * @param      {string}  address  ens address or contract address
  */
 export async function resolveContent(address: string) {
-  const input = '0x2dff6941';
-  const urlHash = namehash(address);
-  const callObj = {
-    method: 'eth_call',
-    params: [
-      {
-        data: `${input}${urlHash.replace('0x', '')}`,
-        to: config.nameResolver.ensResolver,
-      }
-    ],
-    id: 1,
-    jsonrpc: '2.0'
-  };
+  const anyWindow = (window as any);
+  // disable ens cache, when dapp-browser was redeployed
+  const cacheAvailable = anyWindow.dappBrowserBuild === window.localStorage['evan-dapp-browser-build']
+    && ensCache[address] && ensCache[address] !== 'invalid';
 
-  const ethResult = await postToEthClient(JSON.stringify(callObj));
-  if (ethResult.result) {
-    try {
-      const ipfsHash = bytes32ToIpfsHash(ethResult.result);
-      const ipfsContent = await ipfsCatPromise(ipfsHash);
-      return JSON.parse(ipfsContent);
-    } catch (ex) {
-      const errMsg = `Could not parse content address of ${address}: ${ethResult.result} (${ex.message})`;
-      devLog(errMsg, 'error');
-      throw new Error(errMsg);
+  // loading chain used to reload the ens data after 3 seconds, when cached
+  let contentResolver = Promise.resolve();
+  if (cacheAvailable) {
+    // delay loading for 3 seconds, to wait the heavy page load is over
+    if (cacheAvailable) {
+      contentResolver = new Promise(resolve => setTimeout(() => resolve(), 3000));
     }
   }
 
-  throw new Error(`Could not resolve content address for ${address}`);
+  // resolve the content
+  contentResolver = contentResolver.then(async () => {
+    const input = '0x2dff6941';
+    const urlHash = namehash(address);
+    const callObj = {
+      method: 'eth_call',
+      params: [
+        {
+          data: `${input}${urlHash.replace('0x', '')}`,
+          to: config.nameResolver.ensResolver,
+        }
+      ],
+      id: 1,
+      jsonrpc: '2.0'
+    };
+
+    const ethResult = await postToEthClient(JSON.stringify(callObj));
+    if (ethResult.result) {
+      try {
+        const ipfsHash = bytes32ToIpfsHash(ethResult.result);
+        const ipfsContent = JSON.parse(await ipfsCatPromise(ipfsHash));
+        const dbcp = ipfsContent.public;
+        
+        // set ens cache to speed up initial loading
+        if (dbcp.dapp.type === 'cached-dapp') {
+          ensCache[address] = JSON.stringify(dbcp);
+        } else {
+          delete ensCache[address];
+        }
+
+        // save ens cache
+        window.localStorage['evan-ens-cache'] = JSON.stringify(ensCache);
+        return dbcp;
+      } catch (ex) {
+        const errMsg = `Could not parse content address of ${address}: ${ethResult.result} (${ex.message})`;
+        devLog(errMsg, 'error');
+        throw new Error(errMsg);
+      }
+    }
+
+    throw new Error(`Could not resolve content address for ${address}`);
+  });
+
+  if (cacheAvailable) {
+    return JSON.parse(ensCache[address]);
+  } else {
+    return contentResolver;
+  }
 }

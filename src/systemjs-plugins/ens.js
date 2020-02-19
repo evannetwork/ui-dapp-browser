@@ -22,12 +22,6 @@ let cachableDBCPs = [ ];
 const utils = require('../app/utils');
 const { resolveContent } = require('../app/ens');
 const ipfsCatPromise = require('../app/ipfs').ipfsCatPromise;
-let ensCache = { };
-
-// check if any ens entries were loaded before
-try {
-  ensCache = JSON.parse(window.localStorage['evan-ens-cache']);
-} catch (ex) { }
 
 /**
  * Wrap data handling to be able to switch between dev and production mode =>
@@ -36,78 +30,29 @@ try {
  * @param      {string}  ensAddress  ens address to load the definition for
  * @return     {any}     The definition from ens.
  */
-const getDefinitionFromEns = function(ensAddress, domain) {
+const getDefinitionFromEns = async function(ensAddress, domain) {
   // remove domain from the end of the ensAddress to get the dapp name
   let dappName = ensAddress.split('.');
   dappName = dappName.slice(0, dappName.length - 1).join('.');
 
   // get correct ens address and check if a cached ens is availabled
   const validEnsAddress = ensAddress;
-  // disable ens cache, when dapp-browser was redeployed
-  const cacheAvailable = window.dappBrowserBuild === window.localStorage['evan-dapp-browser-build']
-    && ensCache[validEnsAddress] && ensCache[validEnsAddress] !== 'invalid';
+  let dbcp;
 
-  // loading chain used to reload the ens data after 3 seconds, when cached
-  let loader = Promise.resolve();
-
-  // delay loading for 3 seconds, to wait the heavy page load is over
-  if (cacheAvailable) {
-    loader = new Promise(resolve => setTimeout(() => resolve(), 3000));
-  }
-
-  if (utils.isDevAvailable(dappName) && ensAddress.indexOf('0x') !== 0) {
-    // load json and resolve it as stringified
-    loader = loader.then(() => evanGlobals.System
-      .import('external/' + dappName + '/dbcp.json!json')
-      .then(dbcp => JSON.stringify(Object.assign(dbcp.public, dbcp.private)))
-    );
-  } else {
-    // trigger the loader
-    if (validEnsAddress.indexOf('Qm') === 0) {
-      loader = loader.then(() => ipfsCatPromise(validEnsAddress));
+  try {
+    if (utils.isDevAvailable(dappName) && ensAddress.indexOf('0x') !== 0) {
+      // load json and resolve it as stringified
+      dbcp = await evanGlobals.System.import('external/' + dappName + '/dbcp.json!json');
+    } else if (validEnsAddress.indexOf('Qm') === 0) {
+      dbcp = await ipfsCatPromise(validEnsAddress);
     } else {
-      loader = loader.then(() => resolveContent(validEnsAddress));
-      // use api to load dbcp json from ens
-      loader = loader
-        .then(dbcp => {
-          if (dbcp) {
-            try {
-              dbcp = JSON.parse(dbcp);
-            } catch(ex) { }
-
-            const combinedStringified = JSON.stringify(Object.assign(dbcp.public, dbcp.private));
-
-            // set ens cache to speed up initial loading
-            if (dbcp.public && dbcp.public.dapp && dbcp.public.dapp.type === 'cached-dapp') {
-              ensCache[validEnsAddress] = combinedStringified;
-            } else {
-              delete ensCache[validEnsAddress];
-            }
-
-            // save ens cache
-            window.localStorage['evan-ens-cache'] = JSON.stringify(ensCache);
-
-            return combinedStringified;
-          } else {
-            if (ensCache[validEnsAddress]) {
-              // if no dbcp was found, set it invalid
-              ensCache[validEnsAddress] = 'invalid';
-            }
-
-            throw new Error(`no valid dbcp on ${ validEnsAddress }`);
-          }
-        })
-        .catch((ex) => {
-          throw new Error(`no valid dbcp on ${ validEnsAddress } (${ex.message})`);
-        });
+      dbcp = await resolveContent(validEnsAddress);
     }
+  } catch (ex) {
+    console.dir(ex);
   }
 
-  if (cacheAvailable) {
-    return ensCache[validEnsAddress];
-  } else {
-    return loader;
-  }
+  return JSON.stringify(dbcp && dbcp.public ? dbcp.public : dbcp);
 };
 
 /**
