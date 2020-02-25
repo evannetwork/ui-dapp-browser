@@ -32,7 +32,11 @@ const ipfsCatPromise = require('../app/ipfs').ipfsCatPromise;
  */
 const getDefinitionFromEns = async function(ensAddress, domain) {
   // remove domain from the end of the ensAddress to get the dapp name
-  let dappName = ensAddress.split('.');
+  let dappName = ensAddress
+    .replace(`angular-core`, `angularcore`)
+    .replace(`angular-libs`, `angularlibs`)
+    .replace(`smart-contracts`, `smartcontracts`)
+    .split('.');
   dappName = dappName.slice(0, dappName.length - 1).join('.');
 
   // get correct ens address and check if a cached ens is availabled

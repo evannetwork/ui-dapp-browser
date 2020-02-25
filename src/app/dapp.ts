@@ -32,8 +32,6 @@ declare let evanGlobals: any;
  * Set defaults for preloaded applications.
  */
 export let loadedDeps = { };
-loadedDeps[`bcc.${ utils.getDomainName() }!dapp-content`] = true;
-loadedDeps[`smartcontracts.${ utils.getDomainName() }!dapp-content`] = true;
 
 /**
  * check warnings only, after the first DApp was loaded
@@ -108,7 +106,11 @@ function getVersionDBCPHashFromDAppVersion(requiredVersion: string, childENS: st
   if (childDefinition && childDefinition) {
     const originalVersion = requiredVersion;
     const childVersions = childDefinition.versions || { };
-    childVersions[childDefinition.version] = childENS;
+    // TODO: remove old replaces!
+    childVersions[childDefinition.version] = childENS
+      .replace(`angular-core`, `angularcore`)
+      .replace(`angular-libs`, `angularlibs`)
+      .replace(`smart-contracts`, `smartcontracts`);
 
     const versionKeys = Object.keys(childVersions);
     const splittedVersion = getSplittedVersion(requiredVersion);
@@ -455,6 +457,34 @@ export async function startDApp(dappEns: string, container = document.body, useD
 
       // remove other elements from the container when they are still existing
       removePreviousContainerChilds();
+      // bind event listener to the iframe window and wait until it requests current user data
+      const handleUserContext = async (event) => {
+        // if iframe was deleted and event listener is opened, close it
+        if (!iframe || !iframe.contentWindow) {
+          return window.removeEventListener('message', handleUserContext);
+        }
+
+        // if user requests evan user context, send it via post message
+        if (event.data === 'evan-user-context') {
+          // send the data to the contentWindow
+          (<any>iframe.contentWindow).postMessage(
+            {
+              accountId: window.localStorage['evan-account'],
+              config,
+              ipfsConfig: ipfs.ipfsConfig,
+              language: window.localStorage['evan-language'],
+              testPassword: window.localStorage['evan-test-password'],
+              type: 'evan-user-context',
+              vault: window.localStorage['evan-vault'],
+            },
+            // ensure to only load iframes from ipfs
+            utils.devMode ? window.location.origin : ipfs.getRestIpfs().api_url(''),
+          );
+
+          window.removeEventListener('message', handleUserContext);
+        }
+      };
+      window.addEventListener('message', handleUserContext);
     } else {
       throw new Error('Invalid entry point defined!');
     }

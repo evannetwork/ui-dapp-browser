@@ -130,7 +130,7 @@ export async function resolveContent(address: string) {
         const ipfsHash = bytes32ToIpfsHash(ethResult.result);
         const ipfsContent = JSON.parse(await ipfsCatPromise(ipfsHash));
         const dbcp = ipfsContent.public;
-        
+
         // set ens cache to speed up initial loading
         if (dbcp.dapp.type === 'cached-dapp') {
           ensCache[address] = JSON.stringify(dbcp);

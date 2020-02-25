@@ -36,14 +36,6 @@ declare let evanGlobals: any;
 window['evanloadTime'] = Date.now();
 
 /**************************************************************************************************/
-/**
- * Keep orignal Promise from ZoneJS and restore it after bcc browserified was loaded, which
- * is overwriting the ZoneJS Promise
- *
- * bcc:23126 Unhandled promise rejection Error: Zone.js has detected that ZoneAwarePromise
- * `(window|global).Promise` has been overwritten.
- */
-// TODO: when bcc is loaded multiple times, zoneJS should also be saved
 const System = window['System'];
 const getDomainName = utils.getDomainName;
 let web3;
@@ -56,9 +48,6 @@ evanGlobals.restIpfs = ipfs.restIpfs;
 evanGlobals.System = System;
 evanGlobals.queryParams = routing.getQueryParameters();
 
-evanGlobals.System.map['bcc'] = `bcc.${ getDomainName() }!dapp-content`;
-evanGlobals.System.map['bcc-profile'] = `bcc.${ getDomainName() }!dapp-content`;
-evanGlobals.System.map['bcc-bc'] = `bcc.${ getDomainName() }!dapp-content`;
 evanGlobals.System.map['@evan.network/api-blockchain-core'] = `bcc.${ getDomainName() }!dapp-content`;
 evanGlobals.System.map['@evan.network/dbcp'] = `bcc.${ getDomainName() }!dapp-content`;
 evanGlobals.System.map['smart-contracts'] = `smartcontracts.${ getDomainName() }!dapp-content`;

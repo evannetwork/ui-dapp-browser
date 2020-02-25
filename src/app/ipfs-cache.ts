@@ -33,7 +33,7 @@ export class IPFSCache {
    * @param      {string}  dbName     database name
    * @param      {string}  storeName  store name within the database
    */
-  constructor(dbName = 'keyval-store', readonly storeName = 'keyval') {
+  constructor(dbName = 'ipfs-cache', readonly storeName = 'ipfs-hashes') {
     this._dbp = new Promise((resolve, reject) => {
       const openreq = indexedDB.open(dbName, 1);
       openreq.onerror = () => {
