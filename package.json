@@ -3,7 +3,6 @@
   "dependencies": {
     "@evan.network/api-blockchain-core": "^2.3.0",
     "console.table": "^0.9.1",
-    "copy-webpack-plugin": "^5.1.1",
     "css-loader": "^3.4.2",
     "del": "^2.2.2",
     "express": "^4.16.2",
@@ -11,6 +10,7 @@
     "gulp-minify": "^3.1.0",
     "inquirer": "^5.1.0",
     "ipfs-api": "^26.1.2",
+    "minimist": "^1.2.0",
     "node-sass": "^4.13.1",
     "request": "^2.83.0",
     "sass-loader": "^8.0.2",
@@ -20,6 +20,8 @@
   },
   "description": "evan dapp root project for loading sub dapps, that can also be compiled as a mobile application",
   "devDependencies": {
+    "terser-webpack-plugin": "^2.3.5",
+    "copy-webpack-plugin": "^5.1.1",
     "eslint": "^6.8.0",
     "eslint-config-airbnb-base": "^14.0.0",
     "eslint-config-prettier": "^6.9.0",
@@ -27,8 +29,10 @@
     "eslint-plugin-prettier": "^3.1.2",
     "ts-loader": "^6.2.1",
     "typescript": "^3.8.2",
+    "uglifyjs-webpack-plugin": "^2.2.0",
     "webpack": "^4.41.6",
-    "webpack-cli": "^3.3.11"
+    "webpack-cli": "^3.3.11",
+    "webpack-node-externals": "^1.7.2"
   },
   "homepage": "https://evannetwork.github.io/",
   "keywords": [
@@ -39,7 +43,7 @@
     "SASS"
   ],
   "license": "AGPL-3.0-only",
-  "main": "dist/app.js",
+  "main": "dist/dapp-browser.js",
   "name": "@evan.network/ui-dapp-browser",
   "repository": {
     "type": "git",
@@ -48,11 +52,9 @@
   "scripts": {
     "build": "npx webpack --mode=production",
     "build-dev": "npx webpack --mode=development",
-    "watch": "npx webpack --mode=development --watch",
     "deploy": "gulp --gulpfile gulp/deployment.js deploy --config",
-    "doc": "gulp --gulpfile gulp/documentation.js",
-    "postinstall": "npm rebuild node-sass",
-    "serve": "gulp --cwd . --gulpfile gulp/serve.js serve && npm run watch"
+    "serve": "gulp --cwd . --gulpfile gulp/serve.js serve && npm run watch",
+    "watch": "npx webpack --mode=development --watch"
   },
   "types": "runtime/build/main.d.ts",
   "version": "2.17.0"

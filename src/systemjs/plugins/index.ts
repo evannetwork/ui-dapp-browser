@@ -17,28 +17,18 @@
   the following URL: https://evan.network/license/
 */
 
-import * as dapp from './app/dapp';
-import * as ipfs from './app/ipfs';
-import * as loading from './app/loading';
-import * as routing from './app/routing';
-import * as utils from './app/utils';
-import config from './app/config';
-import System from './systemjs/index';
-import start from './app/start';
+import registerDAppContent from './dapp-content';
+import registerEns from './ens';
+import registerIpfs from './ipfs';
+import registerJson from './json';
+import registerText from './text';
 
-import './index.scss';
+function registerPlugins(System: any) {
+  System.amdDefine('dapp-content', registerDAppContent(System));
+  System.amdDefine('ens', registerEns(System));
+  System.amdDefine('ipfs', registerIpfs(System));
+  System.amdDefine('json', registerJson(System));
+  System.amdDefine('text', registerText(System));
+}
 
-const DAppBrowser = {
-  config,
-  dapp,
-  getDomainName: utils.getDomainName,
-  ipfs,
-  loading,
-  routing,
-  start,
-  System,
-  utils,
-};
-
-System.amdDefine('@evan.network/ui-dapp-browser', DAppBrowser);
-export default DAppBrowser;
+export { registerPlugins };

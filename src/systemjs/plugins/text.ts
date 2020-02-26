@@ -17,28 +17,22 @@
   the following URL: https://evan.network/license/
 */
 
-import * as dapp from './app/dapp';
-import * as ipfs from './app/ipfs';
-import * as loading from './app/loading';
-import * as routing from './app/routing';
-import * as utils from './app/utils';
-import config from './app/config';
-import System from './systemjs/index';
-import start from './app/start';
+export default function(System: any) {
+  /**
+   * Load basic text (used for css)
+   *
+   * @param      {string}  load    SystemJS payload properties
+   * @return     {string}  location adjusted to return only text
+   */
+  function translate(load: any) {
+    if (this.builder && this.transpiler) {
+      load.metadata.format = 'esm';
+      return 'exp' + 'ort var __useDefault = ' + JSON.stringify(load.source) + '; exp' + 'ort default __useDefault;';
+    }
 
-import './index.scss';
+    load.metadata.format = 'amd';
+    return 'def' + 'ine(function() {\nreturn ' + JSON.stringify(load.source) + ';\n});';
+  }
 
-const DAppBrowser = {
-  config,
-  dapp,
-  getDomainName: utils.getDomainName,
-  ipfs,
-  loading,
-  routing,
-  start,
-  System,
-  utils,
-};
-
-System.amdDefine('@evan.network/ui-dapp-browser', DAppBrowser);
-export default DAppBrowser;
+  return { translate };
+}

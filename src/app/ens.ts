@@ -20,12 +20,13 @@
 import config from './config';
 import { ipfsCatPromise } from './ipfs';
 import { devLog } from './utils';
+import bs58Bundle from '../libs/bs58.bundle';
+import sha3Bundle from '../libs/js-sha3.min';
+import BufferPolyFill from '../libs/buffer.polyfill';
 
-import * as stuff from '../libs/bs58.bundle';
-
-console.log(stuff)
-const bs58: any = {};
-const keccak256: any = {};
+const Buffer = (BufferPolyFill as any).Buffer;
+const bs58 = (bs58Bundle as any);
+const keccak256 = (sha3Bundle as any).keccak256;
 
 // const bs58 = (window as any).bs58;
 let ensCache: any = { };

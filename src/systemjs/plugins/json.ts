@@ -17,28 +17,18 @@
   the following URL: https://evan.network/license/
 */
 
-import * as dapp from './app/dapp';
-import * as ipfs from './app/ipfs';
-import * as loading from './app/loading';
-import * as routing from './app/routing';
-import * as utils from './app/utils';
-import config from './app/config';
-import System from './systemjs/index';
-import start from './app/start';
+export default function(System: any) {
+  /**
+   * use translate to handle json results => format result as common js and
+   * prepend an module.exports, so the json will be returned
+   *
+   * @param      {any}     load    original load object
+   * @return     {string}  module.exports + source, call SystemJS to return JSON
+   */
+  function translate(load: any) {
+    load.metadata.format = 'cjs';
+    return 'module.exports = ' + load.source;
+  };
 
-import './index.scss';
-
-const DAppBrowser = {
-  config,
-  dapp,
-  getDomainName: utils.getDomainName,
-  ipfs,
-  loading,
-  routing,
-  start,
-  System,
-  utils,
-};
-
-System.amdDefine('@evan.network/ui-dapp-browser', DAppBrowser);
-export default DAppBrowser;
+  return { translate };
+}
