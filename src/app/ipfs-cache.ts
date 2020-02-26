@@ -19,7 +19,7 @@
 
 import { sendEvent, devLog } from './utils';
 
-let lastCache;
+let lastCache: IPFSCache;
 
 /**
  * IPFS cache that uses an index db to store ipfs results in.

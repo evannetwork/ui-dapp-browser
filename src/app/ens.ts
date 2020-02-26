@@ -17,14 +17,18 @@
   the following URL: https://evan.network/license/
 */
 
-import { config } from './config';
+import config from './config';
 import { ipfsCatPromise } from './ipfs';
 import { devLog } from './utils';
 
-const bs58 = (window as any).bs58;
-const Buffer = (window as any).buffer.Buffer;
-const keccak256 = (window as any).keccak256;
-let ensCache = { };
+import * as stuff from '../libs/bs58.bundle';
+
+console.log(stuff)
+const bs58: any = {};
+const keccak256: any = {};
+
+// const bs58 = (window as any).bs58;
+let ensCache: any = { };
 
 /**
  * is inserted when the application was bundled, used to prevent window usage
@@ -36,7 +40,7 @@ try {
   ensCache = JSON.parse(window.localStorage['evan-ens-cache']);
 } catch (ex) { }
 
-async function postToEthClient(requestString): Promise<any> {
+async function postToEthClient(requestString: string): Promise<any> {
   const [ , , protocol, host, defaultPort ] = config.web3Provider
     .match(/^((http[s]?|ftp|ws[s]):\/)?\/?([^:\/\s]+)((\/\w+)*\/)([\w\-\.]+[^#?\s]+)(.*)?(#[\w\-]+)?/);
   const port = defaultPort || (protocol === 'https' || protocol === 'wss') ? 443 : 8080;
@@ -50,8 +54,8 @@ async function postToEthClient(requestString): Promise<any> {
   });
 }
 
-function namehash(inputName) {
-  function dropPrefix0x(input) {
+function namehash(inputName: string) {
+  function dropPrefix0x(input: string) {
     return input.replace(/^0x/, '');
   }
   let node = '';

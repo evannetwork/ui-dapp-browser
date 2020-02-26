@@ -32,43 +32,9 @@ const enableBuild = process.argv.indexOf('--build') !== -1;
 gulp.task('serve', async function () {
   process.chdir(path.resolve('..'));
 
-  if (enableBuild) {
-    // run build script initially
-    require(path.resolve('./gulp/build.js'));
-    await new Promise(resolve => gulp.task('build')(resolve));
-
-    // watch for changes
-    gulp.watch(
-      [
-        'src/**/*.ts',
-        'src/libs/*.js',
-        'src/systemjs-plugins/*.js',
-        'src/*.js',
-        'systemjs.config.js',
-        '!src/build/*.js'
-      ],
-      gulp.series(['build'])
-    );
-
-    gulp.watch(
-      [
-        'src/**/*.scss',
-      ],
-      gulp.series(['sass', 'copy'])
-    );
-
-    gulp.watch(
-      [
-        'src/**/*.html',
-        '!src/build/*.html'
-      ],
-      gulp.series(['copy'])
-    );
-  }
-
   var app = express();
 
-  app.use(serveStatic('runtime'));
+  app.use(serveStatic('dist'));
   app.use(serveStatic('.'));
   app.use(function (req, res, next) {
     res.header("Access-Control-Allow-Origin", "*");
@@ -78,15 +44,15 @@ gulp.task('serve', async function () {
 
   app.use('/dev-dapps', (req, res) => {
     const data = {
-      externals: []
+      dapps: []
     };
 
     try {
-      data.externals = getDirectories(path.resolve('runtime/external'))
+      data.dapps = getDirectories(path.resolve('dist/dapps'))
         .map(external => external.split(path.sep).pop());
     } catch (ex) { }
 
-    console.log('Serving DApps locally: ' + data.externals.join(', '));
+    console.log('Serving DApps locally: ' + data.dapps.join(', '));
 
     res.send(data);
   });

@@ -19,6 +19,7 @@
 
 import { startDApp, } from './dapp';
 import * as utils from './utils';
+import Navigo from '../libs/navigo';
 
 /**
  * is inserted when the application was bundled, used to prevent window usage
@@ -28,12 +29,11 @@ declare let evanGlobals: any;
 /**
  * small navigation library Navigo is used to handle comfortable url route writing
  */
-const Navigo = window['Navigo'];
-let lastRootENS;
+let lastRootENS: string;
 
-export let router;
-export let defaultDAppENS;
-export let history;
+export let router: any;
+export let defaultDAppENS: string;
+export let history: string[];
 
 /**
  * Go to onboarding. (#/onboarding.evan)
@@ -75,9 +75,9 @@ export function getActiveRootENS(): string {
 
   if (splitted.length > 0) {
     return splitted[0];
-  } else {
-    return '';
   }
+
+  return '';
 }
 
 /**
@@ -150,7 +150,7 @@ export async function onRouteChange(): Promise<void> {
  * @return     {void}    resolved when routing was created
  */
 export async function initialize(initialRoute?: string): Promise<void> {
-  // load history from cache
+  // load history fstring[[rom cache
   if (window.performance.navigation.type === 1 && !window.sessionStorage['evan-route-reloaded']) {
     history = [ ];
   } else {
@@ -216,7 +216,7 @@ export function updateHistory() {
  * @param      {string}  url     url to parse, detail is window.location.href
  * @return     {string}  value of the parameter / null if not defined
  */
-export function getQueryParameterValue(name, url = window.location.href) {
+export function getQueryParameterValue(name: string, url = window.location.href) {
   // parse out the parameters
   const regex = new RegExp('[?&]' + name.replace(/[\[\]]/g, '\\$&') + '(=([^&#]*)|&|#|$)');
   const results = regex.exec(url);
@@ -237,7 +237,7 @@ export function getQueryParameterValue(name, url = window.location.href) {
  */
 export function getQueryParameters(url: string = window.location.search.split('#')[0]): { [key: string]: any} {
   // http://stackoverflow.com/a/23946023/2407309
-  let urlParams = {};
+  let urlParams: any = {};
   let queryString = url.split('?')[1];
 
   if (queryString) {

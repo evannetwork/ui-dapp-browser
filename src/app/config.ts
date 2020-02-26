@@ -30,7 +30,15 @@ const process = {
     ENS_MAILBOX: window.localStorage['evan-ens-mailbox'],
   },
 };
-const config = {
+
+(window as any).process = window.process || {};
+(window as any).process.env = window.process.env || {};
+(window as any).process.env = {
+  ...(window as any).process.env,
+  ...process.env,
+};
+
+export default {
   accountMap: {
     '0x0000000000000000000000000000000000000000': ''
   },
@@ -77,5 +85,3 @@ const config = {
   ensRootOwner: '0x4a6723fC5a926FA150bAeAf04bfD673B056Ba83D',
   faucetAccount: '0x4a6723fC5a926FA150bAeAf04bfD673B056Ba83D',
 }
-
-export { config }

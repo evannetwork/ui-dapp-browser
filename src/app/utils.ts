@@ -39,7 +39,7 @@ export let browserName: string;
 export let isPrivateMode: boolean;
 
 // import configuration
-import { config } from './config';
+import config from './config';
 
 export const environment = window.location.href.indexOf('https://dashboard.evan.network') ? 'core' :
   'testcore';
@@ -47,7 +47,7 @@ export const environment = window.location.href.indexOf('https://dashboard.evan.
 /**
  * Checks if we are running in devMode, if true, load dev-dapps from local file server, if false do nothing
  */
-export async function setUpDevMode(): Promise<void> {
+export async function setUpDevMode(System: any): Promise<void> {
   const host = window.location.host;
   const correctHost = [
     host.indexOf('localhost') !== -1,
@@ -56,16 +56,15 @@ export async function setUpDevMode(): Promise<void> {
     host.endsWith('.serveo.net'),
   ].filter(check => check).length !== 0;
 
-  if (correctHost && window.location.href.indexOf('dev.html') !== -1) {
-    evanGlobals.devMode = await evanGlobals.System.import(`${ window.location.origin }/dev-dapps!json`);
-
-    if (evanGlobals.devMode.externals) {
-      evanGlobals.devMode = evanGlobals.devMode.externals;
+  if (correctHost || window.location.href.indexOf('dev.html') !== -1) {
+    let result = await System.import(`${ window.location.origin }/dev-dapps!json`);
+    if (result.dapps) {
+      result = result.dapps;
     } else {
-      evanGlobals.devMode = null;
+      result = null;
     }
 
-    devMode = evanGlobals.devMode;
+    devMode = result;
   }
 }
 
@@ -75,9 +74,9 @@ export async function setUpDevMode(): Promise<void> {
  * @param      {string}   name    string of the dapp to check
  * @return     {boolean}  True if DApp is available for development, False otherwise.
  */
-export function isDevAvailable(name): boolean {
-  if (evanGlobals.devMode) {
-    return evanGlobals.devMode.indexOf(name) !== -1;
+export function isDevAvailable(name: string): boolean {
+  if (devMode) {
+    return devMode.indexOf(name) !== -1;
   }
 
   return false;
@@ -159,15 +158,18 @@ export function getDAppName(ensAddress: string) {
  * @param      {Array<string>}  subLabels  used to enhance nameResolver config
  * @return     {<type>}         The domain name.
  */
-export function getDomainName(...subLabels): string {
+export function getDomainName(...subLabels: string[]): string {
   const domainConfig = config.nameResolver.domains.root;
 
   if (Array.isArray(domainConfig)) {
-    return subLabels.filter(label => label).concat(domainConfig.map(
-      label => config.nameResolver.labels[label])).join('.').toLowerCase();
-  } else {
-    return domainConfig;
+    return subLabels
+      .filter(label => label)
+      .concat(domainConfig.map(label => (config.nameResolver.labels as any)[label]))
+      .join('.')
+      .toLowerCase();
   }
+
+  return domainConfig;
 }
 
 /**
@@ -193,10 +195,11 @@ export function getBrowserName() {
   const isFirefox = typeof (<any>window).InstallTrigger !== 'undefined';
 
   // Safari 3.0+ "[object HTMLElementConstructor]"
-  const isSafari = /constructor/i.test((<any>window).HTMLElement) ||
-    (function (p) { return p.toString() === "[object SafariRemoteNotification]"; })(!window['safari'] || (<any>window).safari.pushNotification) ||
-    (!!navigator.userAgent.match(/Version\/[\d\.]+.*Safari/)) ||
-    (/iPad|iPhone|iPod/.test(navigator.userAgent) && !(<any>window).MSStream);
+  const isSafari = /constructor/i.test((<any>window).HTMLElement)
+    || (function (p: any): any { return p.toString() === "[object SafariRemoteNotification]"; })
+      (!(window as any).safari || (window as any).safari.pushNotification)
+    || (!!navigator.userAgent.match(/Version\/[\d\.]+.*Safari/))
+    || (/iPad|iPhone|iPod/.test(navigator.userAgent) && !(<any>window).MSStream);
 
   // Internet Explorer 6-11
   const isIE = /*@cc_on!@*/false || !!(<any>document).documentMode;
@@ -293,20 +296,21 @@ export async function getIsPrivateMode() {
  * @return     {string}  opera / firefox / safari / ie / edge / chrome
  */
 export function currentBrowser() {
-  if ((!!window['opr'] && !!window['opr'].addons) || !!window['opera'] ||
+  const windowAny: any = window;
+  if ((!!windowAny.opr && !!windowAny.opr.addons) || !!windowAny.opera ||
     navigator.userAgent.indexOf(' OPR/') >= 0) {
       return 'opera';
-  } else if (typeof window['InstallTrigger'] !== 'undefined') {
+  } else if (typeof windowAny['InstallTrigger'] !== 'undefined') {
     return 'firefox';
-  } else if (/constructor/i.test(<any>window['HTMLElement']) ||
-    (function (p) { return p.toString() === '[object SafariRemoteNotification]'; })
-    (!window['safari'] || (typeof window['safari'] !== 'undefined' && window['safari'].pushNotification))) {
+  } else if (/constructor/i.test(<any>windowAny['HTMLElement']) ||
+    (function (p: any) { return p.toString() === '[object SafariRemoteNotification]'; })
+    (!windowAny['safari'] || (typeof windowAny['safari'] !== 'undefined' && windowAny['safari'].pushNotification))) {
       return 'safari';
-  } else if (/*@cc_on!@*/false || !!document['documentMode']) {
+  } else if (/*@cc_on!@*/false || !!(document as any).documentMode) {
     return 'ie';
-  } else if (!!window['StyleMedia']) {
+  } else if (!!windowAny['StyleMedia']) {
     return 'edge';
-  } else if (!!window['chrome'] && !!window['chrome'].webstore) {
+  } else if (!!windowAny['chrome'] && !!windowAny['chrome'].webstore) {
     return 'chrome';
   }
 }
@@ -319,6 +323,6 @@ export function currentBrowser() {
  */
 export function devLog(message: string, type = 'log') {
   if (window.localStorage['evan-dev-log'] || window.localStorage['bc-dev-logs'] === 'debug') {
-    console[type](`[dapp-browser] ${message}`);
+    (console as any)[type](`[dapp-browser] ${message}`);
   }
 }

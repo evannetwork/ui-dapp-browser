@@ -30,7 +30,6 @@ export let isFirstLoad = true;
 const percentageThreshold = 100 / 9;
 export let lastPercentage = 0;
 let waitForLoadingAnimation = Promise.resolve();
-let percentagesSet = [ ];
 
 /**
  * Takes the latest progress percentage and raise it with the incoming value.
@@ -51,16 +50,13 @@ export async function raiseProgress(percentage: number, returnObj?: any) {
   }
 
   // set the percentage only, if it wasn't set before
-  if (!percentagesSet[lastPercentage]) {
-    percentagesSet[lastPercentage] = true;
-    const loadingProgress = document.getElementById(`loading-progress`);
-    if (loadingProgress) {
-      loadingProgress.style.transform = `scaleX(${ lastPercentage / 100 })`;
-    }
-
-    // wait until animation is finished
-    waitForLoadingAnimation = new Promise(resolve => setTimeout(resolve, 100));
+  const loadingProgress = document.getElementById(`loading-progress`);
+  if (loadingProgress) {
+    loadingProgress.style.transform = `scaleX(${ lastPercentage / 100 })`;
   }
+
+  // wait until animation is finished
+  waitForLoadingAnimation = new Promise(resolve => setTimeout(resolve, 100));
 
   return returnObj;
 }
@@ -87,8 +83,8 @@ export function finishDAppLoading()  {
   if (isFirstLoad) {
     isFirstLoad = false;
 
-    utils.devLog(`Loading evan.network finished: ${ (Date.now() - window['evanloadTime']) / 1000 }s`);
+    utils.devLog(`Loading evan.network finished: ${ (Date.now() - (window as any).evanloadTime) / 1000 }s`);
   }
 
-  utils.devLog(`Loading dapp finished: ${ (Date.now() - window['evanDApploadTime']) / 1000 }s`);
+  utils.devLog(`Loading dapp finished: ${ (Date.now() - (window as any).evanloadTime) / 1000 }s`);
 }

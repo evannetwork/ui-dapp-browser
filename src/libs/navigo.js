@@ -466,4 +466,4 @@ Navigo.REPLACE_WILDCARD = '(?:.*)';
 Navigo.FOLLOWED_BY_SLASH_REGEXP = '(?:\/$|$)';
 Navigo.MATCH_REGEXP_FLAGS = '';
 
-window.Navigo = Navigo;
+export default Navigo;

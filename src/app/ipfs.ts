@@ -17,14 +17,14 @@
   the following URL: https://evan.network/license/
 */
 
-import * as browserIpfs from '../libs/browser-ipfs.js';
+import browserIpfs from '../libs/browser-ipfs.js';
 import { getIpfsCache } from './ipfs-cache';
 import * as utils from './utils';
 
 /**
  * set the default provider for the browser ipfs for the current window location
  */
-browserIpfs.default.setProvider({
+browserIpfs.setProvider({
   host: window.location.host.split(':')[0],
   port: window.location.port,
   protocol: window.location.protocol.replace(':', ''),
@@ -56,11 +56,11 @@ export function getRestIpfs(): any {
     restIpfsConfig.port = '8080';
   }
 
-  browserIpfs.default.api.host = restIpfsConfig.host;
-  browserIpfs.default.api.port = restIpfsConfig.port;
-  browserIpfs.default.api.protocol = restIpfsConfig.protocol;
+  browserIpfs.api.host = restIpfsConfig.host;
+  browserIpfs.api.port = restIpfsConfig.port;
+  browserIpfs.api.protocol = restIpfsConfig.protocol;
 
-  return browserIpfs.default;
+  return browserIpfs;
 }
 
 /**
@@ -78,7 +78,7 @@ export async function ipfsCatPromise(ipfsHash: string): Promise<any> {
 
   return new Promise((resolve, reject) => {
     try {
-      restIpfs.cat(ipfsHash, async (error, result) => {
+      restIpfs.cat(ipfsHash, async (error: any, result: any) => {
         if (error) {
           reject(error);
         } else {

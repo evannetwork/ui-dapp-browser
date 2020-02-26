@@ -20,18 +20,14 @@
 import * as ipfs  from './ipfs';
 import * as loading  from './loading';
 import * as utils from './utils';
-import { config } from './config';
+import config from './config';
+import System from '../systemjs/index';
 
-
-/**
- * is inserted when the application was bundled, used to prevent window usage
- */
-declare let evanGlobals: any;
 
 /**
  * Set defaults for preloaded applications.
  */
-export let loadedDeps = { };
+export let loadedDeps: any = { };
 
 /**
  * check warnings only, after the first DApp was loaded
@@ -78,9 +74,9 @@ export function getDAppBaseUrl(dbcp: any, address: string): string {
   } catch (ex) { }
 
   if (utils.isDevAvailable(address) && address.indexOf('0x') !== 0) {
-    return window.location.origin + '/external/' + address;
+    return window.location.origin + '/dapps/' + address;
   } else {
-    return evanGlobals.restIpfs
+    return ipfs.restIpfs
       .api_url('/' + (dbcp.dapp.isIpns ? 'ipns' : 'ipfs') + '/' + dbcp.dapp.origin);
   }
 }
@@ -226,8 +222,13 @@ function getVersionDBCPHashFromDAppVersion(requiredVersion: string, childENS: st
  *    ]
  *  ]
  */
-export async function getDAppDependencies(originName: string, ensDefinition: any, depTree = [ ], deep = 0): Promise<Array<any>> {
-  let deps = [ ];
+export async function getDAppDependencies(
+  originName: string,
+  ensDefinition: any,
+  depTree: any[][] = [],
+  deep = 0
+): Promise<Array<any>> {
+  const deps: any[] = [ ];
 
   depTree.unshift(deps);
 
@@ -248,7 +249,7 @@ export async function getDAppDependencies(originName: string, ensDefinition: any
 
         // load all dependencies, check for its location and trigger the sub loading
         for (let dependency of depKeys) {
-          let subDefinition = await evanGlobals.System
+          let subDefinition = await System
             .import(`${ dependency }.${ utils.getDomainName() }!ens`);
 
           // resolve the correct ipfs hash from dbcp versions list
@@ -265,7 +266,7 @@ export async function getDAppDependencies(originName: string, ensDefinition: any
           // the latest version from ens, so we need to require the correct, version specific dbcp
           // json and merge the versions
           if (versionLocation.indexOf('Qm') === 0) {
-            const previousDefinition = await evanGlobals.System
+            const previousDefinition = await System
               .import(`${ versionLocation.replace('!dapp-content', '') }!ens`);
 
             // use the latest version history, to be sure, that the correct latest version is
@@ -303,14 +304,14 @@ export async function getDAppDependencies(originName: string, ensDefinition: any
 export async function loadDAppDependencies(dappEns: string, useDefaultDomain?: boolean): Promise<any> {
   utils.devLog(`Loading dapp: ${ dappEns }`);
 
-  window['evanDApploadTime'] = Date.now();
+  (window as any).evanDApploadTime = Date.now();
 
   if (dappEns.indexOf('0x') !== 0 && useDefaultDomain) {
     dappEns = `${dappEns}.${utils.getDomainName()}`;
   }
 
   // load ens definition for the dapp that should be loaded
-  const ensDefinition = await evanGlobals.System.import(`${dappEns}!ens`);
+  const ensDefinition = await System.import(`${dappEns}!ens`);
 
   // travers all deps and it'S version location
   const depCategories = await getDAppDependencies(dappEns, ensDefinition);
@@ -320,7 +321,7 @@ export async function loadDAppDependencies(dappEns: string, useDefaultDomain?: b
   // 1 (dapp to start) + count of dapp libs
   let depCount = 1;
 
-  depCategories.forEach(depCategory => depCategory.forEach(dep => depCount++));
+  depCategories.forEach(depCategory => depCategory.forEach((dep: any) => depCount++));
 
   const loadingSteps = (90 - lastPercentage) / depCount;
 
@@ -329,14 +330,14 @@ export async function loadDAppDependencies(dappEns: string, useDefaultDomain?: b
   const zoneJSPromise = window['Promise'];
   for (let depCategory of depCategories) {
     if (depCategory.length > 0) {
-      await Promise.all(depCategory.map(async (dep) => {
+      await Promise.all(depCategory.map(async (dep: any) => {
         // set systemjs map
-        evanGlobals.System.map[dep.name] = dep.location;
+        System.map[dep.name] = dep.location;
 
         if (!loadedDeps[dep.location]) {
           try {
             // preimport application to handle references in code
-            await evanGlobals.System.import(dep.name);
+            await System.import(dep.name);
           } catch (ex) {
             console.error(ex);
 
@@ -366,7 +367,7 @@ export async function loadDAppDependencies(dappEns: string, useDefaultDomain?: b
  */
 export async function loadDApp(dappEns: string, useDefaultDomain?: boolean): Promise<any> {
   const ensDefinition = await loadDAppDependencies(dappEns, useDefaultDomain);
-  const loadedModule = await evanGlobals.System.import(`${dappEns}!dapp-content`);
+  const loadedModule = await System.import(`${dappEns}!dapp-content`);
 
   return {
     module: loadedModule,
@@ -399,7 +400,7 @@ export async function startDApp(dappEns: string, container = document.body, useD
 
     // save previous element that were included into the container and remove them, after the new
     // dapp has started (transform it into an array, to use it as an copy)
-    let previousContainerChilds = [ ].map.call(document.body.childNodes, (el) => el);
+    let previousContainerChilds = [ ].map.call(document.body.childNodes, (el: Element) => el);
     /**
      * Remove the previous container children to force previously opened dapp in this container, to
      * stop. Mostly used after the new dapp has started, to keep eventually loading screen that is
@@ -433,7 +434,7 @@ export async function startDApp(dappEns: string, container = document.body, useD
     const dappBaseUrl = getDAppBaseUrl(ensDefinition, dappEns);
     if (entrypoint.endsWith('.js')) {
       // load the DApp and start it
-      const dappModule = await evanGlobals.System.import(`${dappEns}!dapp-content`);
+      const dappModule = await System.import(`${dappEns}!dapp-content`);
       await dappModule.startDApp(container, ensDefinition.name, dappEns, dappBaseUrl);
 
       // remove other elements from the container when they are still existing
@@ -458,7 +459,7 @@ export async function startDApp(dappEns: string, container = document.body, useD
       // remove other elements from the container when they are still existing
       removePreviousContainerChilds();
       // bind event listener to the iframe window and wait until it requests current user data
-      const handleUserContext = async (event) => {
+      const handleUserContext = async (event: any): Promise<void> => {
         // if iframe was deleted and event listener is opened, close it
         if (!iframe || !iframe.contentWindow) {
           return window.removeEventListener('message', handleUserContext);
