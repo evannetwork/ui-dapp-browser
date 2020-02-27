@@ -21,7 +21,7 @@ import * as utils from '../../app/utils';
 import System from '../index';
 import { getQueryParameters } from '../../app/routing';
 import { ipfsCatPromise } from '../../app/ipfs';
-import { resolveContent } from '../../app/ens';
+import { resolveContent, parseToValidEnsAddress } from '../../app/ens';
 
 export default function(System: any) {
   // libraries that should be cached
@@ -36,15 +36,11 @@ export default function(System: any) {
    */
   const getDefinitionFromEns = async function(ensAddress: string, domain: string) {
     // remove domain from the end of the ensAddress to get the dapp name
-    let split = ensAddress
-      .replace(`angular-core`, `angularcore`)
-      .replace(`angular-libs`, `angularlibs`)
-      .replace(`smart-contracts`, `smartcontracts`)
-      .split('.');
+    let split = parseToValidEnsAddress(ensAddress).split('.');
     const dappName = split.slice(0, split.length - 1).join('.');
 
     // get correct ens address and check if a cached ens is availabled
-    const validEnsAddress = ensAddress;
+    const validEnsAddress = parseToValidEnsAddress(ensAddress);
     let dbcp;
 
     try {

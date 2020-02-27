@@ -9,6 +9,7 @@ const outFolder = path.resolve(__dirname, 'dist');
 
 const config = {
   entry: './src/index.ts',
+  devtool: '#source-map',
   mode: argv.mode || 'production',
   module: {
     rules: [

@@ -22,6 +22,7 @@ import * as loading  from './loading';
 import * as utils from './utils';
 import config from './config';
 import System from '../systemjs/index';
+import { parseToValidEnsAddress } from './ens';
 
 
 /**
@@ -103,10 +104,7 @@ function getVersionDBCPHashFromDAppVersion(requiredVersion: string, childENS: st
     const originalVersion = requiredVersion;
     const childVersions = childDefinition.versions || { };
     // TODO: remove old replaces!
-    childVersions[childDefinition.version] = childENS
-      .replace(`angular-core`, `angularcore`)
-      .replace(`angular-libs`, `angularlibs`)
-      .replace(`smart-contracts`, `smartcontracts`);
+    childVersions[childDefinition.version] = parseToValidEnsAddress(childENS);
 
     const versionKeys = Object.keys(childVersions);
     const splittedVersion = getSplittedVersion(requiredVersion);

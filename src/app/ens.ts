@@ -94,6 +94,18 @@ function bytes32ToIpfsHash(str: string): string {
 }
 
 /**
+ * Parses a ens address and replaces old, not existing applications to be backwards compatible.
+ *
+ * @param      {string}  address  ens address to be parsed
+ */
+export function parseToValidEnsAddress(address: string) {
+  return address
+      .replace(`angular-core`, `angularcore`)
+      .replace(`angular-libs`, `angularlibs`)
+      .replace(`smart-contracts`, `smartcontracts`);
+}
+
+/**
  * Resolves the content behind a ens address.
  *
  * @param      {string}  address  ens address or contract address
@@ -133,6 +145,9 @@ export async function resolveContent(address: string) {
     if (ethResult.result) {
       try {
         const ipfsHash = bytes32ToIpfsHash(ethResult.result);
+        if (ethResult.result === '0x0000000000000000000000000000000000000000000000000000000000000000') {
+          throw new Error('No ens content set!');
+        }
         const ipfsContent = JSON.parse(await ipfsCatPromise(ipfsHash));
         const dbcp = ipfsContent.public;
 
@@ -157,8 +172,12 @@ export async function resolveContent(address: string) {
   });
 
   if (cacheAvailable) {
-    return JSON.parse(ensCache[address]);
-  } else {
-    return contentResolver;
+    try {
+      return JSON.parse(ensCache[address]);
+    } catch (ex) {
+      // invalid cache?
+    }
   }
+
+  return contentResolver;
 }

@@ -52,6 +52,7 @@ System.import = function(pathToLoad: string): Promise<any> {
     exportFunction = exportFunction[0].replace(/#|!/g, '');
     pathToLoad.replace(exportFunction, '!');
   }
+  console.log(pathToLoad)
 
   return System
     .originalImport(pathToLoad)
