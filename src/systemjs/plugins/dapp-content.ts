@@ -18,8 +18,7 @@
 */
 
 import * as utils from '../../app/utils';
-import browserIpfs from '../../libs/browser-ipfs';
-import { restIpfs } from '../../app/ipfs';
+import { getIpfsApiUrl } from '../../app/ipfs';
 
 const importCache: any = { };
 
@@ -46,7 +45,7 @@ export default function(System: any) {
       if (utils.isDevAvailable(origin.replace('dapps/', '')) && origin.indexOf('Qm') !== 0) {
         link.href = origin + '/' + file;
       } else {
-        link.href = browserIpfs.api_url('/' + (isIpns ? 'ipns' : 'ipfs') + '/' + origin + '/' + file);
+        link.href = getIpfsApiUrl('/' + (isIpns ? 'ipns' : 'ipfs') + '/' + origin + '/' + file);
       }
 
       head.appendChild(link);
@@ -77,7 +76,7 @@ export default function(System: any) {
       return 'dapps/' + dappName + '/' + file;
     } else {
       if (file.indexOf('.css') === -1) {
-        return restIpfs.api_url('/' + (dbcp.dapp.isIpns ? 'ipns' : 'ipfs') + '/' + dbcp.dapp.origin + '/' + file);
+        return getIpfsApiUrl('/' + (dbcp.dapp.isIpns ? 'ipns' : 'ipfs') + '/' + dbcp.dapp.origin + '/' + file);
       } else {
         addCSS(dbcp.dapp.origin, file, dbcp.dapp.isIpns);
       }

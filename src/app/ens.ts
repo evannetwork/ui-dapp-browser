@@ -207,17 +207,6 @@ export async function resolveContent(address: string) {
       try {
         // load ipfs data
         let ipfsResult = await ipfsCatPromise(ipfsHash);
-        // old logic and contract descriptions will return a buffer, parse it and remove bad
-        // characters and deal with binary buffer (https://github.com/evannetwork/api-blockchain-
-        // core/blob/develop/src/dfs/ipfs.ts#L309)
-        if (ipfsResult && ipfsResult.buffer) {
-          const bufferedResult = Buffer.from(ipfsResult);
-          const decodedToUtf8 = bufferedResult.toString('utf8');
-          ipfsResult = decodedToUtf8.indexOf('�') === -1
-            ? decodedToUtf8
-            : bufferedResult.toString('binary');
-        }
-
         // parse the result
         const dbcp = JSON.parse(ipfsResult).public;
 

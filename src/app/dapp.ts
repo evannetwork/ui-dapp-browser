@@ -77,8 +77,7 @@ export function getDAppBaseUrl(dbcp: any, address: string): string {
   if (utils.isDevAvailable(address) && address.indexOf('0x') !== 0) {
     return window.location.origin + '/dapps/' + address;
   } else {
-    return ipfs.restIpfs
-      .api_url('/' + (dbcp.dapp.isIpns ? 'ipns' : 'ipfs') + '/' + dbcp.dapp.origin);
+    return ipfs.getIpfsApiUrl('/' + (dbcp.dapp.isIpns ? 'ipns' : 'ipfs') + '/' + dbcp.dapp.origin);
   }
 }
 
@@ -477,7 +476,7 @@ export async function startDApp(dappEns: string, container = document.body, useD
               vault: window.localStorage['evan-vault'],
             },
             // ensure to only load iframes from ipfs
-            utils.devMode ? window.location.origin : ipfs.getRestIpfs().api_url(''),
+            utils.devMode ? window.location.origin : ipfs.getIpfsApiUrl(''),
           );
 
           window.removeEventListener('message', handleUserContext);
