@@ -56,7 +56,7 @@ export default function(System: any) {
       console.dir(ex);
     }
 
-    return JSON.stringify(dbcp && dbcp.public ? dbcp.public : dbcp);
+    return JSON.stringify(dbcp && dbcp.public ? dbcp.public : dbcp) || '';
   };
 
   /**

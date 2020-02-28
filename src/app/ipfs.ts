@@ -51,9 +51,8 @@ export async function ipfsCatPromise(ipfsHash: string): Promise<any> {
     const req = new XMLHttpRequest();
     req.onreadystatechange = async () => {
       if (req.readyState == 4) {
-        let response = req.response;
-        await ipfsConfig.ipfsCache.add(ipfsHash, result);
-        resolve(result);
+        await ipfsConfig.ipfsCache.add(ipfsHash, req.response);
+        resolve(req.response);
       }
     };
 

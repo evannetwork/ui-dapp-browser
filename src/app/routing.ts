@@ -43,7 +43,7 @@ export function goToOnboarding() {
   const activeRoute = hashOrigin.split('?')[0];
   const queryParams = hashOrigin.split('?')[1];
 
-  router.navigate(`/onboarding.vue.${ utils.getDomainName() }` +
+  router.navigate(`/dashboard.vue.evan/onboarding.vue.${ utils.getDomainName() }` +
     `?origin=${ activeRoute }${ queryParams ? '&' + queryParams : '' }`);
 }
 
