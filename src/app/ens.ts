@@ -27,6 +27,16 @@ import BufferPolyFill from '../libs/buffer.polyfill';
 const Buffer = (BufferPolyFill as any).Buffer;
 const bs58 = (bs58Bundle as any);
 const keccak256 = (sha3Bundle as any).keccak256;
+const nullAddress = '0x0000000000000000000000000000000000000000';
+const contractFuncSigs = {
+  described: {
+    contractDescription: '0x872db889',
+  },
+  publicResolver: {
+    contentFuncSig: '0x2dff6941', // web3.utils.sha3('content(bytes32)')
+    addrFuncSig: '0x2dff6941', // web3.utils.sha3('addr(bytes32)')
+  },
+}
 
 // const bs58 = (window as any).bs58;
 let ensCache: any = { };
@@ -50,7 +60,7 @@ async function postToEthClient(requestString: string): Promise<any> {
     const xhr = new XMLHttpRequest();
     xhr.open('POST', `http${port === 443 ? 's' : ''}://${host}:${port}`, true);
     xhr.setRequestHeader('Content-type', 'application/json');
-    xhr.onload = () => resolve(JSON.parse(xhr.responseText));
+    xhr.onload = () => resolve(JSON.parse(xhr.responseText).result);
     xhr.send(requestString);
   });
 }
@@ -106,6 +116,70 @@ export function parseToValidEnsAddress(address: string) {
 }
 
 /**
+ * Generate a eth call json structure with given params and returns the stringified result.
+ *
+ * @param      {string}  params  The parameters
+ */
+export function generateEthCall(params: Array<{data: string; to:string}>|{data: string; to:string}) {
+  return JSON.stringify({
+    method: 'eth_call',
+    params: Array.isArray(params) ? params : [params],
+    id: 1,
+    jsonrpc: '2.0'
+  });
+}
+
+/**
+ * Resolves the content ipfs hash for a given ipfs, ens or contract address
+ *
+ * @param      {string}  address  The address
+ */
+export async function getContentHashForAddress(address: string): Promise<string> {
+  let result;
+
+  // early exit, when ipfs hash was applied
+  if (address.startsWith('Qm')) {
+    return address;
+  }
+
+  // check for a described contract
+  if (address.startsWith('0x')) {
+    // contract address as input
+    result = await postToEthClient(generateEthCall({
+      data: `${contractFuncSigs.described.contractDescription}`,
+      to: address,
+    }));
+  } else {
+    // resolve ens address
+    const hashedAddress = namehash(address).replace('0x', '');
+    // resolve ens content
+    const ensContent = await postToEthClient(generateEthCall({
+      data: `${contractFuncSigs.publicResolver.contentFuncSig}${hashedAddress}`,
+      to: config.nameResolver.ensResolver,
+    }));
+    // if no content could be resolved, try to load a underlying contract address
+    if (ensContent.startsWith(nullAddress)) {
+      const ensAddress = await postToEthClient(generateEthCall({
+        data: `${contractFuncSigs.publicResolver.addrFuncSig}${hashedAddress}`,
+        to: config.nameResolver.ensResolver,
+      }));
+      if (!ensAddress.startsWith(nullAddress)) {
+        result = await getContentHashForAddress(ensAddress);
+      }
+    } else {
+      result = ensContent;
+    }
+  }
+
+  // return undefined, if nothing was found
+  if (!result || result.startsWith(nullAddress)) {
+    return;
+  }
+
+  return bytes32ToIpfsHash(result);
+}
+
+/**
  * Resolves the content behind a ens address.
  *
  * @param      {string}  address  ens address or contract address
@@ -127,29 +201,25 @@ export async function resolveContent(address: string) {
 
   // resolve the content
   contentResolver = contentResolver.then(async () => {
-    const input = '0x2dff6941';
-    const urlHash = namehash(address);
-    const callObj = {
-      method: 'eth_call',
-      params: [
-        {
-          data: `${input}${urlHash.replace('0x', '')}`,
-          to: config.nameResolver.ensResolver,
-        }
-      ],
-      id: 1,
-      jsonrpc: '2.0'
-    };
+    const ipfsHash = await getContentHashForAddress(address);
 
-    const ethResult = await postToEthClient(JSON.stringify(callObj));
-    if (ethResult.result) {
+    if (ipfsHash) {
       try {
-        const ipfsHash = bytes32ToIpfsHash(ethResult.result);
-        if (ethResult.result === '0x0000000000000000000000000000000000000000000000000000000000000000') {
-          throw new Error('No ens content set!');
+        // load ipfs data
+        let ipfsResult = await ipfsCatPromise(ipfsHash);
+        // old logic and contract descriptions will return a buffer, parse it and remove bad
+        // characters and deal with binary buffer (https://github.com/evannetwork/api-blockchain-
+        // core/blob/develop/src/dfs/ipfs.ts#L309)
+        if (ipfsResult && ipfsResult.buffer) {
+          const bufferedResult = Buffer.from(ipfsResult);
+          const decodedToUtf8 = bufferedResult.toString('utf8');
+          ipfsResult = decodedToUtf8.indexOf('�') === -1
+            ? decodedToUtf8
+            : bufferedResult.toString('binary');
         }
-        const ipfsContent = JSON.parse(await ipfsCatPromise(ipfsHash));
-        const dbcp = ipfsContent.public;
+
+        // parse the result
+        const dbcp = JSON.parse(ipfsResult).public;
 
         // set ens cache to speed up initial loading
         if (dbcp.dapp.type === 'cached-dapp') {
@@ -162,7 +232,7 @@ export async function resolveContent(address: string) {
         window.localStorage['evan-ens-cache'] = JSON.stringify(ensCache);
         return dbcp;
       } catch (ex) {
-        const errMsg = `Could not parse content address of ${address}: ${ethResult.result} (${ex.message})`;
+        const errMsg = `Could not parse content of address ${address}: ${ipfsHash} (${ex.message})`;
         devLog(errMsg, 'error');
         throw new Error(errMsg);
       }
