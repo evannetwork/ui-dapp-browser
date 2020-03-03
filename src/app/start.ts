@@ -44,8 +44,7 @@ export default async function(): Promise<void> {
   ]);
 
   try {
-    routing.initialize();
-    await utils.onDeviceReady();
+    await routing.initialize();
 
     // update build number to enable ens cache
     if ((window as any).dappBrowserBuild) {

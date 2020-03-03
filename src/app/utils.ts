@@ -125,18 +125,6 @@ export function showError() {
 }
 
 /**
- * Adds an deviceready event handler and wait for the result to resolve the promise. If we are on a
- * desktop device, dont wait for deviceready, it will be never called.
- *
- * @return     {Promise<void>}  resolved when deviceready event is emitted
- */
-export async function onDeviceReady(): Promise<any> {
-  if ((<any>window).cordova) {
-    return new Promise((resolve, reject) => document.addEventListener('deviceready', resolve));
-  }
-}
-
-/**
  * Removes the text after the last dot.
  *
  * @param      {string}  ensAddress  ens address to get the name for

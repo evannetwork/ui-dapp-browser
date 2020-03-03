@@ -150,7 +150,7 @@ export async function onRouteChange(): Promise<void> {
  * @return     {void}    resolved when routing was created
  */
 export async function initialize(initialRoute?: string): Promise<void> {
-  // load history fstring[[rom cache
+  // load history from cache
   if (window.performance.navigation.type === 1 && !window.sessionStorage['evan-route-reloaded']) {
     history = [ ];
   } else {
