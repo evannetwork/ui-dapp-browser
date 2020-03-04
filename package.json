@@ -56,6 +56,6 @@
     "serve": "gulp --cwd . --gulpfile gulp/serve.js serve && npm run watch",
     "watch": "npx webpack --mode=development --watch"
   },
-  "types": "runtime/build/main.d.ts",
+  "types": "dist/src/index.d.ts",
   "version": "2.17.0"
 }

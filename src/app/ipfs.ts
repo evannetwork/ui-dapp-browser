@@ -18,7 +18,6 @@
 */
 
 import { getIpfsCache } from './ipfs-cache';
-import * as utils from './utils';
 
 /**
  * default evan.network ipfs configuration
