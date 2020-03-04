@@ -40,7 +40,7 @@ const DAppBrowser = {
   utils,
 };
 
-const getDomainName = utils.getDomainName;
+const { getDomainName } = utils;
 
 System.amdDefine('@evan.network/ui-dapp-browser', DAppBrowser);
 
@@ -53,5 +53,5 @@ export {
   routing,
   start,
   System,
-  utils
+  utils,
 };

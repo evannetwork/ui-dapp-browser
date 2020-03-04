@@ -17,8 +17,8 @@
   the following URL: https://evan.network/license/
 */
 
-// use localStorage params to overwrite default values. The default options correspond to those of
-// the test net. By deploying other configurations, the comments will be replaced using this values.
+/* use localStorage params to overwrite default values. The default options correspond to those of
+   the test net. By deploying other configurations, the comments will be replaced using this values. */
 const process = {
   env: {
     ENS_ADDRESS: window.localStorage['evan-ens-address'],
@@ -40,7 +40,7 @@ const process = {
 
 export default {
   accountMap: {
-    '0x0000000000000000000000000000000000000000': ''
+    '0x0000000000000000000000000000000000000000': '',
   },
   web3Provider: window.localStorage['evan-web3-provider'] || 'wss://testcore.evan.network/ws',
   nameResolver: {
@@ -84,4 +84,4 @@ export default {
   alwaysAutoGasLimit: 1.1,
   ensRootOwner: '0x4a6723fC5a926FA150bAeAf04bfD673B056Ba83D',
   faucetAccount: '0x4a6723fC5a926FA150bAeAf04bfD673B056Ba83D',
-}
+};

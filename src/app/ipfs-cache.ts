@@ -29,7 +29,7 @@ let lastCache: IPFSCache;
 export class IPFSCache {
   readonly _dbp: Promise<IDBDatabase>;
 
- /**
+  /**
    * @param      {string}  dbName     database name
    * @param      {string}  storeName  store name within the database
    */
@@ -48,7 +48,7 @@ export class IPFSCache {
         resolve(openreq.result);
       };
 
-      openreq.onblocked = function(event) {
+      openreq.onblocked = function (event) {
         devLog('IndexDB blocked!');
 
         resolve();
@@ -79,7 +79,7 @@ export class IPFSCache {
    *                                             when the transaction is finished
    */
   _withIDBStore(type: IDBTransactionMode, callback: ((store: IDBObjectStore) => void)): Promise<void> {
-    return this._dbp.then(db => new Promise<void>((resolve, reject) => {
+    return this._dbp.then((db) => new Promise<void>((resolve, reject) => {
       const transaction = db.transaction(this.storeName, type);
       transaction.oncomplete = () => resolve();
       transaction.onabort = transaction.onerror = () => reject(transaction.error);
@@ -98,14 +98,12 @@ export class IPFSCache {
     let req: IDBRequest;
 
     return this
-      ._withIDBStore('readonly', idbStore => {
+      ._withIDBStore('readonly', (idbStore) => {
         req = idbStore.get(key);
       })
       .then(() => req.result)
       // edge is throwing an exception, when the value is not set
-      .catch((ex) => {
-        return undefined;
-      });
+      .catch((ex) => undefined);
   }
 
   /**
@@ -117,18 +115,18 @@ export class IPFSCache {
    */
   async set(key: IDBValidKey, value: any): Promise<void> {
     try {
-      const result = await this._withIDBStore('readwrite', idbStore => {
+      const result = await this._withIDBStore('readwrite', (idbStore) => {
         idbStore.put(value, key);
       });
       return result;
     } catch (ex) {
       if (this.isQuotaExceeded(ex)) {
         sendEvent('evan-warning', {
-          type: 'quota-exceeded'
+          type: 'quota-exceeded',
         });
       } else {
         sendEvent('evan-warning', {
-          type: 'indexdb-not-available'
+          type: 'indexdb-not-available',
         });
       }
     }
@@ -141,7 +139,7 @@ export class IPFSCache {
    * @param      {IDBStore}     store   idb store to delete the data from
    */
   del(key: IDBValidKey): Promise<void> {
-    return this._withIDBStore('readwrite', idbStore => {
+    return this._withIDBStore('readwrite', (idbStore) => {
       idbStore.delete(key);
     });
   }
@@ -152,7 +150,7 @@ export class IPFSCache {
    * @param      {IDBStore}  store   idb store to clear
    */
   clear(): Promise<void> {
-    return this._withIDBStore('readwrite', idbStore => {
+    return this._withIDBStore('readwrite', (idbStore) => {
       idbStore.clear();
     });
   }

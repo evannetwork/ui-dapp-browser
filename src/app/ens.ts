@@ -24,9 +24,9 @@ import bs58Bundle from '../libs/bs58.bundle';
 import sha3Bundle from '../libs/js-sha3.min';
 import BufferPolyFill from '../libs/buffer.polyfill';
 
-const Buffer = (BufferPolyFill as any).Buffer;
+const { Buffer } = BufferPolyFill as any;
 const bs58 = (bs58Bundle as any);
-const keccak256 = (sha3Bundle as any).keccak256;
+const { keccak256 } = sha3Bundle as any;
 const nullAddress = '0x0000000000000000000000000000000000000000';
 const contractFuncSigs = {
   described: {
@@ -36,7 +36,7 @@ const contractFuncSigs = {
     contentFuncSig: '0x2dff6941', // web3.utils.sha3('content(bytes32)')
     addrFuncSig: '0x2dff6941', // web3.utils.sha3('addr(bytes32)')
   },
-}
+};
 
 // const bs58 = (window as any).bs58;
 let ensCache: any = { };
@@ -52,7 +52,7 @@ try {
 } catch (ex) { }
 
 async function postToEthClient(requestString: string): Promise<any> {
-  const [ , , protocol, host, defaultPort ] = config.web3Provider
+  const [, , protocol, host, defaultPort] = config.web3Provider
     .match(/^((http[s]?|ftp|ws[s]):\/)?\/?([^:\/\s]+)((\/\w+)*\/)([\w\-\.]+[^#?\s]+)(.*)?(#[\w\-]+)?/);
   const port = defaultPort || (protocol === 'https' || protocol === 'wss') ? 443 : 8080;
 
@@ -110,9 +110,9 @@ function bytes32ToIpfsHash(str: string): string {
  */
 export function parseToValidEnsAddress(address: string) {
   return address
-      .replace(`angular-core`, `angularcore`)
-      .replace(`angular-libs`, `angularlibs`)
-      .replace(`smart-contracts`, `smartcontracts`);
+    .replace('angular-core', 'angularcore')
+    .replace('angular-libs', 'angularlibs')
+    .replace('smart-contracts', 'smartcontracts');
 }
 
 /**
@@ -120,12 +120,12 @@ export function parseToValidEnsAddress(address: string) {
  *
  * @param      {string}  params  The parameters
  */
-export function generateEthCall(params: Array<{data: string; to:string}>|{data: string; to:string}) {
+export function generateEthCall(params: Array<{data: string; to: string}>|{data: string; to: string}) {
   return JSON.stringify({
     method: 'eth_call',
     params: Array.isArray(params) ? params : [params],
     id: 1,
-    jsonrpc: '2.0'
+    jsonrpc: '2.0',
   });
 }
 
@@ -195,7 +195,7 @@ export async function resolveContent(address: string) {
   if (cacheAvailable) {
     // delay loading for 3 seconds, to wait the heavy page load is over
     if (cacheAvailable) {
-      contentResolver = new Promise(resolve => setTimeout(() => resolve(), 3000));
+      contentResolver = new Promise((resolve) => setTimeout(() => resolve(), 3000));
     }
   }
 
@@ -206,7 +206,7 @@ export async function resolveContent(address: string) {
     if (ipfsHash) {
       try {
         // load ipfs data
-        let ipfsResult = await ipfsCatPromise(ipfsHash);
+        const ipfsResult = await ipfsCatPromise(ipfsHash);
         // parse the result
         const dbcp = JSON.parse(ipfsResult).public;
 

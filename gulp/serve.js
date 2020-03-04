@@ -23,41 +23,40 @@ const gulp = require('gulp');
 const serveStatic = require('serve-static');
 const path = require('path');
 
-const isDirectory = source => lstatSync(source).isDirectory()
-const getDirectories = source =>
-  readdirSync(source).map(name => path.join(source, name)).filter(isDirectory)
+const isDirectory = (source) => lstatSync(source).isDirectory();
+const getDirectories = (source) => readdirSync(source).map((name) => path.join(source, name)).filter(isDirectory);
 
 const enableBuild = process.argv.indexOf('--build') !== -1;
 
-gulp.task('serve', async function () {
+gulp.task('serve', async () => {
   process.chdir(path.resolve('..'));
 
-  var app = express();
+  const app = express();
 
   app.use(serveStatic('dist'));
   app.use(serveStatic('.'));
-  app.use(function (req, res, next) {
-    res.header("Access-Control-Allow-Origin", "*");
-    res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+  app.use((req, res, next) => {
+    res.header('Access-Control-Allow-Origin', '*');
+    res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
     next();
   });
 
   app.use('/dev-dapps', (req, res) => {
     const data = {
-      dapps: []
+      dapps: [],
     };
 
     try {
       data.dapps = getDirectories(path.resolve('dist/dapps'))
-        .map(external => external.split(path.sep).pop());
+        .map((external) => external.split(path.sep).pop());
     } catch (ex) { }
 
-    console.log('Serving DApps locally: ' + data.dapps.join(', '));
+    console.log(`Serving DApps locally: ${data.dapps.join(', ')}`);
 
     res.send(data);
   });
 
-  app.listen(3000, function () {
+  app.listen(3000, () => {
     console.log('\nServer running on http://localhost:3000 ...');
   });
 });

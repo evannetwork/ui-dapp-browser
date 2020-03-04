@@ -20,6 +20,9 @@
 /**
  * is inserted when the application was bundled, used to prevent window usage
  */
+// import configuration
+import config from './config';
+
 declare let evanGlobals: any;
 
 /**
@@ -38,26 +41,23 @@ export let browserName: string;
  */
 export let isPrivateMode: boolean;
 
-// import configuration
-import config from './config';
-
-export const environment = window.location.href.indexOf('https://dashboard.evan.network') ? 'core' :
-  'testcore';
+export const environment = window.location.href.indexOf('https://dashboard.evan.network') ? 'core'
+  : 'testcore';
 
 /**
  * Checks if we are running in devMode, if true, load dev-dapps from local file server, if false do nothing
  */
 export async function setUpDevMode(System: any): Promise<void> {
-  const host = window.location.host;
+  const { host } = window.location;
   const correctHost = [
     host.indexOf('localhost') !== -1,
     host.indexOf('127.0.0.1') !== -1,
     host.endsWith('.ngrok.io'),
     host.endsWith('.serveo.net'),
-  ].filter(check => check).length !== 0;
+  ].filter((check) => check).length !== 0;
 
   if (correctHost || window.location.href.indexOf('dev.html') !== -1) {
-    let result = await System.import(`${ window.location.origin }/dev-dapps!json`);
+    let result = await System.import(`${window.location.origin}/dev-dapps!json`);
     if (result.dapps) {
       result = result.dapps;
     } else {
@@ -90,7 +90,7 @@ export function isDevAvailable(name: string): boolean {
  */
 export function sendEvent(name: string, data?: any) {
   window.dispatchEvent(new CustomEvent(name, {
-    detail: data
+    detail: data,
   }));
 }
 
@@ -107,7 +107,7 @@ export const events = {
    * Sends the event, that a sub DApp finished loading
    */
   finishLoadingSubDApp: () => sendEvent('loading-sub-dapp-finished'),
-}
+};
 
 /**
  * Show Error during the initial loading, when no UI framework is loaded
@@ -118,9 +118,9 @@ export function showError() {
   if (errorElement) {
     errorElement.style.display = 'block';
 
-    errorElement.querySelectorAll('button')[0].onclick = function() {
+    errorElement.querySelectorAll('button')[0].onclick = function () {
       window.location.reload();
-    }
+    };
   }
 }
 
@@ -151,8 +151,8 @@ export function getDomainName(...subLabels: string[]): string {
 
   if (Array.isArray(domainConfig)) {
     return subLabels
-      .filter(label => label)
-      .concat(domainConfig.map(label => (config.nameResolver.labels as any)[label]))
+      .filter((label) => label)
+      .concat(domainConfig.map((label) => (config.nameResolver.labels as any)[label]))
       .join('.')
       .toLowerCase();
   }
@@ -176,21 +176,20 @@ export function getBrowserName() {
   }
 
   // Opera 8.0+
-  const isOpera = (!!(<any>window).opr && !!(<any>window).opr.addons) ||
-    !!(<any>window).opera || navigator.userAgent.indexOf(' OPR/') >= 0;
+  const isOpera = (!!(<any>window).opr && !!(<any>window).opr.addons)
+    || !!(<any>window).opera || navigator.userAgent.indexOf(' OPR/') >= 0;
 
   // Firefox 1.0+
   const isFirefox = typeof (<any>window).InstallTrigger !== 'undefined';
 
   // Safari 3.0+ "[object HTMLElementConstructor]"
   const isSafari = /constructor/i.test((<any>window).HTMLElement)
-    || (function (p: any): any { return p.toString() === "[object SafariRemoteNotification]"; })
-      (!(window as any).safari || (window as any).safari.pushNotification)
+    || (function (p: any): any { return p.toString() === '[object SafariRemoteNotification]'; }(!(window as any).safari || (window as any).safari.pushNotification))
     || (!!navigator.userAgent.match(/Version\/[\d\.]+.*Safari/))
     || (/iPad|iPhone|iPod/.test(navigator.userAgent) && !(<any>window).MSStream);
 
   // Internet Explorer 6-11
-  const isIE = /*@cc_on!@*/false || !!(<any>document).documentMode;
+  const isIE = /* @cc_on!@ */false || !!(<any>document).documentMode;
 
   // Edge 20+
   const isEdge = !isIE && !!(<any>window).StyleMedia;
@@ -202,16 +201,15 @@ export function getBrowserName() {
   const isBlink = (isChrome || isOpera) && !!(<any>window).CSS;
   /* tslint:enable */
 
-  return browserName =
-    isOpera ? 'Opera' :
-    isFirefox ? 'Firefox' :
-    isSafari ? 'Safari' :
-    isChrome ? 'Chrome' :
-    isIE ? 'IE' :
-    isEdge ? 'Edge' :
-    isBlink ? 'Blink' :
-    'Don\'t know';
-};
+  return browserName = isOpera ? 'Opera'
+    : isFirefox ? 'Firefox'
+      : isSafari ? 'Safari'
+        : isChrome ? 'Chrome'
+          : isIE ? 'IE'
+            : isEdge ? 'Edge'
+              : isBlink ? 'Blink'
+                : 'Don\'t know';
+}
 
 /**
  * Lightweight script to detect whether the browser is running in Private mode.
@@ -230,10 +228,10 @@ export async function getIsPrivateMode() {
           not();
         }
       } catch (e) {
-        // Safari only enables cookie in private mode
-        // if cookie is disabled, then all client side storage is disabled
-        // if all client side storage is disabled, then there is no point
-        // in using private mode
+        /* Safari only enables cookie in private mode
+           if cookie is disabled, then all client side storage is disabled
+           if all client side storage is disabled, then there is no point
+           in using private mode */
         navigator.cookieEnabled ? yes() : not();
       }
     };
@@ -288,17 +286,17 @@ export function currentBrowser() {
   if ((!!windowAny.opr && !!windowAny.opr.addons) || !!windowAny.opera ||
     navigator.userAgent.indexOf(' OPR/') >= 0) {
       return 'opera';
-  } else if (typeof windowAny['InstallTrigger'] !== 'undefined') {
+  } if (typeof windowAny['InstallTrigger'] !== 'undefined') {
     return 'firefox';
-  } else if (/constructor/i.test(<any>windowAny['HTMLElement']) ||
+  } if (/constructor/i.test(<any>windowAny['HTMLElement']) ||
     (function (p: any) { return p.toString() === '[object SafariRemoteNotification]'; })
     (!windowAny['safari'] || (typeof windowAny['safari'] !== 'undefined' && windowAny['safari'].pushNotification))) {
       return 'safari';
-  } else if (/*@cc_on!@*/false || !!(document as any).documentMode) {
+  } if (/*@cc_on!@*/false || !!(document as any).documentMode) {
     return 'ie';
-  } else if (!!windowAny['StyleMedia']) {
+  } if (!!windowAny['StyleMedia']) {
     return 'edge';
-  } else if (!!windowAny['chrome'] && !!windowAny['chrome'].webstore) {
+  } if (!!windowAny['chrome'] && !!windowAny['chrome'].webstore) {
     return 'chrome';
   }
 }

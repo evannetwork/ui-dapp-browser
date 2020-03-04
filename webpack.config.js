@@ -38,11 +38,11 @@ const config = {
     }]),
     new webpack.SourceMapDevToolPlugin({
       filename: 'dapp-browser.js.map',
-      exclude: ['libs']
+      exclude: ['libs'],
     }),
   ],
   resolve: {
-    extensions: [ '.tsx', '.ts', '.js' ],
+    extensions: ['.tsx', '.ts', '.js'],
   },
   output: {
     filename: 'dapp-browser.js',

@@ -50,13 +50,13 @@ export async function raiseProgress(percentage: number, returnObj?: any) {
   }
 
   // set the percentage only, if it wasn't set before
-  const loadingProgress = document.getElementById(`loading-progress`);
+  const loadingProgress = document.getElementById('loading-progress');
   if (loadingProgress) {
-    loadingProgress.style.transform = `scaleX(${ lastPercentage / 100 })`;
+    loadingProgress.style.transform = `scaleX(${lastPercentage / 100})`;
   }
 
   // wait until animation is finished
-  waitForLoadingAnimation = new Promise(resolve => setTimeout(resolve, 100));
+  waitForLoadingAnimation = new Promise((resolve) => setTimeout(resolve, 100));
 
   return returnObj;
 }
@@ -65,7 +65,7 @@ export async function raiseProgress(percentage: number, returnObj?: any) {
  * Hides the initial loading that is embedded to the root dapp html page. => It
  * will disappear smooth and will be removed when animation is over
  */
-export function finishDAppLoading()  {
+export function finishDAppLoading() {
   const initialLoading = document.getElementById('evan-initial-loading');
 
   if (initialLoading && initialLoading.className.indexOf('hidden') === -1) {
@@ -83,8 +83,8 @@ export function finishDAppLoading()  {
   if (isFirstLoad) {
     isFirstLoad = false;
 
-    utils.devLog(`Loading evan.network finished: ${ (Date.now() - (window as any).evanloadTime) / 1000 }s`);
+    utils.devLog(`Loading evan.network finished: ${(Date.now() - (window as any).evanloadTime) / 1000}s`);
   }
 
-  utils.devLog(`Loading dapp finished: ${ (Date.now() - (window as any).evanDApploadTime) / 1000 }s`);
+  utils.devLog(`Loading dapp finished: ${(Date.now() - (window as any).evanDApploadTime) / 1000}s`);
 }

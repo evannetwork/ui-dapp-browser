@@ -17,7 +17,6 @@
   the following URL: https://evan.network/license/
 */
 
-import * as loading from './loading';
 import * as routing from './routing';
 import * as utils from './utils';
 import System from '../systemjs/index';
@@ -29,7 +28,7 @@ import System from '../systemjs/index';
  *                                       dapps with ens addresses that were passed to the location
  *                                       hash
  */
-export default async function(): Promise<void> {
+export default async function (): Promise<void> {
   delete (window as any).System;
   delete (window as any).SystemJS;
 
@@ -42,6 +41,7 @@ export default async function(): Promise<void> {
     utils.getBrowserName(),
     utils.getIsPrivateMode(),
   ]);
+
 
   try {
     await routing.initialize();

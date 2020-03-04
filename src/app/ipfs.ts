@@ -22,7 +22,7 @@ import { getIpfsCache } from './ipfs-cache';
 /**
  * default evan.network ipfs configuration
  */
-export let ipfsConfig = {
+export const ipfsConfig = {
   host: 'ipfs.test.evan.network',
   ipfsCache: getIpfsCache(),
   port: '443',
@@ -56,14 +56,14 @@ export async function ipfsCatPromise(ipfsHash: string): Promise<any> {
     };
 
     req.open('GET', getIpfsApiUrl(`/ipfs/${ipfsHash}`));
-    req.responseType = "arraybuffer";
+    req.responseType = 'arraybuffer';
     req.send();
   });
 
   if (result && typeof result === 'object') {
-    // old logic and contract descriptions will return a buffer, parse it and remove bad
-    // characters and deal with binary buffer (https://github.com/evannetwork/api-blockchain-
-    // core/blob/develop/src/dfs/ipfs.ts#L309)
+    /* old logic and contract descriptions will return a buffer, parse it and remove bad
+       characters and deal with binary buffer (https://github.com/evannetwork/api-blockchain-
+       core/blob/develop/src/dfs/ipfs.ts#L309) */
     const bufferedResult = Buffer.from(result);
     const decodedToUtf8 = bufferedResult.toString('utf8');
     result = decodedToUtf8.indexOf('�') === -1
@@ -72,6 +72,6 @@ export async function ipfsCatPromise(ipfsHash: string): Promise<any> {
   }
 
   return result;
-};
+}
 
-export { getIpfsCache }
+export { getIpfsCache };

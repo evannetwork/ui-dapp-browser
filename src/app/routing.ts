@@ -17,7 +17,7 @@
   the following URL: https://evan.network/license/
 */
 
-import { startDApp, } from './dapp';
+import { startDApp } from './dapp';
 import * as utils from './utils';
 import Navigo from '../libs/navigo';
 
@@ -43,15 +43,15 @@ export function goToOnboarding() {
   const activeRoute = hashOrigin.split('?')[0];
   const queryParams = hashOrigin.split('?')[1];
 
-  router.navigate(`/dashboard.vue.evan/onboarding.vue.${ utils.getDomainName() }` +
-    `?origin=${ activeRoute }${ queryParams ? '&' + queryParams : '' }`);
+  router.navigate(`/dashboard.vue.evan/onboarding.vue.${utils.getDomainName()}`
+    + `?origin=${activeRoute}${queryParams ? `&${queryParams}` : ''}`);
 }
 
 /**
  * Go to dashboard.  (#/dashboard.evan)
  */
 export function goToDashboard() {
-  router.navigate(`/dashboard.vue.${ utils.getDomainName() }`);
+  router.navigate(`/dashboard.vue.${utils.getDomainName()}`);
 }
 
 /**
@@ -60,8 +60,8 @@ export function goToDashboard() {
  * @return     {boolean}  True if onboarding, False otherwise.
  */
 export function isOnboarding(): boolean {
-  return [ `/onboarding.${ utils.getDomainName() }`, `/onboarding.vue.${ utils.getDomainName() }` ]
-    .filter(onboardingUrl => window.location.hash.indexOf(onboardingUrl) !== -1)
+  return [`/onboarding.${utils.getDomainName()}`, `/onboarding.vue.${utils.getDomainName()}`]
+    .filter((onboardingUrl) => window.location.hash.indexOf(onboardingUrl) !== -1)
     .length !== 0;
 }
 
@@ -86,7 +86,7 @@ export function getActiveRootENS(): string {
  * @return     {string}  default DApp ens path
  */
 export async function getDefaultDAppENS(): Promise<string> {
-  const host = window.location.host;
+  const { host } = window.location;
 
   if (!host.startsWith('ipfs') && !host.startsWith('localhost')) {
     if (host !== 'dashboard.evan.network' && host !== 'dashboard.test.evan.network') {
@@ -102,7 +102,7 @@ export async function getDefaultDAppENS(): Promise<string> {
     }
   }
 
-  return `dashboard.vue.${ utils.getDomainName() }`;
+  return `dashboard.vue.${utils.getDomainName()}`;
 }
 
 /**
@@ -111,7 +111,7 @@ export async function getDefaultDAppENS(): Promise<string> {
  */
 export async function beforeRoute(): Promise<void> {
   if (!getActiveRootENS()) {
-    router.navigate(`/${ defaultDAppENS }`);
+    router.navigate(`/${defaultDAppENS}`);
   }
 }
 
@@ -136,7 +136,7 @@ export async function onRouteChange(): Promise<void> {
 
       await startDApp(activeRootENS);
     } catch (ex) {
-      utils.devLog(`Error while onRouteChange and startDApp (${ activeRootENS })`);
+      utils.devLog(`Error while onRouteChange and startDApp (${activeRootENS})`);
       console.error(ex);
     }
   }
@@ -152,7 +152,7 @@ export async function onRouteChange(): Promise<void> {
 export async function initialize(initialRoute?: string): Promise<void> {
   // load history from cache
   if (window.performance.navigation.type === 1 && !window.sessionStorage['evan-route-reloaded']) {
-    history = [ ];
+    history = [];
   } else {
     try {
       history = JSON.parse(window.sessionStorage['evan-route-history']);
@@ -160,12 +160,12 @@ export async function initialize(initialRoute?: string): Promise<void> {
   }
 
   // setup history functions
-  history = history || [ ];
+  history = history || [];
   updateHistory();
 
   // watch for window reload to save, that the current session was reloaded
   delete window.sessionStorage['evan-route-reloaded'];
-  window.addEventListener('beforeunload', function (event) {
+  window.addEventListener('beforeunload', (event) => {
     window.sessionStorage['evan-route-reloaded'] = true;
   });
 
@@ -218,14 +218,13 @@ export function updateHistory() {
  */
 export function getQueryParameterValue(name: string, url = window.location.href) {
   // parse out the parameters
-  const regex = new RegExp('[?&]' + name.replace(/[\[\]]/g, '\\$&') + '(=([^&#]*)|&|#|$)');
+  const regex = new RegExp(`[?&]${name.replace(/[\[\]]/g, '\\$&')}(=([^&#]*)|&|#|$)`);
   const results = regex.exec(url);
 
   if (!results || !results[2]) {
     return null;
-  } else {
-    return decodeURIComponent(results[2].replace(/\+/g, ' '));
   }
+  return decodeURIComponent(results[2].replace(/\+/g, ' '));
 }
 
 /**
@@ -237,16 +236,16 @@ export function getQueryParameterValue(name: string, url = window.location.href)
  */
 export function getQueryParameters(url: string = window.location.search.split('#')[0]): { [key: string]: any} {
   // http://stackoverflow.com/a/23946023/2407309
-  let urlParams: any = {};
-  let queryString = url.split('?')[1];
+  const urlParams: any = {};
+  const queryString = url.split('?')[1];
 
   if (queryString) {
-    let keyValuePairs = queryString.split('&');
+    const keyValuePairs = queryString.split('&');
 
     for (let i = 0; i < keyValuePairs.length; i++) {
-      let keyValuePair = keyValuePairs[i].split('=');
-      let paramName = keyValuePair[0];
-      let paramValue = keyValuePair[1] || '';
+      const keyValuePair = keyValuePairs[i].split('=');
+      const paramName = keyValuePair[0];
+      const paramValue = keyValuePair[1] || '';
       urlParams[paramName] = decodeURIComponent(paramValue.replace(/\+/g, ' '));
     }
   }

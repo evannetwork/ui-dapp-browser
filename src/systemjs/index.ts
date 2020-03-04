@@ -22,13 +22,13 @@ import { getDomainName } from '../app/utils';
 import { registerPlugins } from './plugins/index';
 import './system.src';
 
-const System = (window as any).System;
+const { System } = window as any;
 
 // register old maps to be backwards compatible to dapp-browser version 2.0
-System.map['@evan.network/api-blockchain-core'] = `bcc.${ getDomainName() }!dapp-content`;
-System.map['@evan.network/dbcp'] = `bcc.${ getDomainName() }!dapp-content`;
-System.map['smart-contracts'] = `smartcontracts.${ getDomainName() }!dapp-content`;
-System.map['@evan.network/smart-contracts-core'] = `smartcontracts.${ getDomainName() }!dapp-content`;
+System.map['@evan.network/api-blockchain-core'] = `bcc.${getDomainName()}!dapp-content`;
+System.map['@evan.network/dbcp'] = `bcc.${getDomainName()}!dapp-content`;
+System.map['smart-contracts'] = `smartcontracts.${getDomainName()}!dapp-content`;
+System.map['@evan.network/smart-contracts-core'] = `smartcontracts.${getDomainName()}!dapp-content`;
 System.map['@evan.network/ui-angular-libs'] = 'angularlibs.evan!dapp-content';
 System.map['angular-libs'] = 'angularlibs.evan!dapp-content';
 System.map['@evan.network/ui-angular-core'] = 'angularcore.evan!dapp-content';
@@ -44,9 +44,9 @@ registerPlugins(System);
  * @return     {Promise<any>}  SystemJS result
  */
 System.originalImport = System.import;
-System.import = function(pathToLoad: string): Promise<any> {
-  // if an export function with the following pattern (#***!dapp-content) was specified, replace the
-  // export function for the System.import
+System.import = function (pathToLoad: string): Promise<any> {
+  /* if an export function with the following pattern (#***!dapp-content) was specified, replace the
+     export function for the System.import */
   let exportFunction: any = pathToLoad.match(/#(.*)!/g);
   if (exportFunction && exportFunction.length > 0) {
     exportFunction = exportFunction[0].replace(/#|!/g, '');
@@ -58,10 +58,9 @@ System.import = function(pathToLoad: string): Promise<any> {
     .then((result: any) => {
       // if an export function is selected and available, return only this value
       if (exportFunction && result[exportFunction]) {
-        return result[exportFunction]
-      } else {
-        return result;
+        return result[exportFunction];
       }
+      return result;
     });
 };
 
