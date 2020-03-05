@@ -83,8 +83,8 @@ export function finishDAppLoading() {
   if (isFirstLoad) {
     isFirstLoad = false;
 
-    utils.devLog(`Loading evan.network finished: ${(Date.now() - (window as any).evanloadTime) / 1000}s`);
+    utils.log(`Loading evan.network finished: ${(Date.now() - (window as any).evanloadTime) / 1000}s`);
   }
 
-  utils.devLog(`Loading dapp finished: ${(Date.now() - (window as any).evanDApploadTime) / 1000}s`);
+  utils.log(`Loading dapp finished: ${(Date.now() - (window as any).evanDApploadTime) / 1000}s`);
 }

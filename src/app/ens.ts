@@ -19,7 +19,7 @@
 
 import config from './config';
 import { ipfsCatPromise } from './ipfs';
-import { devLog } from './utils';
+import { log } from './utils';
 import bs58Bundle from '../libs/bs58.bundle';
 import sha3Bundle from '../libs/js-sha3.min';
 import BufferPolyFill from '../libs/buffer.polyfill';
@@ -222,7 +222,7 @@ export async function resolveContent(address: string) {
         return dbcp;
       } catch (ex) {
         const errMsg = `Could not parse content of address ${address}: ${ipfsHash} (${ex.message})`;
-        devLog(errMsg, 'error');
+        log(errMsg, 'error');
         throw new Error(errMsg);
       }
     }

@@ -17,7 +17,7 @@
   the following URL: https://evan.network/license/
 */
 
-import { sendEvent, devLog } from './utils';
+import { sendEvent, log } from './utils';
 
 let lastCache: IPFSCache;
 
@@ -49,7 +49,7 @@ export class IPFSCache {
       };
 
       openreq.onblocked = function (event) {
-        devLog('IndexDB blocked!');
+        log('IndexDB blocked!');
 
         resolve();
       };

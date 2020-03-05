@@ -298,7 +298,7 @@ export async function getDAppDependencies(
  * @return     {Promise<any>}  ens definition from the DApp
  */
 export async function loadDAppDependencies(dappEns: string, useDefaultDomain?: boolean): Promise<any> {
-  utils.devLog(`Loading dapp: ${dappEns}`);
+  utils.log(`Loading dapp: ${dappEns}`);
 
   (window as any).evanDApploadTime = Date.now();
 

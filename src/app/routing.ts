@@ -136,7 +136,7 @@ export async function onRouteChange(): Promise<void> {
 
       await startDApp(activeRootENS);
     } catch (ex) {
-      utils.devLog(`Error while onRouteChange and startDApp (${activeRootENS})`);
+      utils.log(`Error while onRouteChange and startDApp (${activeRootENS})`);
       console.error(ex);
     }
   }

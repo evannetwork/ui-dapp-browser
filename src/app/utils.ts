@@ -307,7 +307,7 @@ export function currentBrowser() {
  * @param      {string}  message  message that should be logged
  * @param      {string}  type     log type
  */
-export function devLog(message: string, type = 'log') {
+export function log(message: string, type = 'log') {
   if (window.localStorage['evan-dev-log'] || window.localStorage['bc-dev-logs'] === 'debug') {
     (console as any)[type](`[dapp-browser] ${message}`);
   }
