@@ -1,13 +1,25 @@
 # dapp-browser
 
-
 ## Next Version
 ### Features
+- full refactoring
+- full typescript usage
+- load local deps also from index.html (dev.html is obsolete) 
+- use better ipfs / ens resolving / caching
 
 ### Fixes
 
 ### Deprecations
-
+- remove ionic and cordova
+- move dapps-watching to dist/dapps.js
+- main entrypoint changed dist location to dist/dapp-browser.js
+- no js client shim included
+- remove old functions and move them to `https://github.com/evannetwork/ui-dapps/tree/develop/evan-libs/old-dapp-browser/src`
+  - all blockchain-core ui dependencies (bccHelper, AccountStore, KeyProvider)
+  - lightwallet
+  - notifications
+  - web3
+  - queue
 
 ## Version 2.8.0
 ### Features

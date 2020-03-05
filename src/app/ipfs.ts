@@ -17,49 +17,25 @@
   the following URL: https://evan.network/license/
 */
 
-import * as browserIpfs from '../libs/browser-ipfs.js';
-import * as utils from './utils';
-
-/**
- * set the default provider for the browser ipfs for the current window location
- */
-browserIpfs.default.setProvider({
-  host: window.location.host.split(':')[0],
-  port: window.location.port,
-  protocol: window.location.protocol.replace(':', ''),
-  root: ''
-});
+import { getIpfsCache } from './ipfs-cache';
 
 /**
  * default evan.network ipfs configuration
  */
-export let ipfsConfig: any = { host: 'ipfs.test.evan.network', port: '443', protocol: 'https' };
-ipfsConfig.ipfsCache = ipfsConfig.ipfsCache || null
+export const ipfsConfig = {
+  host: 'ipfs.test.evan.network',
+  ipfsCache: getIpfsCache(),
+  port: '443',
+  protocol: 'https',
+};
 
 /**
- * Rest ipfs instance
- */
-export const restIpfs = getRestIpfs();
-
-/**
- * Format browser IPFS library to match the backend ipfs interface.
+ * Get the api url for a given end ipfs url part.
  *
- * @return     {files : ipfsApi}  The rest ipfs.
+ * @param      {string}  path    path that should be added to the base path.
  */
-export function getRestIpfs(): any {
-  const restIpfsConfig = JSON.parse(JSON.stringify(ipfsConfig));
-
-  if (restIpfsConfig.protocol === 'https') {
-    restIpfsConfig.port = '443';
-  } else {
-    restIpfsConfig.port = '8080';
-  }
-
-  browserIpfs.default.api.host = restIpfsConfig.host;
-  browserIpfs.default.api.port = restIpfsConfig.port;
-  browserIpfs.default.api.protocol = restIpfsConfig.protocol;
-
-  return browserIpfs.default;
+export function getIpfsApiUrl(path: string) {
+  return `${ipfsConfig.protocol}://${ipfsConfig.host}:${ipfsConfig.port}${path}`;
 }
 
 /**
@@ -68,14 +44,34 @@ export function getRestIpfs(): any {
  * @param      {string}        ipfsHash  ipfs hash to load
  * @return     {Promise<any>}  ipfs address content
  */
-export function ipfsCatPromise(ipfsHash: string): Promise<any> {
-  return new Promise((resolve, reject) => {
-    try {
-      restIpfs.cat(ipfsHash, (error, result) => {
-        error ? reject(error) : resolve(result);
-      });
-    } catch (ex) {
-      reject(ex);
-    }
+export async function ipfsCatPromise(ipfsHash: string): Promise<any> {
+  const cached = await ipfsConfig.ipfsCache.get(ipfsHash);
+  let result: any = cached || await new Promise((resolve, reject) => {
+    const req = new XMLHttpRequest();
+    req.onreadystatechange = async () => {
+      if (req.readyState == 4) {
+        await ipfsConfig.ipfsCache.add(ipfsHash, req.response);
+        resolve(req.response);
+      }
+    };
+
+    req.open('GET', getIpfsApiUrl(`/ipfs/${ipfsHash}`));
+    req.responseType = 'arraybuffer';
+    req.send();
   });
-};
+
+  if (result && typeof result === 'object') {
+    /* old logic and contract descriptions will return a buffer, parse it and remove bad
+       characters and deal with binary buffer (https://github.com/evannetwork/api-blockchain-
+       core/blob/develop/src/dfs/ipfs.ts#L309) */
+    const bufferedResult = Buffer.from(result);
+    const decodedToUtf8 = bufferedResult.toString('utf8');
+    result = decodedToUtf8.indexOf('�') === -1
+      ? decodedToUtf8
+      : bufferedResult.toString('binary');
+  }
+
+  return result;
+}
+
+export { getIpfsCache };

@@ -17,8 +17,8 @@
   the following URL: https://evan.network/license/
 */
 
-// use localStorage params to overwrite default values. The default options correspond to those of
-// the test net. By deploying other configurations, the comments will be replaced using this values.
+/* use localStorage params to overwrite default values. The default options correspond to those of
+   the test net. By deploying other configurations, the comments will be replaced using this values. */
 const process = {
   env: {
     ENS_ADDRESS: window.localStorage['evan-ens-address'],
@@ -28,10 +28,17 @@ const process = {
     ENS_EVENTS: window.localStorage['evan-ens-events'],
     ENS_PROFILES: window.localStorage['evan-ens-profiles'],
     ENS_MAILBOX: window.localStorage['evan-ens-mailbox'],
-    USE_IDENTITY: window.localStorage['evan-use-identity'],
   },
 };
-const config = {
+
+(window as any).process = window.process || {};
+(window as any).process.env = window.process.env || {};
+(window as any).process.env = {
+  ...(window as any).process.env,
+  ...process.env,
+};
+
+export default {
   accountMap: {
     '0x0000000000000000000000000000000000000000': '',
   },
@@ -73,10 +80,7 @@ const config = {
       accountId: '0x063fB42cCe4CA5448D69b4418cb89E663E71A139',
     },
   },
-  useIdentity: process.env.USE_IDENTITY || false,
   alwaysAutoGasLimit: 1.1,
   ensRootOwner: '0x4a6723fC5a926FA150bAeAf04bfD673B056Ba83D',
   faucetAccount: '0x4a6723fC5a926FA150bAeAf04bfD673B056Ba83D',
 };
-
-export { config }

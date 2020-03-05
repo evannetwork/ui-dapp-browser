@@ -23,75 +23,40 @@ const gulp = require('gulp');
 const serveStatic = require('serve-static');
 const path = require('path');
 
-const isDirectory = source => lstatSync(source).isDirectory()
-const getDirectories = source =>
-  readdirSync(source).map(name => path.join(source, name)).filter(isDirectory)
+const isDirectory = (source) => lstatSync(source).isDirectory();
+const getDirectories = (source) => readdirSync(source).map((name) => path.join(source, name)).filter(isDirectory);
 
 const enableBuild = process.argv.indexOf('--build') !== -1;
 
-gulp.task('serve', async function () {
+gulp.task('serve', async () => {
   process.chdir(path.resolve('..'));
 
-  if (enableBuild) {
-    // run build script initially
-    require(path.resolve('./gulp/build.js'));
-    await new Promise(resolve => gulp.task('build')(resolve));
+  const app = express();
 
-    // watch for changes
-    gulp.watch(
-      [
-        'src/**/*.ts',
-        'src/libs/*.js',
-        'src/systemjs-plugins/*.js',
-        'src/*.js',
-        'systemjs.config.js',
-        '!src/build/*.js'
-      ],
-      gulp.series(['build'])
-    );
-
-    gulp.watch(
-      [
-        'src/**/*.scss',
-      ],
-      gulp.series(['sass', 'copy'])
-    );
-
-    gulp.watch(
-      [
-        'src/**/*.html',
-        '!src/build/*.html'
-      ],
-      gulp.series(['copy'])
-    );
-  }
-
-  var app = express();
-
-  app.use(serveStatic('runtime'));
+  app.use(serveStatic('dist'));
   app.use(serveStatic('.'));
-  app.use(function (req, res, next) {
-    res.header("Access-Control-Allow-Origin", "*");
-    res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+  app.use((req, res, next) => {
+    res.header('Access-Control-Allow-Origin', '*');
+    res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
     next();
   });
 
   app.use('/dev-dapps', (req, res) => {
     const data = {
-      externals: []
+      dapps: [],
     };
 
     try {
-      data.externals = getDirectories(path.resolve('runtime/external'))
-        .map(external => external.split(path.sep).pop());
+      data.dapps = getDirectories(path.resolve('dist/dapps'))
+        .map((external) => external.split(path.sep).pop());
     } catch (ex) { }
 
-    console.log('Serving DApps locally: ' + data.externals.join(', '));
+    console.log(`Serving DApps locally: ${data.dapps.join(', ')}`);
 
     res.send(data);
   });
 
-  app.listen(3000, function () {
+  app.listen(3000, () => {
     console.log('\nServer running on http://localhost:3000 ...');
   });
 });
