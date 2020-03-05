@@ -80,7 +80,6 @@ export default {
       accountId: '0x063fB42cCe4CA5448D69b4418cb89E663E71A139',
     },
   },
-  useIdentity: false,
   alwaysAutoGasLimit: 1.1,
   ensRootOwner: '0x4a6723fC5a926FA150bAeAf04bfD673B056Ba83D',
   faucetAccount: '0x4a6723fC5a926FA150bAeAf04bfD673B056Ba83D',

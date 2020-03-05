@@ -66,9 +66,9 @@ const dappDeploymentFolder = path.resolve('deployment');
 const dappFolder = path.resolve('..');
 const mobileDeploymentFolder = path.resolve('www');
 const licensesFolder = path.resolve('licenses');
-const originFolder = path.resolve('runtime/external');
+const originFolder = path.resolve('dist/dapps');
 const platformFolder = path.resolve('platforms');
-const runtimeFolder = path.resolve('runtime');
+const runtimeFolder = path.resolve('dist');
 
 // globals
 let config;
@@ -571,7 +571,7 @@ async function deployDApps(externals, version) {
 
     try {
       const folderName = `${dappDeploymentFolder}/${external}`;
-      const externalDbcpPath = `${runtimeFolder}/external/${external}`;
+      const externalDbcpPath = `${runtimeFolder}/dapps/${external}`;
       const dbcp = require(`${externalDbcpPath}/dbcp.json`);
       let dbcpPath;
 
@@ -594,7 +594,7 @@ async function deployDApps(externals, version) {
       }
 
       updateDBCPVersion(dbcp, version, beforeHash);
-      saveDBCPFile(`${runtimeFolder}/external/${external}/dbcp.json`, dbcp);
+      saveDBCPFile(`${runtimeFolder}/dapps/${external}/dbcp.json`, dbcp);
 
       if (dbcpPath) {
         saveDBCPFile(dbcpPath, dbcp);
