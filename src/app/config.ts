@@ -33,7 +33,7 @@ const process = {
 };
 const config = {
   accountMap: {
-    '0x0000000000000000000000000000000000000000': ''
+    '0x0000000000000000000000000000000000000000': '',
   },
   web3Provider: window.localStorage['evan-web3-provider'] || 'wss://testcore.evan.network/ws',
   nameResolver: {
@@ -50,6 +50,7 @@ const config = {
       index: 'index',
       mailbox: 'mailbox',
       profile: 'profile',
+      vcs: 'vcs',
       wallet: 'wallet',
     },
     domains: {
@@ -64,6 +65,7 @@ const config = {
       profile: process.env.ENS_PROFILES || ['profile', 'ensRoot'],
       profileFactory: ['profile', 'factory', 'ensRoot'],
       root: ['ensRoot'],
+      vcRegistry: ['vcs', 'ensRoot'],
     },
   },
   smartAgents: {
@@ -75,6 +77,6 @@ const config = {
   alwaysAutoGasLimit: 1.1,
   ensRootOwner: '0x4a6723fC5a926FA150bAeAf04bfD673B056Ba83D',
   faucetAccount: '0x4a6723fC5a926FA150bAeAf04bfD673B056Ba83D',
-}
+};
 
 export { config }
