@@ -42,9 +42,14 @@ const request = require('request');
 const Web3 = require('web3');
 const { inspect, } = require('util');
 
+// load this before api-blockchain-core, so the correct process env will be used
+const config = require(process.argv[process.argv.indexOf('--config') + 1]);
+if (!config || !config.bcConfig || !config.runtimeConfig) {
+  throw new Error('No or invalid config file specified!');
+}
+
 // blockchain-core / DBCP stuff
 const {
-  AccountStore,
   createDefaultRuntime,
   ExecutorWallet,
   Ipfs,
@@ -71,7 +76,6 @@ const platformFolder = path.resolve('platforms');
 const runtimeFolder = path.resolve('runtime');
 
 // globals
-let config;
 let deploymentAccount;
 let deploymentDomain;
 let initialized;
@@ -134,12 +138,6 @@ const versionMap = [
 async function createRuntime() {
   // deployment configuration and accounts
   try {
-    config = require(process.argv[process.argv.indexOf('--config') + 1]);
-
-    if (!config || !config.bcConfig || !config.runtimeConfig) {
-      throw new Error('No or invalid config file specified!');
-    }
-
     deploymentAccount = Object.keys(config.runtimeConfig.accountMap)[0];
     ipfsConfig = JSON.parse(JSON.stringify(config.runtimeConfig.ipfs));
     ipfsUrl = `${ ipfsConfig.protocol }://${ ipfsConfig.host }:${ ipfsConfig.port }`;
@@ -614,11 +612,7 @@ async function deployDApps(externals, version) {
           runtime.nameResolver.ensContract, 'owner', runtime.nameResolver.namehash(checkAddress));
         if (owner === '0x0000000000000000000000000000000000000000') {
           try {
-            if (splitEns.length -1 === i) {
-              await runtime.nameResolver.claimPermanentAddress(checkAddress, deploymentAccount);
-            } else {
-              await runtime.nameResolver.setAddress(checkAddress, '0x0000000000000000000000000000000000000000', deploymentAccount);
-            }
+            await runtime.nameResolver.claimPermanentAddress(checkAddress, deploymentAccount);
           } catch (ex) {
             console.log(ex);
             // claim permanent address is only needed for root addresses
