@@ -1,0 +1,69 @@
+<!--
+  Copyright (C) 2018-present evan GmbH.
+
+  This program is free software: you can redistribute it and/or modify it
+  under the terms of the GNU Affero General Public License, version 3,
+  as published by the Free Software Foundation.
+
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  See the GNU Affero General Public License for more details.
+
+  You should have received a copy of the GNU Affero General Public License
+  along with this program. If not, see http://www.gnu.org/licenses/ or
+  write to the Free Software Foundation, Inc., 51 Franklin Street,
+  Fifth Floor, Boston, MA, 02110-1301 USA, or download the license from
+  the following URL: https://evan.network/license/
+-->
+
+<!DOCTYPE html>
+<html lang="en" dir="ltr" class="dapp-browser">
+  <head>
+    <meta charset="UTF-8">
+    <title>evan.network</title>
+    <meta name="viewport" content="viewport-fit=cover, width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="format-detection" content="telephone=no">
+    <meta name="msapplication-tap-highlight" content="no">
+
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#4e8ef7">
+
+    <!-- add to homescreen for ios -->
+    <link rel="apple-touch-icon" href="logo.png">
+    <link rel="apple-touch-startup-image" href="logo.png">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="#023845">
+
+    <!-- insertbuildversionhere -->
+
+    <!-- load dapp sources from relative path for local development -->
+    <script src="./dapp-browser.js"></script>
+  </head>
+
+  <body class="dapp-browser">
+    <div id="evan-testnet">TESTCORE</div>
+    <div id="evan-initial-loading">
+      <div class="logo">
+        <img src="./logo.png">
+
+        <div class="loading-bar"></div>
+        <div id="loading-progress" class="loading-bar"></div>
+        <div class="evan-logo-error">
+          <p>Error occurred! Please reload.</p>
+          <button>
+            Reload
+          </button>
+        </div>
+      </div>
+    </div>
+    <script>
+      System
+        .import('@evan.network/ui-dapp-browser')
+        .then((dappBrowser) => {
+          dappBrowser.start();
+        });
+    </script>
+  </body>
+</html>

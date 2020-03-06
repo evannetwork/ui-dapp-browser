@@ -26,9 +26,6 @@ temp/
 hooks/
 platforms/
 !platforms/android/build.gradle
-plugins/
-plugins/android.json
-plugins/ios.json
 www/
 $RECYCLE.BIN/
 
