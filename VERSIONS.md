@@ -2,12 +2,18 @@
 
 ## Next Version
 ### Features
+
+### Fixes
+
+### Deprecations
+
+
+## Version 3.0.0
+### Features
 - full refactoring
 - full typescript usage
 - load local deps also from index.html (dev.html is obsolete) 
 - use better ipfs / ens resolving / caching
-
-### Fixes
 
 ### Deprecations
 - remove ionic and cordova
