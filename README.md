@@ -15,21 +15,12 @@ The src folder includes a dev.html and a index.html file. By opening the dev.htm
 The DApp browser provides several functionallities to access
 - DApp routing
 - global utillity functions like log
-- information of the current logged in user
-  - account id
-  - lightwallet vault
-  - provider (internal, external)
-  - global synchronisation data queue
-- blockchain connections configuration
-- blockchain-core AccountStore and KeyProvider
 - DApp time tracing options
-- initialized blockchain-core structures
 - IPFS cache
 - ipfs handlers
 - load and start sub DApps
 - loading mechanisms
 - SystemJS plugins for ENS loading, ENS and file loading, IPFS loading, JSON loading, CSS loading
-- web3 handlers
 
 ## Installation
 ```sh
@@ -39,7 +30,7 @@ npm i @evan.network/ui-dapp-browser
 ## Building
 - build the runtime folder
 ```sh
-npm run build
+yarn build
 ```
 - start a deployment
   - all folders within the runtime/external folder can be deployed
@@ -47,22 +38,17 @@ npm run build
   -the content of this folder will be dynamcally created by the development build jobs of [angular-gulp](https://github.com/evannetwork/angular-gulp)
 
 ```sh
-npm run deploy --config pathToConfig
-```
-
-- generate auto generated compodoc code documentation
-```sh
-npm run doc
+yarn deploy --config pathToConfig
 ```
 
 - starts a local file serve within the runtime folder (http://localhost:3000/dev.html)
 ```sh
-npm run serve
+yarn serve
 ```
 
 - runs the build command, watch for file changes and starts a local file serve with the runtime folder
 ```sh
-npm run serve-build
+yarn build
 ```
 
 - expose local development server to others for testing
@@ -80,7 +66,7 @@ tsconfig.json
     ...,
     "paths": {
       "dapp-browser": [
-        "../node_modules/@evan.network/ui-dapp-browser/runtime/build/main.js"
+        "../node_modules/@evan.network/ui-dapp-browser/dist/dapp-browser.js"
       ]
     }
     ...
@@ -95,7 +81,7 @@ Have a look at the [deployment description](https://evannetwork.github.io/dev/de
 You can also start a repl for handling manual deployment steps. Just start the following script, with the same configuration that was passed below within the [ENS deployment description](https://evannetwork.github.io/dev/deployment).
 
 ```sh
-npm run deploy-repl --config ...
+yarn deploy-repl --config ...
 ```
 
 Available params:
@@ -104,7 +90,6 @@ Available params:
   - `dappDeploymentFolder`
   - `dappFolder`
   - `licensesFolder`
-  - `mobileDeploymentFolder`
   - `originFolder`
   - `platformFolder`
   - `runtimeFolder`
@@ -118,52 +103,3 @@ Available params:
   - `ipfsUrl`
   - `runtime`
   - `web3`
-
-## Mobile App generation
-DApp-browser Files from the runtime folder will be copied into the www folder using cordova-prepare. After this, cordova dependencies will be injected into this folder and the correct cordova load options will be added to the html files.
-
-### Android deployment
-Be sure to have the correct cordova version and it's dependencies installed:
-
-- cordova: 6.5.0
-- gradle: 5.3
-- Android Studio
-  - SDK 28, 27, 26, 25
-  - Google play Services
-
-To create the application for Android, run the following commands:
-
-1. Add the android platform
-```sh
-cordova platform add android 
-```
-
-2. copy everything from `platforms-changes` to the platforms folder
-```sh
-cp -r platforms-changes/* platforms
-```
-
-3. prepare deployment folder for specific environment and build apk
-```sh
-npm run cordova-prepare-android --config ~/projects/evan.network/dev-environment/config/bcc/testnet.js
-cordova build android
-```
-
-3. The APK is located within the directory `platforms/android/build/outputs/apk/debug`
-
-### IOS deployment
-**You need to do this on an Apple Mac!**
-Before you start building the application, you need to update the Versionnumber of the config.xml file.
-To create the application on IOS, run the following commands:
-```sh
-npm run cordova-prepare-ios --config ~/projects/evan.network/dev-environment/config/bcc/testnet.js
-cordova build ios
-```
-"Cordova-run-ios" wil result within an error. But now, you can start XCode and do the following things:
-- npm run cordova-prepare-ios / npm run cordova-prepare-android
-- npm run cordova-run-ios
-- move resource/icon-1024.png to resources in xcode
-- edit info p-list properties
-  - Privacy - Photo Library Usage Description : This app uses the photo library.
-- disable "Requies full screen"
-- toggle automatic signing
