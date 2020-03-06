@@ -42,16 +42,16 @@ export default async function (): Promise<void> {
     utils.getIsPrivateMode(),
   ]);
 
-
   try {
     await routing.initialize();
-
-    // update build number to enable ens cache
-    if ((window as any).dappBrowserBuild) {
-      window.localStorage['evan-dapp-browser-build'] = (window as any).dappBrowserBuild || '';
-    }
   } catch (ex) {
     console.error(ex);
     utils.showError();
+  }
+
+  // update build number to enable ens cache
+  const { dappBrowserBuild } = (window as any);
+  if (dappBrowserBuild) {
+    window.localStorage['evan-dapp-browser-build'] = dappBrowserBuild || '';
   }
 }

@@ -46,7 +46,7 @@ export default function(System: any) {
     try {
       if (utils.isDevAvailable(dappName) && ensAddress.indexOf('0x') !== 0) {
         // load json and resolve it as stringified
-        dbcp = await System.import('dapps/' + dappName + '/dbcp.json!json');
+        dbcp = await System.import(`dapps/${dappName}/dbcp.json!json`);
       } else if (validEnsAddress.indexOf('Qm') === 0) {
         dbcp = await ipfsCatPromise(validEnsAddress);
       } else {
@@ -54,6 +54,10 @@ export default function(System: any) {
       }
     } catch (ex) {
       console.dir(ex);
+    }
+
+    if (typeof dbcp === 'string') {
+      dbcp = JSON.parse(dbcp);
     }
 
     return JSON.stringify(dbcp && dbcp.public ? dbcp.public : dbcp) || '';

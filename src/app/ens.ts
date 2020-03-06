@@ -38,18 +38,27 @@ const contractFuncSigs = {
   },
 };
 
-// const bs58 = (window as any).bs58;
-let ensCache: any = { };
+const ensCache: any = ((): any => {
+  // reset ens cache
+  const { dappBrowserBuild } = (window as any);
+  if (dappBrowserBuild !== window.localStorage['evan-dapp-browser-build']) {
+    window.localStorage.removeItem('evan-ens-cache');
+  }
+
+  // check if any ens entries were loaded before
+  try {
+    return JSON.parse(window.localStorage['evan-ens-cache']);
+  } catch (ex) {
+    // invalid cache
+  }
+
+  return {};
+})();
 
 /**
  * is inserted when the application was bundled, used to prevent window usage
  */
 declare let evanGlobals: any;
-
-// check if any ens entries were loaded before
-try {
-  ensCache = JSON.parse(window.localStorage['evan-ens-cache']);
-} catch (ex) { }
 
 async function postToEthClient(requestString: string): Promise<any> {
   const [, , protocol, host, defaultPort] = config.web3Provider
@@ -187,8 +196,7 @@ export async function getContentHashForAddress(address: string): Promise<string>
 export async function resolveContent(address: string) {
   const anyWindow = (window as any);
   // disable ens cache, when dapp-browser was redeployed
-  const cacheAvailable = anyWindow.dappBrowserBuild === window.localStorage['evan-dapp-browser-build']
-    && ensCache[address] && ensCache[address] !== 'invalid';
+  const cacheAvailable = ensCache[address] && ensCache[address] !== 'invalid';
 
   // loading chain used to reload the ens data after 3 seconds, when cached
   let contentResolver = Promise.resolve();
