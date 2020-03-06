@@ -13,3 +13,4 @@ systemjs.config.js
 tsconfig.json
 tslint.json
 www/
+dist/dapps
