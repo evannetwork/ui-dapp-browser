@@ -8,6 +8,11 @@
 ### Deprecations
 
 
+## Version 3.0.1
+### Fixes
+- remove `dist/dapps` from npmjs
+
+
 ## Version 3.0.0
 ### Features
 - full refactoring
