@@ -69,7 +69,6 @@ const advancedDeployment = process.argv.indexOf('--advanced') !== -1;
 const configPath = path.resolve(process.argv[process.argv.indexOf('--config') + 1]);
 const dappDeploymentFolder = path.resolve('deployment');
 const dappFolder = path.resolve('..');
-const mobileDeploymentFolder = path.resolve('www');
 const licensesFolder = path.resolve('licenses');
 const originFolder = path.resolve('dist/dapps');
 const platformFolder = path.resolve('platforms');
@@ -247,27 +246,13 @@ const pinToEVANIpfs = function (ipfsHash) {
  * @param {string} folderName   FolderName that should be deployed (is used to splice out the ipfs folder hash)
  * @param {string} path         Path thath should be deployed (including folderName)
  */
-async function deployIPFSFolder(folderName, path) {
-  return new Promise((resolve, reject) => {
+async function deployIPFSFolder(path) {
+  return new Promise((resolve) => {
     ipfsInstance.util.addFromFs(path, { recursive: true }, (err, result) => {
       if (err) { throw err; }
       resolve(result[result.length - 1].hash || result[result.length - 1].Hash);
     });
   });
-  /* return new Promise((resolve, reject) => {
-     exec(`ipfs add -r ${ path }`, { */
-
-  /* }, (err, stdout, stderr) => {
-     if (err) {
-     reject(err);
-     } else {
-     const regex = new RegExp('(Qm[^\\s]+)\\s' + folderName + '\n$', 'g');
-     const folderHash = regex.exec(stdout)[1]; */
-
-  /* resolve(folderHash);
-     }
-     })
-     }) */
 }
 
 async function deployToIpns(dapp, hash, retry) {
@@ -585,7 +570,7 @@ async function deployDApps(externals, version) {
       if (beforeHash) {
         beforeHash = beforeHash.startsWith('Qm') ? beforeHash : Ipfs.bytes32ToIpfsHash(beforeHash);
       }
-      dbcp.public.dapp.origin = await deployIPFSFolder(external, `${folderName}`);
+      dbcp.public.dapp.origin = await deployIPFSFolder(`${folderName}`);
 
       if (dbcp.public.versions) {
         dbcp.public.versions[dbcp.public.version] = dbcp.public.dapp.origin;
@@ -687,70 +672,23 @@ const loadDbcps = async function (externals) {
 };
 
 /** **************************** mobile app functions ********************************************* */
-prepareMobileDeploy = async function () {
-  console.log('    ...prepare dapp-browser deployment');
-  await del.sync(`${mobileDeploymentFolder}`, { force: true });
-
-  await new Promise((resolve) => gulp
-    .src([
-      'index.html',
-      'favicon.ico',
-      'manifest.json',
-      'logo.png',
-      'cache.manifest',
-      'cordova.js',
-    ].map((file) => `${runtimeFolder}/${file}`), { allowEmpty: true })
-    .pipe(gulp.dest(mobileDeploymentFolder))
-    .on('end', () => resolve()));
-
-  // copy dbcp description
-  await new Promise((resolve) => gulp
-    .src([`${dappFolder}/dbcp.json`], { allowEmpty: true })
-    .pipe(gulp.dest(mobileDeploymentFolder))
-    .on('end', () => resolve()));
-
-  await new Promise((resolve) => gulp
-    .src(dappBrowserFiles.map((file) => `${runtimeFolder}/${file}`), { allowEmpty: true })
-    .pipe(gulp.dest(`${mobileDeploymentFolder}/build`))
-    .on('end', () => resolve()));
-
-  // insert correct inps values for the current configuration
-  await replaceConfigurationValues(mobileDeploymentFolder);
-};
-
-const preparMobileAppBuild = async function (platform) {
-  const dapps = loadDApps();
-
-  await initializeDBCPs(dapps);
-  await prepareMobileDeploy();
-
-  console.log('copy platform cordova assets...');
-  await new Promise((resolve, reject) => gulp
-    .src([
-      `${platformFolder}/${platform}/platform_www/**/*`,
-    ])
-    .pipe(gulp.dest(mobileDeploymentFolder))
-    .on('end', () => resolve()));
-
-  console.log('enable cordova loading...');
-  await new Promise((resolve, reject) => gulp
-    .src([
-      `${mobileDeploymentFolder}/index.html`,
-    ])
-    .pipe(replace(
-      /<!-- insertcordovahere -->/g,
-      '<script src="cordova.js"></script>',
-    ))
-    .pipe(gulp.dest(mobileDeploymentFolder))
-    .on('end', () => resolve()));
-
-  await del.sync(`${mobileDeploymentFolder}/build`, { force: true });
-};
-
-const mobileAppDeploy = async function (version) {
+const dappBrowserDeploy = async function (uglify) {
   console.log('    ...deploying dapp-browser');
 
-  const folderHash = await deployIPFSFolder('www', mobileDeploymentFolder);
+  await del.sync(`${dappDeploymentFolder}`, { force: true });
+  await new Promise((resolve) => gulp
+    .src([`${runtimeFolder}/*`])
+    .pipe(gulp.dest(`${dappDeploymentFolder}/dapp-browser._evan`))
+    .on('end', () => resolve()));
+
+  if (uglify) {
+    await uglify('dapp-browser._evan', `${dappDeploymentFolder}/dapp-browser._evan`);
+  }
+
+  await replaceUmlauts();
+  await replaceConfigurationValues(dappDeploymentFolder);
+
+  const folderHash = await deployIPFSFolder(`${dappDeploymentFolder}/dapp-browser._evan`);
 
   await pinToEVANIpfs(folderHash);
   await deployToIpns('dappbrowser', folderHash);
@@ -768,7 +706,7 @@ const mobileAppDeploy = async function (version) {
 const licensesDeploy = async function () {
   console.log('    ...deploy licenses');
 
-  const folderHash = await deployIPFSFolder('licenses', licensesFolder);
+  const folderHash = await deployIPFSFolder(licensesFolder);
 
   await pinToEVANIpfs(folderHash);
   await deployToIpns('licenses', folderHash);
@@ -1037,16 +975,8 @@ const deploymentMenu = async function () {
             // remove dapp-browser._evan as normal dapp, would break the deployment process
             results.dapps.splice(mobileDAppIndex, 1);
 
-            await prepareMobileDeploy();
-
-            if (results.uglify) {
-              await uglify('dapp-browser._evan', mobileDeploymentFolder);
-            }
-
-            await replaceUmlauts();
-
             if (enableDeploy) {
-              await mobileAppDeploy(results.version);
+              await dappBrowserDeploy(uglify);
             }
           }
 
@@ -1115,7 +1045,6 @@ const deploymentRepl = async function () {
         dappDeploymentFolder,
         dappFolder,
         licensesFolder,
-        mobileDeploymentFolder,
         originFolder,
         platformFolder,
         runtimeFolder,

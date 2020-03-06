@@ -234,7 +234,7 @@ export async function getDAppDependencies(
     console.error('Recursive dependency detected.');
     throw new Error('Recursive dependency detected.');
   } else {
-    deep++;
+    deep += 1;
 
     // if the DApp has dependencies, trace them
     if (ensDefinition && ensDefinition.dapp && ensDefinition.dapp.dependencies) {
@@ -244,7 +244,9 @@ export async function getDAppDependencies(
         const depKeys = Object.keys(dependencies);
 
         // load all dependencies, check for its location and trigger the sub loading
+        // eslint-disable-next-line no-restricted-syntax
         for (const dependency of depKeys) {
+        // eslint-disable-next-line no-await-in-loop
           let subDefinition = await System
             .import(`${dependency}.${utils.getDomainName()}!ens`);
 
@@ -262,6 +264,7 @@ export async function getDAppDependencies(
              the latest version from ens, so we need to require the correct, version specific dbcp
              json and merge the versions */
           if (versionLocation.indexOf('Qm') === 0) {
+            // eslint-disable-next-line no-await-in-loop
             const previousDefinition = await System
               .import(`${versionLocation.replace('!dapp-content', '')}!ens`);
 
@@ -280,6 +283,7 @@ export async function getDAppDependencies(
           });
 
           // load recursive dependencies
+          // eslint-disable-next-line no-await-in-loop
           await getDAppDependencies(dependency, subDefinition, depTree, deep);
         }
       }
