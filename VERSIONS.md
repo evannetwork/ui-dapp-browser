@@ -4,6 +4,7 @@
 ### Features
 
 ### Fixes
+- add `EVAN_CHAIN` to config `process.env`
 
 ### Deprecations
 

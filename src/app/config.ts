@@ -28,6 +28,7 @@ const process = {
     ENS_EVENTS: window.localStorage['evan-ens-events'],
     ENS_PROFILES: window.localStorage['evan-ens-profiles'],
     ENS_MAILBOX: window.localStorage['evan-ens-mailbox'],
+    EVAN_CHAIN: window.localStorage['evan-chain'],
   },
 };
 
