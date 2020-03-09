@@ -21,13 +21,13 @@
    the test net. By deploying other configurations, the comments will be replaced using this values. */
 const process = {
   env: {
-    ENS_ADDRESS: window.localStorage['evan-ens-address'],
-    ENS_RESOLVER: window.localStorage['evan-ens-resolver'],
     BC_ROOT: window.localStorage['evan-bc-root'],
-    ENS_ROOT: window.localStorage['evan-ens-root'],
+    ENS_ADDRESS: window.localStorage['evan-ens-address'],
     ENS_EVENTS: window.localStorage['evan-ens-events'],
-    ENS_PROFILES: window.localStorage['evan-ens-profiles'],
     ENS_MAILBOX: window.localStorage['evan-ens-mailbox'],
+    ENS_PROFILES: window.localStorage['evan-ens-profiles'],
+    ENS_RESOLVER: window.localStorage['evan-ens-resolver'],
+    ENS_ROOT: window.localStorage['evan-ens-root'],
     EVAN_CHAIN: window.localStorage['evan-chain'],
   },
 };
