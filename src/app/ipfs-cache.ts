@@ -81,7 +81,15 @@ export class IPFSCache {
       this.db = new Promise((resolve, reject) => {
         log(`[ipfs-cache] open cache db - ${this.dbName}`);
         const openreq = indexedDB.open(this.dbName, 1);
-        openreq.onsuccess = (): void => resolve(openreq.result);
+        openreq.onsuccess = (): void => {
+          try {
+            openreq.result.createObjectStore(this.storeName);
+          } catch (ex) {
+            // already exists
+          }
+
+          resolve(openreq.result);
+        };
         openreq.onblocked = (): void => reject();
         openreq.onerror = (): void => reject();
 
@@ -92,8 +100,6 @@ export class IPFSCache {
         };
       });
     }
-
-    await this.db;
 
     return this.db;
   }
@@ -114,7 +120,7 @@ export class IPFSCache {
         request.onsuccess = (): void => delResolve();
       });
 
-      await this.getOpenedDb();
+      return this.getOpenedDb(true);
     })();
 
     await this.db;
