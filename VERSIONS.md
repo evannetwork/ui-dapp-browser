@@ -4,6 +4,7 @@
 ### Features
 
 ### Fixes
+- recreate `ipfs-cache` indexeddb on `aborted` event
 
 ### Deprecations
 
