@@ -28,7 +28,7 @@ const process = {
     ENS_PROFILES: window.localStorage['evan-ens-profiles'],
     ENS_RESOLVER: window.localStorage['evan-ens-resolver'],
     ENS_ROOT: window.localStorage['evan-ens-root'],
-    EVAN_CHAIN: window.localStorage['evan-chain'],
+    EVAN_CHAIN: window.localStorage['evan-chain'] || 'testcore',
   },
 };
 
