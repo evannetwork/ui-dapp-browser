@@ -17,9 +17,10 @@
   the following URL: https://evan.network/license/
 */
 
-import { startDApp } from './dapp';
 import * as utils from './utils';
 import Navigo from '../libs/navigo';
+import { ensCache } from './ens';
+import { startDApp, loadDApp } from './dapp';
 
 /**
  * is inserted when the application was bundled, used to prevent window usage
@@ -33,7 +34,6 @@ let lastRootENS: string;
 
 export let router: any;
 export let defaultDAppENS: string;
-export let history: string[];
 
 /**
  * Go to onboarding. (#/onboarding.evan)
@@ -134,7 +134,18 @@ export async function onRouteChange(): Promise<void> {
       activeRootENS = getActiveRootENS();
       lastRootENS = activeRootENS;
 
-      await startDApp(activeRootENS);
+      // start main application
+      const mainDAppLoad = startDApp(activeRootENS);
+
+      // preload nested dapps, if cache known ens cache is registered
+      const split = window.location.hash.replace(/#\/|#/g, '').split('?')[0].split('/');
+      split.forEach((subEns: string) => {
+        if (subEns !== activeRootENS && ensCache[subEns]) {
+          loadDApp(subEns);
+        }
+      });
+
+      await mainDAppLoad;
     } catch (ex) {
       utils.log(`Error while onRouteChange and startDApp (${activeRootENS})`);
       console.error(ex);
@@ -150,19 +161,6 @@ export async function onRouteChange(): Promise<void> {
  * @return     {void}    resolved when routing was created
  */
 export async function initialize(initialRoute?: string): Promise<void> {
-  // load history from cache
-  if (window.performance.navigation.type === 1 && !window.sessionStorage['evan-route-reloaded']) {
-    history = [];
-  } else {
-    try {
-      history = JSON.parse(window.sessionStorage['evan-route-history']);
-    } catch (ex) { }
-  }
-
-  // setup history functions
-  history = history || [];
-  updateHistory();
-
   // watch for window reload to save, that the current session was reloaded
   delete window.sessionStorage['evan-route-reloaded'];
   window.addEventListener('beforeunload', (event) => {
@@ -199,14 +197,6 @@ export function getRouteFromUrl(): string {
     .replace('#!', '')
     .replace(/#\/|\/#/g, '')
     .split('?')[0];
-}
-
-/**
- * Takes the current navigation history and writes it to the sessionStorage if the user navigates to
- * another page and navigates back
- */
-export function updateHistory() {
-  window.sessionStorage['evan-route-history'] = JSON.stringify(history);
 }
 
 /**

@@ -38,7 +38,8 @@ const contractFuncSigs = {
   },
 };
 
-const ensCache: any = ((): any => {
+const loadedEns: any = { };
+export const ensCache: any = ((): any => {
   // reset ens cache
   const { dappBrowserBuild } = (window as any);
   if (dappBrowserBuild !== window.localStorage['evan-dapp-browser-build']) {
@@ -54,11 +55,6 @@ const ensCache: any = ((): any => {
 
   return {};
 })();
-
-/**
- * is inserted when the application was bundled, used to prevent window usage
- */
-declare let evanGlobals: any;
 
 async function postToEthClient(requestString: string): Promise<any> {
   const [, , protocol, host, defaultPort] = config.web3Provider
