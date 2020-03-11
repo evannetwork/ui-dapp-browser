@@ -90,7 +90,7 @@ export default function(System: any) {
         ensAddress.lastIndexOf('.' + rootDomain)
       ) + '.' + devDomain
 
-      // try to load from dev domain, if is 
+      // try to load from dev domain, if is
       return Promise.resolve()
         .then(() => getDefinitionFromEns(ensDevAddress, devDomain))
         .catch(() => getDefinitionFromEns(ensAddress, rootDomain));
