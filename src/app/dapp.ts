@@ -245,7 +245,7 @@ export async function getDAppDependencies(
 
         // load all dependencies, check for its location and trigger the sub loading
         // eslint-disable-next-line no-restricted-syntax
-        for (const dependency of depKeys) {
+        await Promise.all(depKeys.map(async (dependency) => {
         // eslint-disable-next-line no-await-in-loop
           let subDefinition = await System
             .import(`${dependency}.${utils.getDomainName()}!ens`);
@@ -285,7 +285,7 @@ export async function getDAppDependencies(
           // load recursive dependencies
           // eslint-disable-next-line no-await-in-loop
           await getDAppDependencies(dependency, subDefinition, depTree, deep);
-        }
+        }));
       }
     }
   }
