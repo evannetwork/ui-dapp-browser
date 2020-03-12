@@ -141,6 +141,7 @@ export async function onRouteChange(): Promise<void> {
       const split = window.location.hash.replace(/#\/|#/g, '').split('?')[0].split('/');
       split.forEach((subEns: string) => {
         if (subEns !== activeRootENS && ensCache[subEns]) {
+          utils.log(`preloading ${subEns} dapp`);
           loadDApp(subEns);
         }
       });

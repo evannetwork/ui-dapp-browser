@@ -18,10 +18,9 @@
 */
 
 import * as utils from '../../app/utils';
-import System from '../index';
 import { getQueryParameters } from '../../app/routing';
 import { ipfsCatPromise } from '../../app/ipfs';
-import { resolveContent, parseToValidEnsAddress } from '../../app/ens';
+import { resolveContent, parseToValidEnsAddress, setEnsCache } from '../../app/ens';
 
 export default function(System: any) {
   // libraries that should be cached
@@ -36,19 +35,22 @@ export default function(System: any) {
    */
   const getDefinitionFromEns = async function(ensAddress: string, domain: string) {
     // remove domain from the end of the ensAddress to get the dapp name
-    let split = parseToValidEnsAddress(ensAddress).split('.');
+    const split = parseToValidEnsAddress(ensAddress).split('.');
     const dappName = split.slice(0, split.length - 1).join('.');
 
     // get correct ens address and check if a cached ens is availabled
     const validEnsAddress = parseToValidEnsAddress(ensAddress);
     let dbcp;
+    let updateEnsCache = false;
 
     try {
       if (utils.isDevAvailable(dappName) && ensAddress.indexOf('0x') !== 0) {
         // load json and resolve it as stringified
         dbcp = await System.import(`dapps/${dappName}/dbcp.json!json`);
+        updateEnsCache = true;
       } else if (validEnsAddress.indexOf('Qm') === 0) {
         dbcp = await ipfsCatPromise(validEnsAddress);
+        updateEnsCache = true;
       } else {
         dbcp = await resolveContent(validEnsAddress);
       }
@@ -56,11 +58,18 @@ export default function(System: any) {
       console.dir(ex);
     }
 
+    // parse dbcp to the correct format
     if (typeof dbcp === 'string') {
       dbcp = JSON.parse(dbcp);
     }
+    dbcp = dbcp && dbcp.public ? dbcp.public : dbcp;
 
-    return JSON.stringify(dbcp && dbcp.public ? dbcp.public : dbcp) || '';
+    // update ens cache for local / ipfs loaded dbcp
+    if (updateEnsCache && dbcp) {
+      setEnsCache(ensAddress, dbcp);
+    }
+
+    return JSON.stringify(dbcp) || '';
   };
 
   /**
