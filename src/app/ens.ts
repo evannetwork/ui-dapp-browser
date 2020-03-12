@@ -38,7 +38,8 @@ const contractFuncSigs = {
   },
 };
 
-const ensCache: any = ((): any => {
+const loadedEns: any = { };
+export const ensCache: any = ((): any => {
   // reset ens cache
   const { dappBrowserBuild } = (window as any);
   if (dappBrowserBuild !== window.localStorage['evan-dapp-browser-build']) {
@@ -54,11 +55,6 @@ const ensCache: any = ((): any => {
 
   return {};
 })();
-
-/**
- * is inserted when the application was bundled, used to prevent window usage
- */
-declare let evanGlobals: any;
 
 async function postToEthClient(requestString: string): Promise<any> {
   const [, , protocol, host, defaultPort] = config.web3Provider
@@ -189,6 +185,23 @@ export async function getContentHashForAddress(address: string): Promise<string>
 }
 
 /**
+ * Sets the ens cache for a ens address with a loaded dbcp description.
+ *
+ * @param      {string}  address  ens address
+ * @param      {any}     dbcp     dbcp.public
+ */
+export function setEnsCache(address: string, dbcp: any): void {
+  // set ens cache to speed up initial loading
+  if (dbcp.dapp.type === 'cached-dapp') {
+    ensCache[address] = JSON.stringify(dbcp);
+  } else {
+    delete ensCache[address];
+  }
+
+  window.localStorage['evan-ens-cache'] = JSON.stringify(ensCache);
+}
+
+/**
  * Resolves the content behind a ens address.
  *
  * @param      {string}  address  ens address or contract address
@@ -217,16 +230,8 @@ export async function resolveContent(address: string) {
         const ipfsResult = await ipfsCatPromise(ipfsHash);
         // parse the result
         const dbcp = JSON.parse(ipfsResult).public;
-
-        // set ens cache to speed up initial loading
-        if (dbcp.dapp.type === 'cached-dapp') {
-          ensCache[address] = JSON.stringify(dbcp);
-        } else {
-          delete ensCache[address];
-        }
-
+        setEnsCache(address, dbcp);
         // save ens cache
-        window.localStorage['evan-ens-cache'] = JSON.stringify(ensCache);
         return dbcp;
       } catch (ex) {
         const errMsg = `Could not parse content of address ${address}: ${ipfsHash} (${ex.message})`;
