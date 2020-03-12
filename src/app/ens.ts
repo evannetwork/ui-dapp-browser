@@ -39,7 +39,9 @@ const contractFuncSigs = {
 };
 
 const loadedEns: any = { };
+const ensCache: any = ((): any => {
 export const ensCache: any = ((): any => {
+
   // reset ens cache
   const { dappBrowserBuild } = (window as any);
   if (dappBrowserBuild !== window.localStorage['evan-dapp-browser-build']) {
@@ -207,7 +209,11 @@ export function setEnsCache(address: string, dbcp: any): void {
  * @param      {string}  address  ens address or contract address
  */
 export async function resolveContent(address: string) {
-  const anyWindow = (window as any);
+  // directly return, when ens content was resolved before
+  if (loadedEns[address]) {
+    return loadedEns[address];
+  }
+
   // disable ens cache, when dapp-browser was redeployed
   const cacheAvailable = ensCache[address] && ensCache[address] !== 'invalid';
 
@@ -230,8 +236,10 @@ export async function resolveContent(address: string) {
         const ipfsResult = await ipfsCatPromise(ipfsHash);
         // parse the result
         const dbcp = JSON.parse(ipfsResult).public;
-        setEnsCache(address, dbcp);
         // save ens cache
+        setEnsCache(address, dbcp);
+        loadedEns[address] = dbcp;
+
         return dbcp;
       } catch (ex) {
         const errMsg = `Could not parse content of address ${address}: ${ipfsHash} (${ex.message})`;
@@ -245,7 +253,8 @@ export async function resolveContent(address: string) {
 
   if (cacheAvailable) {
     try {
-      return JSON.parse(ensCache[address]);
+      loadedEns[address] = JSON.parse(ensCache[address]);
+      return loadedEns[address];
     } catch (ex) {
       // invalid cache?
     }
