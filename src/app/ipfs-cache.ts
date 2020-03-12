@@ -62,9 +62,6 @@ export class IPFSCache {
             // do nothing
           }
         }
-      } else if (ex.number === -2147024882) {
-        // Internet Explorer 8
-        quotaExceeded = true;
       }
     }
 
@@ -108,7 +105,12 @@ export class IPFSCache {
    * Close the current db, delete the previous one and create a new one.
    */
   private async recreateDb(): Promise<void> {
+    if (!this.db) {
+      return;
+    }
+
     log('[ipfs-cache] recreate ipfs db - maybe aborted?');
+
     // close previous db
     await (await this.getOpenedDb()).close();
 
@@ -132,7 +134,7 @@ export class IPFSCache {
    * @param      {string}  hash    ipfs hash to store the data for
    * @param      {any}     data    data to store for the ipfs hash
    */
-  async add(hash: string, data: any): Promise<any> {
+  async add(hash: string, data: any): Promise<void> {
     return this.set(hash, data);
   }
 
