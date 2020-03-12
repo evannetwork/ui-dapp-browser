@@ -5,6 +5,7 @@
 
 ### Fixes
 - recreate `ipfs-cache` indexeddb on `aborted` event
+- add `EVAN_CHAIN` to config `process.env`
 
 ### Deprecations
 
