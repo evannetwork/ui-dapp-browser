@@ -39,9 +39,7 @@ const contractFuncSigs = {
 };
 
 const loadedEns: any = { };
-const ensCache: any = ((): any => {
 export const ensCache: any = ((): any => {
-
   // reset ens cache
   const { dappBrowserBuild } = (window as any);
   if (dappBrowserBuild !== window.localStorage['evan-dapp-browser-build']) {
