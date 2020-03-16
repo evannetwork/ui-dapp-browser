@@ -445,13 +445,20 @@ export async function startDApp(dappEns: string, container = document.body, useD
     // html entrypoint => create iframe
     } else if (entrypoint.endsWith('.html')) {
       const iframe = document.createElement('iframe');
+      // preload ui-session, so that it is directly available on evan-user-content event
+      const uiSessionP = System.import(`uisession.libs.${utils.getDomainName()}!dapp-content`);
+
       iframe.className += ' evan-dapp';
 
       // open the iframe using the dappBaseUrl
       iframe.setAttribute('src', `${dappBaseUrl}/${entrypoint}`);
 
-      // remove the loading screen
-      loading.finishDAppLoading();
+      // hide loading when ui-session was loaded, but do not break the other logic
+      (async (): Promise<void> => {
+        await uiSessionP;
+        // remove the loading screen
+        loading.finishDAppLoading();
+      })();
 
       // and append the iframe to the dom
       container.appendChild(iframe);
@@ -467,19 +474,38 @@ export async function startDApp(dappEns: string, container = document.body, useD
 
         // if user requests evan user context, send it via post message
         if (event.data === 'evan-user-context') {
+          const uiSession = await uiSessionP;
+          // load user specific data (if the user has already logged in), so it can be passed into
+          // the iframe
+          const vault = uiSession.lightwallet.loadVault();
+          let privateKey;
+          let encryptionKey;
+          if (vault && vault.pwDerivedKey) {
+            privateKey = await uiSession.lightwallet.getPrivateKey(vault, uiSession.core.activeAccount);
+            encryptionKey = await uiSession.lightwallet.getEncryptionKey();
+          }
+
           // send the data to the contentWindow
-          (<any>iframe.contentWindow).postMessage(
+          (iframe.contentWindow as any).postMessage(
             {
               accountId: window.localStorage['evan-account'],
               config,
-              ipfsConfig: ipfs.ipfsConfig,
+              encryptionKey,
+              ipfsConfig: {
+                host: ipfs.ipfsConfig.host,
+                port: ipfs.ipfsConfig.port,
+                protocol: ipfs.ipfsConfig.protocol,
+              },
               language: window.localStorage['evan-language'],
+              privateKey,
               testPassword: window.localStorage['evan-test-password'],
               type: 'evan-user-context',
               vault: window.localStorage['evan-vault'],
             },
             // ensure to only load iframes from ipfs
-            utils.devMode ? window.location.origin : ipfs.getIpfsApiUrl(''),
+            utils.devMode.indexOf(dappEns.replace(`.${utils.getDomainName()}`, '')) !== -1
+              ? window.location.origin
+              : ipfs.getIpfsApiUrl(''),
           );
 
           window.removeEventListener('message', handleUserContext);
