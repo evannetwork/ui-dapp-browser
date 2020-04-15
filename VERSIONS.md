@@ -6,6 +6,7 @@
 ### Fixes
 - recreate `ipfs-cache` indexeddb on `aborted` event
 - add `EVAN_CHAIN` to config `process.env`
+- fix devMode check in iframe
 
 ### Deprecations
 
@@ -19,7 +20,7 @@
 ### Features
 - full refactoring
 - full typescript usage
-- load local deps also from index.html (dev.html is obsolete) 
+- load local deps also from index.html (dev.html is obsolete)
 - use better ipfs / ens resolving / caching
 
 ### Deprecations
@@ -37,7 +38,7 @@
 ## Version 2.8.0
 ### Features
 - start routing directly on dapp-browser load, so cached ens addresses can be directly resolved from ipfs, without waiting for bcc
-- enable `cached-dapp` dbcp type to get better initial loading speed 
+- enable `cached-dapp` dbcp type to get better initial loading speed
 
 ### Fixes
 - add `hidden` class to `initial-loading` only when it was not added before
@@ -178,7 +179,7 @@
 - reduce amount of calls of `vault.generateNewAddresses()`
 
 ### Deprecations
-- move `zone.js` to `@evan.network/ui-angular-libs` (it's only needed by angular) 
+- move `zone.js` to `@evan.network/ui-angular-libs` (it's only needed by angular)
 
 ## Version 1.7.0
 ### Features
