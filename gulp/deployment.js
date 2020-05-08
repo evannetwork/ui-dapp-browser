@@ -197,10 +197,12 @@ async function createRuntime() {
     deploymentAccount = config.runtimeConfig.walletAddress;
     // replace executor usages in runtime submodules
     for (const key of Object.keys(runtime)) {
-      if (runtime[key].executor) {
-        runtime[key].executor = executorWallet;
-      } else if (runtime[key].options && runtime[key].options.executor) {
-        runtime[key].options.executor = executorWallet;
+      if (runtime[key]) {
+        if (runtime[key].executor) {
+          runtime[key].executor = executorWallet;
+        } else if (runtime[key].options && runtime[key].options.executor) {
+          runtime[key].options.executor = executorWallet;
+        }
       }
     }
     // set executor in runtime (top level)
@@ -357,14 +359,14 @@ const replaceConfigurationValues = async function (folderPath) {
     .pipe(replace(/<!-- insertbuildversionhere -->/g, `<script>window.dappBrowserBuild = '${Date.now()}'</script>`))
 
     // replace bcc configurations
-    .pipe(replace(/window\.localStorage\['evan-ens-address'\]/g, `window.localStorage['evan-ens-address'] || '${config.bcConfig.nameResolver.ensAddress}'`))
-    .pipe(replace(/window\.localStorage\['evan-ens-resolver'\]/g, `window.localStorage['evan-ens-resolver'] || '${config.bcConfig.nameResolver.ensResolver}'`))
-    .pipe(replace(/window\.localStorage\['evan-bc-root'\]/g, `window.localStorage['evan-bc-root'] || '${config.bcConfig.nameResolver.labels.businessCenterRoot}'`))
-    .pipe(replace(/window\.localStorage\['evan-ens-root'\]/g, `window.localStorage['evan-ens-root'] || '${config.bcConfig.nameResolver.labels.ensRoot}'`))
-    .pipe(replace(/window\.localStorage\['evan-ens-events'\]/g, `window.localStorage['evan-ens-events'] || ${JSON.stringify(config.bcConfig.nameResolver.domains.eventhub)}`))
-    .pipe(replace(/window\.localStorage\['evan-ens-profiles'\]/g, `window.localStorage['evan-ens-profiles'] || ${JSON.stringify(config.bcConfig.nameResolver.domains.profile)}`))
-    .pipe(replace(/window\.localStorage\['evan-ens-mailbox'\]/g, `window.localStorage['evan-ens-mailbox'] || ${JSON.stringify(config.bcConfig.nameResolver.domains.mailbox)}`))
-    .pipe(replace(/window\.localStorage\['evan-chain'\] \|\| 'testcore'/g, `window.localStorage['evan-chain'] || '${runtime.environment}'`))
+    .pipe(replace(/window\.localStorage\[(?:'|")evan-ens-address(?:'|")]/g, `window.localStorage['evan-ens-address'] || '${config.bcConfig.nameResolver.ensAddress}'`))
+    .pipe(replace(/window\.localStorage\[(?:'|")evan-ens-resolver(?:'|")]/g, `window.localStorage['evan-ens-resolver'] || '${config.bcConfig.nameResolver.ensResolver}'`))
+    .pipe(replace(/window\.localStorage\[(?:'|")evan-bc-root(?:'|")]/g, `window.localStorage['evan-bc-root'] || '${config.bcConfig.nameResolver.labels.businessCenterRoot}'`))
+    .pipe(replace(/window\.localStorage\[(?:'|")evan-ens-root(?:'|")]/g, `window.localStorage['evan-ens-root'] || '${config.bcConfig.nameResolver.labels.ensRoot}'`))
+    .pipe(replace(/window\.localStorage\[(?:'|")evan-ens-events(?:'|")]/g, `window.localStorage['evan-ens-events'] || ${JSON.stringify(config.bcConfig.nameResolver.domains.eventhub)}`))
+    .pipe(replace(/window\.localStorage\[(?:'|")evan-ens-profiles(?:'|")]/g, `window.localStorage['evan-ens-profiles'] || ${JSON.stringify(config.bcConfig.nameResolver.domains.profile)}`))
+    .pipe(replace(/window\.localStorage\[(?:'|")evan-ens-mailbox(?:'|")]/g, `window.localStorage['evan-ens-mailbox'] || ${JSON.stringify(config.bcConfig.nameResolver.domains.mailbox)}`))
+    .pipe(replace(/window\.localStorage\[(?:'|")evan-chain(?:'|")]\s?\|\|\s?(?:'|")testcore(?:'|")/g, `window.localStorage['evan-chain'] || '${runtime.environment}'`))
     // insert correct faucet account
     .pipe(replace(/faucetAccount\:\ \'0x4a6723fC5a926FA150bAeAf04bfD673B056Ba83D\'/g, `faucetAccount: '${config.dappConfigSwitches.accounts.faucetAccount}'`))
     // insert correct ensRootOwner
@@ -376,6 +378,8 @@ const replaceConfigurationValues = async function (folderPath) {
     // paymentChannelManagerAccountId
     .pipe(replace(/0x0A0D9dddEba35Ca0D235A4086086AC704bbc8C2b/g, config.dappConfigSwitches.accounts.paymentChannelManagerAccount))
     .pipe(replace(/pk_test_kpO3T5fXA7aaftg9D0OO0w3S/g, config.dappConfigSwitches.paymentStripeKey))
+    // replace ens resolver
+    .pipe(replace(/0xDC18774FA2E472D26aB91deCC4CDd20D9E82047e/g, config.bcConfig.nameResolver.ensResolver))
 
 
     // web3 configurations
@@ -384,6 +388,7 @@ const replaceConfigurationValues = async function (folderPath) {
     // ipfs config
     .pipe(replace(/\{\ host\:\ \'ipfs\.test\.evan\.network\'\,\ port\:\ \'443\'\,\ protocol\:\ \'https\'\ \}/g, JSON.stringify(ipfsConfig)))
     .pipe(replace(/https\:\/\/ipfs\.test\.evan\.network/g, ipfsUrl))
+    .pipe(replace(/ipfs\.test\.evan\.network/g, ipfsConfig.host))
 
     // smart agent configuratiuon
     .pipe(replace(/https\:\/\/agents\.test\.evan\.network/g, config.dappConfigSwitches.url.coreSmartAgent))
