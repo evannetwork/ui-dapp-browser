@@ -4,11 +4,15 @@
 ### Features
 
 ### Fixes
+
+### Deprecations
+
+
+## Version 3.0.2
+### Fixes
 - recreate `ipfs-cache` indexeddb on `aborted` event
 - add `EVAN_CHAIN` to config `process.env`
 - fix devMode check in iframe
-
-### Deprecations
 
 
 ## Version 3.0.1
