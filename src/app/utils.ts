@@ -41,7 +41,7 @@ export let browserName: string;
  */
 export let isPrivateMode: boolean;
 
-export const environment = window.location.href.indexOf('https://dashboard.evan.network') !== -1 ? 'core'
+export const environment = window.location.href.indexOf('https://dashboard.evan.network') === 0 ? 'core'
   : 'testcore';
 
 /**

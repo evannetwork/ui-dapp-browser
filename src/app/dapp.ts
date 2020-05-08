@@ -154,9 +154,9 @@ function getVersionDBCPHashFromDAppVersion(requiredVersion: string, childENS: st
       // check for IPFS hash or usal ens domain name
       if (childVersions[requiredVersion].indexOf('Qm') === 0) {
         return `${childVersions[requiredVersion]}!dapp-content`;
-      } 
+      }
         return `${ childVersions[requiredVersion] }.${ utils.getDomainName() }!dapp-content`;
-      
+
     }
       const msg = `Version not found: ${originalVersion} for DApp ${childDefinition.name}`;
       console.error(msg);
@@ -503,7 +503,7 @@ export async function startDApp(dappEns: string, container = document.body, useD
               vault: window.localStorage['evan-vault'],
             },
             // ensure to only load iframes from ipfs
-            utils.devMode.indexOf(dappEns.replace(`.${utils.getDomainName()}`, '')) !== -1
+            (utils.devMode?.includes(dappEns.replace(`.${utils.getDomainName()}`, '')))
               ? window.location.origin
               : ipfs.getIpfsApiUrl(''),
           );

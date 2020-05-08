@@ -75,6 +75,8 @@ export class IPFSCache {
    */
   private async getOpenedDb(forceNew = false): Promise<any> {
     if (!this.db || forceNew) {
+      let timeoutResolve: any;
+
       this.db = new Promise((resolve, reject) => {
         log(`[ipfs-cache] open cache db - ${this.dbName}`);
         const openreq = indexedDB.open(this.dbName, 1);
@@ -85,6 +87,7 @@ export class IPFSCache {
             // already exists
           }
 
+          window.clearTimeout(timeoutResolve);
           resolve(openreq.result);
         };
         openreq.onblocked = (): void => reject();
@@ -95,6 +98,8 @@ export class IPFSCache {
           log(`[ipfs-cache] create cache db - ${this.dbName}`);
           openreq.result.createObjectStore(this.storeName);
         };
+
+        timeoutResolve = setTimeout(() => resolve(), 1000);
       });
     }
 
