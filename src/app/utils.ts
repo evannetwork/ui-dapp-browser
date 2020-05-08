@@ -308,7 +308,9 @@ export function currentBrowser() {
  * @param      {string}  type     log type
  */
 export function log(message: string, type = 'log') {
-  if (window.localStorage['evan-dev-log'] || window.localStorage['bc-dev-logs'] === 'debug') {
+  if (type === 'error'
+      || window.localStorage['evan-dev-log']
+      || window.localStorage['bc-dev-logs'] === 'debug') {
     (console as any)[type](`[dapp-browser] ${message}`);
   }
 }
