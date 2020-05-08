@@ -84,31 +84,6 @@ export default function(System: any) {
   };
 
   /**
-   * Loads a predefined library. (bcc / smart-contracts) using a specific
-   * pattern.
-   *
-   * @param      {string}    ensAddress     ens address of the DApp
-   * @param      {string}    fileOrigin     ipfs folder hash
-   * @param      {Function}  originalFetch  SystemJS original fetch
-   * @return     {any}       result of the ipfs import
-   */
-  function loadPredefinedLib(ensAddress: string, fileOrigin: string, originalFetch: Function) {
-    const origin = fileOrigin.split('/')[0];
-    const file = fileOrigin.split('/')[1];
-
-    // bccsystemjs will replace with correct ipfs hash before prod deployment
-    return importIpfs({
-        ensAddress: ensAddress,
-        dapp: {
-          origin: origin,
-          isIpns: true
-        }
-      },
-      file,
-    );
-  }
-
-  /**
    * Handle data handling for requested files params.
    *
    * @param      {any}           params         SystemJS parameters

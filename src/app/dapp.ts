@@ -154,9 +154,9 @@ function getVersionDBCPHashFromDAppVersion(requiredVersion: string, childENS: st
       // check for IPFS hash or usal ens domain name
       if (childVersions[requiredVersion].indexOf('Qm') === 0) {
         return `${childVersions[requiredVersion]}!dapp-content`;
-      } 
+      }
         return `${ childVersions[requiredVersion] }.${ utils.getDomainName() }!dapp-content`;
-      
+
     }
       const msg = `Version not found: ${originalVersion} for DApp ${childDefinition.name}`;
       console.error(msg);
@@ -245,7 +245,7 @@ export async function getDAppDependencies(
 
         // load all dependencies, check for its location and trigger the sub loading
         // eslint-disable-next-line no-restricted-syntax
-        for (const dependency of depKeys) {
+        await Promise.all(depKeys.map(async (dependency) => {
         // eslint-disable-next-line no-await-in-loop
           let subDefinition = await System
             .import(`${dependency}.${utils.getDomainName()}!ens`);
@@ -285,7 +285,7 @@ export async function getDAppDependencies(
           // load recursive dependencies
           // eslint-disable-next-line no-await-in-loop
           await getDAppDependencies(dependency, subDefinition, depTree, deep);
-        }
+        }));
       }
     }
   }
@@ -445,13 +445,20 @@ export async function startDApp(dappEns: string, container = document.body, useD
     // html entrypoint => create iframe
     } else if (entrypoint.endsWith('.html')) {
       const iframe = document.createElement('iframe');
+      // preload ui-session, so that it is directly available on evan-user-content event
+      const uiSessionP = System.import(`uisession.libs.${utils.getDomainName()}!dapp-content`);
+
       iframe.className += ' evan-dapp';
 
       // open the iframe using the dappBaseUrl
       iframe.setAttribute('src', `${dappBaseUrl}/${entrypoint}`);
 
-      // remove the loading screen
-      loading.finishDAppLoading();
+      // hide loading when ui-session was loaded, but do not break the other logic
+      (async (): Promise<void> => {
+        await uiSessionP;
+        // remove the loading screen
+        loading.finishDAppLoading();
+      })();
 
       // and append the iframe to the dom
       container.appendChild(iframe);
@@ -467,19 +474,38 @@ export async function startDApp(dappEns: string, container = document.body, useD
 
         // if user requests evan user context, send it via post message
         if (event.data === 'evan-user-context') {
+          const uiSession = await uiSessionP;
+          // load user specific data (if the user has already logged in), so it can be passed into
+          // the iframe
+          const vault = uiSession.lightwallet.loadVault();
+          let privateKey;
+          let encryptionKey;
+          if (vault && vault.pwDerivedKey) {
+            privateKey = await uiSession.lightwallet.getPrivateKey(vault, uiSession.core.activeAccount);
+            encryptionKey = await uiSession.lightwallet.getEncryptionKey();
+          }
+
           // send the data to the contentWindow
-          (<any>iframe.contentWindow).postMessage(
+          (iframe.contentWindow as any).postMessage(
             {
               accountId: window.localStorage['evan-account'],
               config,
-              ipfsConfig: ipfs.ipfsConfig,
+              encryptionKey,
+              ipfsConfig: {
+                host: ipfs.ipfsConfig.host,
+                port: ipfs.ipfsConfig.port,
+                protocol: ipfs.ipfsConfig.protocol,
+              },
               language: window.localStorage['evan-language'],
+              privateKey,
               testPassword: window.localStorage['evan-test-password'],
               type: 'evan-user-context',
               vault: window.localStorage['evan-vault'],
             },
             // ensure to only load iframes from ipfs
-            utils.devMode ? window.location.origin : ipfs.getIpfsApiUrl(''),
+            (utils.devMode?.includes(dappEns.replace(`.${utils.getDomainName()}`, '')))
+              ? window.location.origin
+              : ipfs.getIpfsApiUrl(''),
           );
 
           window.removeEventListener('message', handleUserContext);
